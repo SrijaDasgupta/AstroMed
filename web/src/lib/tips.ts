@@ -47,8 +47,30 @@ export const SOURCES = {
 
 export type SourceId = keyof typeof SOURCES;
 
-export type Topic = "Sleep" | "Heart" | "Behavioral health" | "Bone" | "Radiation" | "Medicine";
-export const TOPICS: Topic[] = ["Sleep", "Heart", "Behavioral health", "Bone", "Radiation", "Medicine"];
+export type Topic =
+  | "Sleep and body clock"
+  | "Heart and blood pressure"
+  | "Metabolism and temperature"
+  | "Bone and muscle"
+  | "Gravity changes and landing"
+  | "Mind, team and support"
+  | "Radiation"
+  | "Medicine";
+
+export const TOPICS: { id: Topic; slug: string; blurb: string }[] = [
+  { id: "Sleep and body clock", slug: "sleep", blurb: "Getting enough sleep, at the right time, in a good sleep space." },
+  { id: "Heart and blood pressure", slug: "heart", blurb: "How the heart and circulation adapt, and how to keep them fit." },
+  { id: "Metabolism and temperature", slug: "metabolism", blurb: "Blood sugar, insulin and body temperature in flight." },
+  { id: "Bone and muscle", slug: "bone", blurb: "Slowing the bone and muscle loss that weightlessness causes." },
+  { id: "Gravity changes and landing", slug: "landing", blurb: "Getting through the switch back to gravity." },
+  { id: "Mind, team and support", slug: "mind", blurb: "Mood, stress, crew relations, and getting help." },
+  { id: "Radiation", slug: "radiation", blurb: "Tracking dose and protecting yourself from solar storms." },
+  { id: "Medicine", slug: "medicine", blurb: "Planning the medical kit for long missions." },
+];
+
+export function topicBySlug(slug: string | undefined) {
+  return TOPICS.find((t) => t.slug === slug);
+}
 
 export type Tip = {
   id: string;
@@ -56,6 +78,8 @@ export type Tip = {
   title: string;
   /** What to do, in plain words. */
   action: string;
+  /** A small thing a person can do today, for daily missions. Omitted for planning-level tips. */
+  habit?: string;
   /** What the NASA document says, paraphrased. */
   evidence: string;
   source: SourceId;
@@ -72,52 +96,57 @@ const MARS: EnvironmentId[] = ["mars-transit", "mars-surface"];
 export const TIPS: Tip[] = [
   {
     id: "protect-sleep-period",
-    topic: "Sleep",
+    topic: "Sleep and body clock",
     title: "Expect shorter sleep in space and protect the sleep period",
     action: "Treat scheduled sleep as protected time, and compare each person's sleep with their own normal rather than with Earth norms.",
+    habit: "Keep tonight's sleep period free of work.",
     evidence: "Across seven studies of 177 astronauts, crews slept about six hours a night in space, whatever the mission. That is less than sleep experts recommend.",
     source: "sleep", page: 11,
     metrics: ["sleepHours"], environments: SPACE,
   },
   {
     id: "avoid-slam-shifts",
-    topic: "Sleep",
+    topic: "Sleep and body clock",
     title: "Watch for sudden schedule shifts and work creeping into rest time",
     action: "When a crew member's sleep drops, check for recent schedule changes or tasks that ran into their off-duty time.",
+    habit: "Check tomorrow's schedule and flag any big shift in wake time.",
     evidence: "Astronauts named night operations, sudden schedule shifts (\"slam shifts\") and \"schedule creep\" of work into off-duty time as factors that hurt their sleep.",
     source: "sleep", page: 16,
     metrics: ["sleepHours", "sleepEfficiency"], environments: "all",
   },
   {
     id: "sleep-environment",
-    topic: "Sleep",
+    topic: "Sleep and body clock",
     title: "Give each person control over their sleep space",
     action: "Make sure ear plugs, eye masks and light blockers are on hand, and let each person adjust their own light, noise and temperature.",
+    habit: "Set up your eye mask, ear plugs and lights before bed.",
     evidence: "NASA's habitability standard requires sleep quarters with control of vibration, lighting, noise and temperature, plus privacy. It notes that preferences differ, so each person needs individual control.",
     source: "std2", page: 134,
     metrics: ["sleepEfficiency", "sleepHours"], environments: "all",
   },
   {
     id: "lighting-circadian",
-    topic: "Sleep",
+    topic: "Sleep and body clock",
     title: "Use lighting to keep the body clock on schedule",
     action: "Use the habitat's adjustable lighting to signal day and night, especially around schedule changes.",
+    habit: "Use bright light after waking and dim light in the hour before sleep.",
     evidence: "NASA deployed solid-state lighting on the ISS to help keep the body clock aligned, to shift sleep timing and to boost alertness during critical operations.",
     source: "sleep", page: 6,
     metrics: ["sleepEfficiency"], environments: "all",
   },
   {
     id: "stimulant-timing",
-    topic: "Sleep",
+    topic: "Sleep and body clock",
     title: "Be careful with stimulants when sleep is already poor",
     action: "If sleep efficiency is dropping, review caffeine and other wake-promoting medicine use, especially later in the day.",
+    habit: "No caffeine after mid-afternoon today.",
     evidence: "In one survey, 75% of astronauts reported using alertness medicines in flight, and those who used caffeine pills or modafinil also reported more trouble falling asleep.",
     source: "sleep", page: 23,
     metrics: ["sleepEfficiency", "sleepHours"], environments: "all",
   },
   {
     id: "sleep-medication-oversight",
-    topic: "Sleep",
+    topic: "Sleep and body clock",
     title: "Sleep medication is common but needs medical oversight",
     action: "Sleep aids should be discussed with the flight surgeon rather than used to quietly cover a growing problem.",
     evidence: "Sleep medication is the most common sleep countermeasure on the ISS, but how well these countermeasures work in flight is still unknown.",
@@ -126,16 +155,17 @@ export const TIPS: Tip[] = [
   },
   {
     id: "combine-signals",
-    topic: "Behavioral health",
+    topic: "Mind, team and support",
     title: "Read heart rate, heart rate variability and sleep together",
     action: "A change in one measure can be noise. Several measures moving the wrong way together, as AstroMed shows, deserves a closer look.",
+    habit: "Look over your own trend charts for anything moving together.",
     evidence: "NASA's behavioral health work combines heart rate, heart rate variability and sleep-wake patterns into one view of well-being tracked over time.",
     source: "behavioral", page: 91,
     metrics: ["hrv", "restingHr", "sleepHours", "moodPositive", "moodNegative", "temperature"], environments: "all",
   },
   {
     id: "private-conference",
-    topic: "Behavioral health",
+    topic: "Mind, team and support",
     title: "Use private medical and psychological check-ins",
     action: "If a crew member's measures stay outside their normal range, schedule a private conference with the flight surgeon or psychologist.",
     evidence: "On the ISS, private psychological conferences and crew care packages help keep crew members well and let problems be spotted early. The same conferences can be used for treatment.",
@@ -144,34 +174,37 @@ export const TIPS: Tip[] = [
   },
   {
     id: "self-monitoring-delay",
-    topic: "Behavioral health",
+    topic: "Mind, team and support",
     title: "With long signal delays, the crew must spot and act on problems themselves",
     action: "On Mars missions, agree in advance which warning signs trigger which response, so the crew can act without waiting for Earth.",
+    habit: "Review your personal warning-signs plan.",
     evidence: "Communication delays will mean crews have to watch their own key health indicators and start countermeasures on their own, without real-time help from the ground.",
     source: "behavioral", page: 55,
     metrics: ["hrv", "restingHr", "sleepHours", "moodPositive", "moodNegative", "temperature"], environments: MARS,
   },
   {
     id: "contact-home",
-    topic: "Behavioral health",
+    topic: "Mind, team and support",
     title: "Keep contact with home, adapted to the delay",
     action: "Plan recorded messages and other delay-friendly ways to stay in touch with family and friends.",
+    habit: "Record or send a message home.",
     evidence: "ISS crews value real-time calls home, but lunar and Mars communication delays will change how these family conferences work.",
     source: "behavioral", page: 61,
     metrics: ["moodPositive", "moodNegative"], environments: MARS,
   },
   {
     id: "exercise-heart",
-    topic: "Heart",
+    topic: "Heart and blood pressure",
     title: "Keep up daily exercise to protect the heart",
     action: "A rising resting heart rate can be a sign of deconditioning. Check that exercise sessions are happening as planned.",
+    habit: "Finish today's aerobic exercise session.",
     evidence: "Exercise prevents cardiovascular deconditioning in flight, but on its own it does not prevent dizziness and fainting on return to gravity.",
     source: "cardio", page: 87,
     metrics: ["restingHr"], environments: SPACE,
   },
   {
     id: "landing-orthostatic",
-    topic: "Heart",
+    topic: "Gravity changes and landing",
     title: "Prepare for dizziness when gravity returns",
     action: "Before landing, combine exercise with fluid loading. Have help ready for the first time crew members stand up.",
     evidence: "Dizziness or fainting on standing after spaceflight (orthostatic intolerance) is well documented. Fluid loading at the end of a mission helped Shuttle astronauts, and exercise alone does not prevent it.",
@@ -180,25 +213,27 @@ export const TIPS: Tip[] = [
   },
   {
     id: "bp-lower-in-flight",
-    topic: "Heart",
+    topic: "Heart and blood pressure",
     title: "Blood pressure usually runs lower in microgravity",
     action: "Judge blood pressure against the person's own in-flight normal. A rise above it in microgravity goes against the usual pattern and is worth a check.",
+    habit: "Do your vital signs check.",
     evidence: "On Space Shuttle missions, heart rate and both systolic and diastolic blood pressure were lower in flight than before launch. They rose past preflight levels during re-entry, and blood pressure dropped when crew stood up after landing.",
     source: "cardio", page: 23,
     metrics: ["systolic", "diastolic"], environments: ["leo", "mars-transit"],
   },
   {
     id: "sleep-and-bp",
-    topic: "Heart",
+    topic: "Heart and blood pressure",
     title: "Short sleep and blood pressure are linked",
     action: "When blood pressure and sleep are both off, address sleep first. It is one of the few things the crew can change themselves.",
+    habit: "Aim for more than 6 hours of sleep tonight.",
     evidence: "Studies on Earth report that sleeping less than six hours a night significantly raises the chance of developing high blood pressure and metabolic syndrome later.",
     source: "cardio", page: 39,
     metrics: ["systolic", "diastolic", "sleepHours"], environments: "all",
   },
   {
     id: "glucose-insulin",
-    topic: "Heart",
+    topic: "Metabolism and temperature",
     title: "Normal blood sugar doesn't rule out insulin resistance",
     action: "Keep tracking glucose, but don't treat a normal reading as the full metabolic picture on long missions.",
     evidence: "After long-duration flights, blood glucose was unchanged, but insulin was about 50% higher and a measure of insulin resistance (HOMA-IR) was almost 60% higher.",
@@ -207,18 +242,20 @@ export const TIPS: Tip[] = [
   },
   {
     id: "temperature-regulation",
-    topic: "Heart",
+    topic: "Metabolism and temperature",
     title: "Watch body temperature, especially before landing",
     action: "Treat a rise above the person's normal as a possible infection first. Before landing or a spacewalk, also think about heat load from suits.",
+    habit: "Take your temperature as part of your vital signs check.",
     evidence: "The body's temperature control at rest and during exercise is impaired after six months in space, even with exercise. A raised core temperature may make dizziness on standing more likely on landing.",
     source: "cardio", page: 84,
     metrics: ["temperature"], environments: "all",
   },
   {
     id: "resistive-exercise-bone",
-    topic: "Bone",
+    topic: "Bone and muscle",
     title: "Resistive exercise slows bone loss",
     action: "Keep up resistance training throughout the mission. Bone loss isn't visible in daily measures, so the schedule itself is what to track.",
+    habit: "Do a resistance exercise session today.",
     evidence: "Astronauts lose about 1–1.5% of their weight-bearing bone density (hip, spine, legs) per month in flight. Resistive exercise can reduce the loss.",
     source: "bone", page: 42,
     metrics: [], environments: SPACE,
@@ -228,6 +265,7 @@ export const TIPS: Tip[] = [
     topic: "Radiation",
     title: "Track total radiation against the career limit",
     action: "Add each mission's dose to the crew member's lifetime total. AstroMed shows the dose for the current mission.",
+    habit: "Check your radiation total in the radiation calculator.",
     evidence: "A crew member's total career radiation dose from spaceflight must stay below 600 mSv, the same limit for all ages and sexes.",
     source: "std1", page: 40,
     metrics: [], environments: SPACE,
@@ -237,6 +275,7 @@ export const TIPS: Tip[] = [
     topic: "Radiation",
     title: "Shelter during solar storms and cut spacewalks short",
     action: "When monitoring shows a solar particle event, move the crew to the most shielded area and end spacewalks early.",
+    habit: "Know the route to your most shielded area.",
     evidence: "Most solar storms are made up of low-energy protons, so local polyethylene shielding inside a lightly shielded vehicle or habitat can bring most recorded events below 100 mSv.",
     source: "radiation", page: 48,
     metrics: [], environments: BEYOND_LEO,
@@ -255,6 +294,7 @@ export const TIPS: Tip[] = [
     topic: "Medicine",
     title: "Plan for medicines outlasting their expiry dates",
     action: "For long missions, choose medicines known to stay stable, and track expiry dates in the onboard kit.",
+    habit: "Check expiry dates on one section of the medical kit.",
     evidence: "Missions of 1–5 years will outlast typical medicine expiry dates of 1–2 years. Some medicines degraded less than 5–10% after 550 days on the ISS.",
     source: "pharma", page: 3,
     metrics: [], environments: MARS,

@@ -7,7 +7,7 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 
 export const metadata: Metadata = {
   title: "AstroMed",
-  description: "Personalized crew health monitoring for missions beyond Earth.",
+  description: "Personal health monitoring for astronauts on missions beyond Earth.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

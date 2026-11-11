@@ -2,37 +2,51 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Globe2, LayoutDashboard, ShieldAlert, Users } from "lucide-react";
+import { BookOpen, Calculator, ClipboardCheck, Globe2, HeartPulse, ShieldAlert, User } from "lucide-react";
 
-const LINKS = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/mission", label: "Mission", icon: Globe2 },
-  { href: "/crew", label: "Crew", icon: Users },
-  { href: "/hazards", label: "Hazards", icon: ShieldAlert },
-  { href: "/tips", label: "Health tips", icon: BookOpen },
+const GROUPS = [
+  {
+    label: "Personal",
+    links: [
+      { href: "/me", label: "My space", icon: User },
+      { href: "/vitals", label: "My vitals", icon: HeartPulse },
+      { href: "/checkups", label: "Checkups", icon: ClipboardCheck },
+      { href: "/hazards", label: "My exposure", icon: ShieldAlert },
+      { href: "/tools", label: "Health tools", icon: Calculator },
+    ],
+  },
+  {
+    label: "General",
+    links: [
+      { href: "/mission", label: "Mission", icon: Globe2 },
+      { href: "/tips", label: "Health tips", icon: BookOpen },
+    ],
+  },
 ];
 
-
 export function NavLinks() {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   return (
-    <nav className="flex gap-1 md:flex-col">
-      {LINKS.map(({ href, label, icon: Icon }) => {
-        const active = pathname === href || pathname.startsWith(`${href}/`);
-        return (
-          <Link
-            key={href}
-            href={href}
-            aria-current={active ? "page" : undefined}
-            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${
-              active ? "bg-sky-400/15 text-sky-200" : "text-slate-400 hover:bg-white/5 hover:text-white"
-            }`}
-          >
-            <Icon className="h-4 w-4" aria-hidden />
-            {label}
-          </Link>
-        );
-      })}
+    <nav className="flex flex-wrap gap-x-4 gap-y-2 md:flex-col md:gap-5" aria-label="Main">
+      {GROUPS.map((g) => (
+        <div key={g.label} className="flex flex-wrap items-center gap-1 md:flex-col md:items-stretch">
+          <p className="hidden px-3 pb-1 text-[11px] font-medium uppercase tracking-widest text-slate-500 md:block">{g.label}</p>
+          {g.links.map(({ href, label, icon: Icon }) => {
+            const active = pathname === href || pathname.startsWith(`${href}/`);
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={active ? "page" : undefined}
+                className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${active ? "bg-sky-400/15 text-sky-200" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}
+              >
+                <Icon className="h-4 w-4" aria-hidden />
+                {label}
+              </Link>
+            );
+          })}
+        </div>
+      ))}
     </nav>
   );
 }

@@ -1,4 +1,4 @@
-import { assess, CREW, MISSION_DAYS, type Assessment, type MetricKey } from "@/lib/crew";
+import { MISSION_DAYS, type Assessment, type MetricKey } from "@/lib/crew";
 import type { EnvironmentId, MissionEnvironment } from "@/lib/environments";
 
 /** NASA career limit for spaceflight radiation (NASA-STD-3001 Vol. 1, p. 40). */
@@ -64,39 +64,22 @@ export function boneSeries(env: MissionEnvironment, length: number, today: numbe
   });
 }
 
-export type CardioRow = {
-  assessment: Assessment;
-  hrChange: number;
-  systolicChange: number;
-  diastolicChange: number;
-};
-
 export type ImmuneSignal = { key: MetricKey; label: string };
 
 /** Measures that can hint at infection or stress-related immune changes. */
-const IMMUNE_SIGNALS: ImmuneSignal[] = [
+export const IMMUNE_SIGNAL_LABELS: ImmuneSignal[] = [
   { key: "temperature", label: "Raised temperature" },
   { key: "sleepHours", label: "Short sleep" },
   { key: "moodNegative", label: "Raised negative mood (stress)" },
 ];
 
-export function hazardReport(env: MissionEnvironment) {
-  const assessments = CREW.map((m) => assess(m, env));
-  const metric = (a: Assessment, k: MetricKey) => a.metrics.find((m) => m.def.key === k)!;
-
-  const cardio: CardioRow[] = assessments.map((a) => ({
-    assessment: a,
-    hrChange: metric(a, "restingHr").recentMean - metric(a, "restingHr").baseline,
-    systolicChange: metric(a, "systolic").recentMean - metric(a, "systolic").baseline,
-    diastolicChange: metric(a, "diastolic").recentMean - metric(a, "diastolic").baseline,
-  }));
-
-  const immune = assessments.map((a) => ({
-    assessment: a,
-    signals: IMMUNE_SIGNALS.filter((s) => metric(a, s.key).status !== "good"),
-  }));
-
-  return { assessments, cardio, immune, today: MISSION_DAYS };
+/** Changes in the person's own heart and immune-related measures (last 3 days vs. baseline). */
+export function myHazards(a: Assessment) {
+  const metric = (k: MetricKey) => a.metrics.find((m) => m.def.key === k)!;
+  const change = (k: MetricKey) => metric(k).recentMean - metric(k).baseline;
+  return {
+    cardio: (["restingHr", "systolic", "diastolic"] as MetricKey[]).map((k) => ({ metric: metric(k), change: change(k) })),
+    immune: IMMUNE_SIGNAL_LABELS.filter((s) => metric(s.key).status !== "good"),
+    today: MISSION_DAYS,
+  };
 }
-
-export const IMMUNE_SIGNAL_LABELS = IMMUNE_SIGNALS;

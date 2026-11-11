@@ -14,7 +14,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen md:flex">
       <aside className="border-b border-white/10 p-4 md:flex md:w-60 md:flex-col md:border-r md:border-b-0">
-        <Link href="/dashboard" className="block px-3 py-2"><Logo /></Link>
+        <Link href="/me" className="block px-3 py-2"><Logo /></Link>
         <div className="mt-2 md:mt-6"><NavLinks /></div>
         <div className="mt-4 hidden border-t border-white/10 pt-4 md:mt-auto md:block">
           <p className="truncate px-3 text-xs text-slate-500" title={who}>{who}</p>

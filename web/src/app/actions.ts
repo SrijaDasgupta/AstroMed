@@ -5,7 +5,13 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { isSupabaseConfigured } from "@/lib/env";
 import { ENV_COOKIE, ENVIRONMENTS } from "@/lib/environments";
-import { DEMO_COOKIE } from "@/lib/session";
+import { DEMO_COOKIE, getViewer } from "@/lib/session";
+import { evaluate, getCheckup, parseAnswers, type Escalation, type Finding } from "@/lib/checkups";
+import { getCrewMember } from "@/lib/crew";
+import { clearDemoLogsCookieName, saveLog } from "@/lib/checkup-store";
+import { DEMO_COOKIES, getProfile, saveProfile as storeProfile, setTipDone } from "@/lib/profile-store";
+import { CREW } from "@/lib/crew";
+import { TIPS } from "@/lib/tips";
 import { createClient } from "@/lib/supabase/server";
 
 export type AuthState = { error?: string; message?: string };
@@ -28,7 +34,7 @@ export async function signIn(_prev: AuthState, formData: FormData): Promise<Auth
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: error.message };
   (await cookies()).delete(DEMO_COOKIE);
-  redirect("/dashboard");
+  redirect("/me");
 }
 
 export async function signUp(_prev: AuthState, formData: FormData): Promise<AuthState> {
@@ -44,7 +50,7 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
     options: { emailRedirectTo: `${origin}/auth/callback` },
   });
   if (error) return { error: error.message };
-  if (data.session) redirect("/dashboard");
+  if (data.session) redirect("/me");
   return { message: "Check your email for a confirmation link, then sign in." };
 }
 
@@ -53,7 +59,10 @@ export async function signOut() {
     const supabase = await createClient();
     await supabase.auth.signOut();
   }
-  (await cookies()).delete(DEMO_COOKIE);
+  const store = await cookies();
+  store.delete(DEMO_COOKIE);
+  store.delete(clearDemoLogsCookieName());
+  DEMO_COOKIES.forEach((c) => store.delete(c));
   redirect("/");
 }
 
@@ -65,7 +74,7 @@ export async function startDemo() {
     maxAge: 60 * 60 * 24 * 7,
     path: "/",
   });
-  redirect("/dashboard");
+  redirect("/me");
 }
 
 export async function setEnvironment(formData: FormData) {
@@ -79,4 +88,49 @@ export async function setEnvironment(formData: FormData) {
     path: "/",
   });
   revalidatePath("/", "layout");
+}
+
+export type CheckupState = {
+  error?: string;
+  result?: { level: Escalation; findings: Finding[]; saved: boolean; problem?: string };
+};
+
+export async function submitCheckup(_prev: CheckupState, formData: FormData): Promise<CheckupState> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: "Your session has ended. Sign in again." };
+  const checkup = getCheckup(String(formData.get("checkupId") ?? ""));
+  if (!checkup) return { error: "Unknown checkup." };
+  const member = getCrewMember((await getProfile(viewer)).crewId)!;
+
+  const parsed = parseAnswers(checkup, formData);
+  if ("error" in parsed) return { error: parsed.error };
+
+  const { level, findings } = evaluate(checkup, member, parsed.answers);
+  const { problem } = await saveLog(viewer, { crewId: member.id, checkupId: checkup.id, escalation: level, answers: parsed.answers });
+  revalidatePath("/", "layout");
+  return { result: { level, findings, saved: !problem, problem } };
+}
+
+export async function toggleHabit(formData: FormData) {
+  const viewer = await getViewer();
+  if (!viewer) redirect("/login");
+  const tipId = String(formData.get("tipId") ?? "");
+  if (!TIPS.some((t) => t.id === tipId && t.habit)) return;
+  await setTipDone(viewer, tipId, formData.get("done") === "1");
+  revalidatePath("/", "layout");
+}
+
+export type ProfileState = { error?: string; saved?: boolean };
+
+export async function updateProfile(_prev: ProfileState, formData: FormData): Promise<ProfileState> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: "Your session has ended. Sign in again." };
+  const displayName = String(formData.get("displayName") ?? "").trim().slice(0, 40);
+  const crewId = String(formData.get("crewId") ?? "");
+  if (!displayName) return { error: "Enter a name." };
+  if (!CREW.some((c) => c.id === crewId)) return { error: "Choose a crew member." };
+  const { problem } = await storeProfile(viewer, { displayName, crewId });
+  if (problem) return { error: problem };
+  revalidatePath("/", "layout");
+  return { saved: true };
 }

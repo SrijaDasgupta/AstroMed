@@ -7,7 +7,7 @@ import { getViewer } from "@/lib/session";
 import { LoginForm } from "./LoginForm";
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  if (await getViewer()) redirect("/dashboard");
+  if (await getViewer()) redirect("/me");
   const { error } = await searchParams;
 
   return (
@@ -32,7 +32,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <span className="h-px flex-1 bg-white/10" />or<span className="h-px flex-1 bg-white/10" />
         </div>
         <DemoButton className="mt-6 w-full" />
-        <p className="mt-2 text-center text-xs text-slate-500">The demo uses sample crew data and needs no account.</p>
+        <p className="mt-2 text-center text-xs text-slate-500">The demo uses sample health data and needs no account.</p>
       </div>
     </main>
   );

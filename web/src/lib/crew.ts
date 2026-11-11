@@ -159,10 +159,10 @@ const LIMITS: Partial<Record<MetricKey, [number, number]>> = {
   moodNegative: [10, 50],
 };
 
-export function simulate(member: CrewMember, env: MissionEnvironment): DaySeries {
+export function simulate(member: CrewMember, env: MissionEnvironment, withEvents = true): DaySeries {
   const rand = seededRandom(`${member.id}:${env.id}`);
   const { adapted, perDay } = ENV_EFFECT[env.id];
-  const event = EVENTS[member.id];
+  const event = withEvents ? EVENTS[member.id] : undefined;
   const out = Object.fromEntries(METRICS.map((d) => [d.key, [] as number[]])) as DaySeries;
 
   for (let day = 1; day <= MISSION_DAYS; day++) {
@@ -197,6 +197,8 @@ export type MetricAssessment = {
   /** How many day-to-day SDs the last 3 days sit from baseline, in the concerning direction. */
   deviation: number;
   status: Status;
+  /** Which days hold the person's own recorded reading rather than sample data. */
+  recorded: boolean[];
 };
 
 export type Assessment = {
@@ -209,20 +211,26 @@ export type Assessment = {
 
 const RANK: Record<Status, number> = { good: 0, warning: 1, critical: 2 };
 
-export function assess(member: CrewMember, env: MissionEnvironment): Assessment {
-  const series = simulate(member, env);
+/** The person's own readings by day (index 0 = 29 days ago, last = today); undefined where none. */
+export type Readings = Partial<Record<MetricKey, (number | undefined)[]>>;
+
+export function assess(member: CrewMember, env: MissionEnvironment, opts: { readings?: Readings; events?: boolean } = {}): Assessment {
+  const events = opts.events ?? true;
+  const series = simulate(member, env, events);
   const metrics = METRICS.map((def): MetricAssessment => {
-    const values = series[def.key];
+    const own = opts.readings?.[def.key];
+    const recorded = series[def.key].map((_, i) => own?.[i] !== undefined);
+    const values = series[def.key].map((v, i) => own?.[i] ?? v);
     const base = def.baseline(member);
     const recent = values.slice(-3);
     const recentMean = recent.reduce((a, b) => a + b, 0) / recent.length;
     const signed = (recentMean - base) / def.dailySd(base, member);
     const deviation = def.worseWhen === "higher" ? signed : -signed;
     const status: Status = deviation >= 3 ? "critical" : deviation >= 2 ? "warning" : "good";
-    return { def, values, latest: values[values.length - 1], recentMean, baseline: base, range: normalRange(def, member), deviation, status };
+    return { def, values, latest: values[values.length - 1], recentMean, baseline: base, range: normalRange(def, member), deviation, status, recorded };
   });
   const status = metrics.reduce<Status>((s, m) => (RANK[m.status] > RANK[s] ? m.status : s), "good");
-  const event = EVENTS[member.id];
+  const event = events ? EVENTS[member.id] : undefined;
   return {
     member,
     metrics,

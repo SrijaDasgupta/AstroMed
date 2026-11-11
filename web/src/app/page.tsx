@@ -6,13 +6,13 @@ import { Logo } from "@/components/Logo";
 import { getViewer } from "@/lib/session";
 
 const FEATURES = [
-  { icon: HeartPulse, title: "Personal baselines", body: "Each crew member's own normal heart rate, variability and sleep, not a population average." },
+  { icon: HeartPulse, title: "Personal baselines", body: "Your own normal heart rate, blood pressure, sleep and mood, not a population average." },
   { icon: Activity, title: "Mission-aware alerts", body: "Gravity, radiation and signal delay change what counts as a warning sign." },
   { icon: Moon, title: "Evidence-based tips", body: "Guidance drawn from NASA health standards and Human Research Program evidence reports." },
 ];
 
 export default async function Home() {
-  if (await getViewer()) redirect("/dashboard");
+  if (await getViewer()) redirect("/me");
 
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-6 py-8">
@@ -22,12 +22,12 @@ export default async function Home() {
       </header>
 
       <section className="flex flex-1 flex-col justify-center py-20">
-        <p className="text-sm font-medium uppercase tracking-widest text-sky-400">Crew health beyond Earth</p>
+        <p className="text-sm font-medium uppercase tracking-widest text-sky-400">Your health beyond Earth</p>
         <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight sm:text-5xl">
-          Know when an astronaut drifts from their own normal.
+          Know when you drift from your own normal.
         </h1>
         <p className="mt-6 max-w-2xl text-lg text-slate-400">
-          AstroMed tracks each crew member against their personal baseline and the mission they&apos;re on,
+          Record your vitals, see them against your personal baseline and your mission, and build healthy habits,
           from the ISS to the surface of Mars.
         </p>
         <div className="mt-10 flex flex-wrap gap-3">

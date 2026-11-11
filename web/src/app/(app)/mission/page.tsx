@@ -12,7 +12,7 @@ export default async function MissionPage() {
       <div>
         <h1 className="text-2xl font-semibold">Mission environment</h1>
         <p className="mt-1 text-slate-400">
-          Where is the crew? This changes which health risks AstroMed watches for and how alerts are judged.
+          Where are you? This changes which health risks AstroMed watches for, your radiation estimates and your daily missions.
         </p>
       </div>
 

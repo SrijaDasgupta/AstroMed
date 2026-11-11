@@ -11,6 +11,8 @@ type Props = {
   baseline: number;
   /** Where the personal baseline comes from. */
   baselineKind: "measured" | "simulated";
+  /** Days that hold the person's own reading (others are sample data). */
+  recorded?: boolean[];
 };
 
 const W = 560;
@@ -30,7 +32,7 @@ function niceTicks(min: number, max: number, count = 4) {
   return ticks;
 }
 
-export function MetricChart({ label, unit, decimals, values, range, baseline, baselineKind }: Props) {
+export function MetricChart({ label, unit, decimals, values, range, baseline, baselineKind, recorded }: Props) {
   const [hover, setHover] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const titleId = useId();
@@ -42,13 +44,16 @@ export function MetricChart({ label, unit, decimals, values, range, baseline, ba
   const yMin = Math.min(ticks[0], lo - pad);
   const yMax = Math.max(ticks[ticks.length - 1], hi + pad);
 
+  const last = values.length - 1;
   const x = (i: number) => PAD.left + (i / (values.length - 1)) * (W - PAD.left - PAD.right);
   const y = (v: number) => PAD.top + (1 - (v - yMin) / (yMax - yMin)) * (H - PAD.top - PAD.bottom);
   const fmt = (v: number) => v.toFixed(decimals);
   const outside = (v: number) => v < range[0] || v > range[1];
+  const isMine = (i: number) => Boolean(recorded?.[i]);
+  const dayLabel = (i: number) => (i === last ? "Today" : `${last - i} d ago`);
+  const anyMine = recorded?.some(Boolean) ?? false;
 
   const path = values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
-  const last = values.length - 1;
   const xTicks = [0, 9, 19, last];
 
   function onPointer(e: React.PointerEvent<SVGSVGElement>) {
@@ -76,11 +81,11 @@ export function MetricChart({ label, unit, decimals, values, range, baseline, ba
             className={`rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide ${baselineKind === "measured" ? "bg-sky-400/10 text-sky-200" : "bg-white/5 text-slate-400"}`}
             title={baselineKind === "measured" ? "Baseline from this person's real MMASH recording" : "Baseline simulated within a normal adult range; MMASH did not record this"}
           >
-            {baselineKind === "measured" ? "Measured" : "Simulated"}
+            {baselineKind === "measured" ? "Measured baseline" : "Simulated baseline"}
           </span>
         </span>
         <span className="text-xs text-slate-400">
-          Normal for this person: {fmt(range[0])}–{fmt(range[1])} {unit}
+          Your normal: {fmt(range[0])}–{fmt(range[1])} {unit}
         </span>
       </figcaption>
 
@@ -99,7 +104,7 @@ export function MetricChart({ label, unit, decimals, values, range, baseline, ba
           onBlur={() => setHover(null)}
         >
           <desc id={`${titleId}-desc`}>
-            {`${label} over ${values.length} days. Latest ${fmt(values[last])} ${unit}; personal normal range ${fmt(range[0])} to ${fmt(range[1])} ${unit}. Use left and right arrow keys to read each day.`}
+            {`${label} over the last ${values.length} days${anyMine ? ", including your own readings" : ""}. Latest ${fmt(values[last])} ${unit}; personal normal range ${fmt(range[0])} to ${fmt(range[1])} ${unit}. Use left and right arrow keys to read each day.`}
           </desc>
           {ticks.map((t) => (
             <g key={t}>
@@ -108,7 +113,7 @@ export function MetricChart({ label, unit, decimals, values, range, baseline, ba
             </g>
           ))}
           {xTicks.map((i) => (
-            <text key={i} x={x(i)} y={H - 6} textAnchor={i === 0 ? "start" : i === last ? "end" : "middle"} className="fill-slate-500 text-[11px]">Day {i + 1}</text>
+            <text key={i} x={x(i)} y={H - 6} textAnchor={i === 0 ? "start" : i === last ? "end" : "middle"} className="fill-slate-500 text-[11px]">{dayLabel(i)}</text>
           ))}
 
           <rect x={PAD.left} width={W - PAD.left - PAD.right} y={y(range[1])} height={y(range[0]) - y(range[1])} fill="#ffffff" opacity={0.06} />
@@ -116,7 +121,11 @@ export function MetricChart({ label, unit, decimals, values, range, baseline, ba
 
           <path d={path} fill="none" stroke={SERIES} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
           {values.map((v, i) =>
-            outside(v) ? <circle key={i} cx={x(i)} cy={y(v)} r={4} fill={OUTSIDE} stroke={SURFACE} strokeWidth={2} /> : null,
+            outside(v) ? (
+              <circle key={i} cx={x(i)} cy={y(v)} r={4} fill={OUTSIDE} stroke={isMine(i) ? "#ffffff" : SURFACE} strokeWidth={2} />
+            ) : isMine(i) ? (
+              <circle key={i} cx={x(i)} cy={y(v)} r={4} fill={SERIES} stroke="#ffffff" strokeWidth={1.5} />
+            ) : null,
           )}
           {!outside(values[last]) && <circle cx={x(last)} cy={y(values[last])} r={4} fill={SERIES} stroke={SURFACE} strokeWidth={2} />}
 
@@ -134,7 +143,7 @@ export function MetricChart({ label, unit, decimals, values, range, baseline, ba
             style={{ left: `${(x(hover) / W) * 100}%`, transform: `translateX(${hover > last / 2 ? "-110%" : "10%"})` }}
           >
             <div className="text-sm font-semibold text-white">{fmt(hv)} {unit}</div>
-            <div className="text-slate-400">Day {hover + 1}{outside(hv) ? " · outside normal range" : ""}</div>
+            <div className="text-slate-400">{dayLabel(hover)} · {isMine(hover) ? "your reading" : "sample"}{outside(hv) ? " · outside normal range" : ""}</div>
           </div>
         )}
       </div>
@@ -143,16 +152,17 @@ export function MetricChart({ label, unit, decimals, values, range, baseline, ba
         <span className="inline-flex items-center gap-1.5"><span className="h-0.5 w-4 rounded" style={{ background: SERIES }} />Daily value</span>
         <span className="inline-flex items-center gap-1.5"><span className="h-3 w-4 rounded-sm bg-white/10" />Personal normal range</span>
         <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: OUTSIDE }} />Outside range</span>
+        {anyMine && <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full border border-white" style={{ background: SERIES }} />Your reading</span>}
       </div>
 
       <details className="mt-2 text-xs text-slate-400">
         <summary className="cursor-pointer hover:text-slate-200">Show as table</summary>
         <div className="mt-2 max-h-48 overflow-auto">
           <table className="w-full text-left">
-            <thead><tr className="text-slate-500"><th className="py-1 font-normal">Day</th><th className="py-1 font-normal">{label} ({unit})</th><th className="py-1 font-normal">In range</th></tr></thead>
+            <thead><tr className="text-slate-500"><th className="py-1 font-normal">Day</th><th className="py-1 font-normal">{label} ({unit})</th><th className="py-1 font-normal">In range</th><th className="py-1 font-normal">Source</th></tr></thead>
             <tbody>
               {values.map((v, i) => (
-                <tr key={i} className="border-t border-white/5"><td className="py-1">{i + 1}</td><td className="py-1 text-slate-200">{fmt(v)}</td><td className="py-1">{outside(v) ? "No" : "Yes"}</td></tr>
+                <tr key={i} className="border-t border-white/5"><td className="py-1">{dayLabel(i)}</td><td className="py-1 text-slate-200">{fmt(v)}</td><td className="py-1">{outside(v) ? "No" : "Yes"}</td><td className="py-1">{isMine(i) ? "Your reading" : "Sample"}</td></tr>
               ))}
             </tbody>
           </table>
