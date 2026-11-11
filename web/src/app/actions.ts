@@ -134,3 +134,25 @@ export async function updateProfile(_prev: ProfileState, formData: FormData): Pr
   revalidatePath("/", "layout");
   return { saved: true };
 }
+
+export async function askAssistant(question: string): Promise<import("@/lib/assistant").Answer> {
+  const viewer = await getViewer();
+  if (!viewer) return { blocks: [{ type: "text", text: "Your session has ended. Sign in again." }], suggestions: [] };
+  const { answer } = await import("@/lib/assistant");
+  const { getMyHealth } = await import("@/lib/my-health");
+  const { dailyMissions, progress } = await import("@/lib/gamification");
+  const { loadTipActions } = await import("@/lib/profile-store");
+  const q = String(question ?? "").slice(0, 300);
+  const [health, actions] = await Promise.all([getMyHealth(viewer), loadTipActions(viewer)]);
+  const missions = dailyMissions(health.assessment, health.env);
+  const p = progress(health.logs, actions, missions.map((m) => m.id));
+  return answer(q, {
+    assessment: health.assessment,
+    env: health.env,
+    logs: health.logs,
+    recordedDays: health.recordedDays,
+    progress: p,
+    missions,
+    doneToday: p.doneToday,
+  });
+}
