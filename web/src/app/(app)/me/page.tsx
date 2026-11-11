@@ -7,14 +7,15 @@ import { dueCount } from "@/lib/checkup-schedule";
 import { getMyHealth } from "@/lib/my-health";
 import { SUMMARY_COLUMNS, summaryCell } from "@/lib/vitals";
 import { dailyMissions, progress, XP } from "@/lib/gamification";
+import { listEntries } from "@/lib/journal-store";
 import { loadTipActions } from "@/lib/profile-store";
 import { requireViewer } from "@/lib/session";
 
 export default async function MePage() {
   const viewer = await requireViewer();
-  const [{ env, profile, logs, assessment: a, recordedDays }, actions] = await Promise.all([getMyHealth(viewer), loadTipActions(viewer)]);
+  const [{ env, profile, logs, assessment: a, recordedDays }, actions, { entries }] = await Promise.all([getMyHealth(viewer), loadTipActions(viewer), listEntries(viewer, 400)]);
   const missions = dailyMissions(a, env);
-  const p = progress(logs, actions, missions.map((m) => m.id));
+  const p = progress(logs, actions, missions.map((m) => m.id), undefined, entries.map((e) => e.date));
   const flagged = a.metrics.filter((m) => m.status !== "good");
   const due = dueCount(logs);
   const doneCount = missions.filter((m) => p.doneToday.has(m.id)).length;

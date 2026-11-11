@@ -5,12 +5,13 @@ import { Logo } from "@/components/Logo";
 import { NavLinks } from "@/components/NavLinks";
 import { ReminderNotifier } from "@/components/ReminderNotifier";
 import { loadSchedule, todaySchedule } from "@/lib/reminder-store";
-import { getCurrentEnvironment } from "@/lib/mission";
+import { getMissionContext } from "@/lib/mission";
 import { requireViewer } from "@/lib/session";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const viewer = await requireViewer();
-  const env = await getCurrentEnvironment();
+  const ctx = await getMissionContext();
+  const env = ctx.env;
   const pending = todaySchedule(await loadSchedule(viewer)).filter((i) => i.state === "open").map(({ key, time, title, kind }) => ({ key, time, title, kind }));
   const who = viewer.kind === "demo" ? viewer.name : viewer.email;
 
@@ -33,7 +34,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <div className="flex-1">
         <header className="flex items-center justify-between gap-4 border-b border-white/10 px-6 py-3">
           <Link href="/mission" className="text-sm text-slate-400 hover:text-white">
-            Mission: <span className="font-medium text-slate-100">{env.name}</span>
+            Mission: <span className="font-medium text-slate-100">{ctx.mission?.name ?? env.name}</span>
+            {ctx.mission && <span className="ml-2 text-slate-500">{ctx.startsIn ? `starts in ${ctx.startsIn} d` : `day ${ctx.day}`}</span>}
           </Link>
           <div className="flex items-center gap-3">
             {viewer.kind === "demo" && (

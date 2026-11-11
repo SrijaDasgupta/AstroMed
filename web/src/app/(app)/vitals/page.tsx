@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { TipCard } from "@/components/TipCard";
 import { tipsForAlerts } from "@/lib/tips";
 import { formatValue, METRIC_GROUPS, MISSION_DAYS } from "@/lib/crew";
+import { getMissionContext } from "@/lib/mission";
 import { getMyHealth } from "@/lib/my-health";
 import { requireViewer } from "@/lib/session";
 
@@ -15,7 +16,7 @@ function explain(deviation: number, worseWhen: "higher" | "lower") {
 
 export default async function MyVitalsPage() {
   const viewer = await requireViewer();
-  const { env, member, sample, assessment: a, recordedDays, baselineSources } = await getMyHealth(viewer);
+  const [{ env, member, sample, assessment: a, recordedDays, baselineSources }, ctx] = await Promise.all([getMyHealth(viewer), getMissionContext()]);
   const flagged = a.metrics.filter((m) => m.status !== "good");
   const b = sample.baseline;
   void member;
@@ -128,9 +129,9 @@ export default async function MyVitalsPage() {
         </section>
         <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 self-start">
           <h2 className="flex items-center gap-2 font-medium"><Radiation className="h-4 w-4 text-slate-400" aria-hidden /> Radiation so far</h2>
-          <p className="mt-3 text-3xl font-semibold">{a.cumulativeDoseMsv.toFixed(1)} <span className="text-base font-normal text-slate-400">mSv</span></p>
+          <p className="mt-3 text-3xl font-semibold">{ctx.doseSoFar.toFixed(1)} <span className="text-base font-normal text-slate-400">mSv</span></p>
           <p className="mt-1 text-sm text-slate-400">
-            Estimated from {MISSION_DAYS} days at about {env.radiationMsvPerDay} mSv/day in {env.name.toLowerCase()}. That is {(a.cumulativeDoseMsv / 6).toFixed(1)}% of NASA&apos;s 600 mSv career limit (NASA-STD-3001 Vol. 1, p. 40).
+            Estimated from {ctx.day} mission day{ctx.day === 1 ? "" : "s"}{ctx.mission ? "" : " (assumed)"} at about {env.radiationMsvPerDay} mSv/day in {env.name.toLowerCase()}. That is {(ctx.doseSoFar / 6).toFixed(1)}% of NASA&apos;s 600 mSv career limit (NASA-STD-3001 Vol. 1, p. 40).
           </p>
         </section>
       </div>

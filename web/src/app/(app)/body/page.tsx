@@ -2,7 +2,7 @@ import { ago } from "@/lib/checkup-schedule";
 import { BODY_PARTS, SYSTEMS, type BodyPart } from "@/lib/body";
 import type { Escalation } from "@/lib/checkups";
 import { CAREER_LIMIT_MSV, boneSeries } from "@/lib/hazards";
-import { MISSION_DAYS } from "@/lib/crew";
+import { getMissionContext } from "@/lib/mission";
 import { getMyHealth } from "@/lib/my-health";
 import { requireViewer } from "@/lib/session";
 import { BodyMap, type PartStatus, type PartView } from "./BodyMap";
@@ -12,7 +12,8 @@ const fromEscalation = (e: Escalation): PartStatus => (e === "none" ? "good" : e
 
 export default async function BodyPage({ searchParams }: { searchParams: Promise<{ part?: string }> }) {
   const viewer = await requireViewer();
-  const { env, assessment, logs } = await getMyHealth(viewer);
+  const [{ env, assessment, logs }, ctx] = await Promise.all([getMyHealth(viewer), getMissionContext()]);
+  const day = Math.max(ctx.day, 0);
   const initial = (await searchParams).part;
 
   function view(p: BodyPart): PartView {
@@ -41,13 +42,13 @@ export default async function BodyPage({ searchParams }: { searchParams: Promise
       }
     }
     if (p.extra === "bone") {
-      const pt = boneSeries(env, MISSION_DAYS, MISSION_DAYS)?.find((x) => x.day === MISSION_DAYS);
+      const pt = boneSeries(env, Math.max(day, 1), day)?.find((x) => x.day === day);
       readings.push(pt
-        ? { label: "Estimated bone density loss so far", value: `${pt.low.toFixed(1)}–${pt.high.toFixed(1)}%`, detail: `${MISSION_DAYS} days in ${env.name.toLowerCase()}, before exercise benefit` }
+        ? { label: "Estimated bone density loss so far", value: `${pt.low.toFixed(1)}–${pt.high.toFixed(1)}%`, detail: `${day} mission days in ${env.name.toLowerCase()}, before exercise benefit` }
         : { label: "Estimated bone density loss", value: "None expected", detail: "Earth gravity" });
     }
     if (p.extra === "radiation") {
-      const dose = env.radiationMsvPerDay * MISSION_DAYS;
+      const dose = ctx.doseSoFar;
       readings.push({ label: "Estimated dose so far", value: `${dose.toFixed(1)} mSv`, detail: `${((dose / CAREER_LIMIT_MSV) * 100).toFixed(1)}% of the 600 mSv career limit` });
     }
     const statuses = readings.map((r) => r.status).filter(Boolean) as PartStatus[];

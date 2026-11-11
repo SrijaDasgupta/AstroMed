@@ -64,6 +64,8 @@ export async function signOut() {
   store.delete(clearDemoLogsCookieName());
   DEMO_COOKIES.forEach((c) => store.delete(c));
   store.delete((await import("@/lib/reminder-store")).DEMO_MEDS_COOKIE);
+  store.delete((await import("@/lib/missions-store")).DEMO_MISSIONS_COOKIE);
+  store.delete((await import("@/lib/journal-store")).DEMO_JOURNAL_COOKIE);
   redirect("/");
 }
 
@@ -180,12 +182,14 @@ export async function askAssistant(question: string): Promise<import("@/lib/assi
   if (!viewer) return { blocks: [{ type: "text", text: "Your session has ended. Sign in again." }], suggestions: [] };
   const { answer } = await import("@/lib/assistant");
   const { getMyHealth } = await import("@/lib/my-health");
+  const { getMissionContext } = await import("@/lib/mission");
   const { dailyMissions, progress } = await import("@/lib/gamification");
   const { loadTipActions } = await import("@/lib/profile-store");
   const q = String(question ?? "").slice(0, 300);
   const [health, actions] = await Promise.all([getMyHealth(viewer), loadTipActions(viewer)]);
   const missions = dailyMissions(health.assessment, health.env);
-  const p = progress(health.logs, actions, missions.map((m) => m.id));
+  const { listEntries } = await import("@/lib/journal-store");
+  const p = progress(health.logs, actions, missions.map((m) => m.id), undefined, (await listEntries(viewer, 400)).entries.map((e) => e.date));
   return answer(q, {
     assessment: health.assessment,
     env: health.env,
@@ -194,6 +198,7 @@ export async function askAssistant(question: string): Promise<import("@/lib/assi
     progress: p,
     missions,
     doneToday: p.doneToday,
+    ...(await getMissionContext().then((c) => ({ missionDay: c.day, doseSoFar: c.doseSoFar, missionName: c.mission?.name }))),
   });
 }
 
@@ -337,4 +342,75 @@ export async function importCsvAction(_prev: FormState, formData: FormData): Pro
       (result.ignoredColumns.length ? ` Not used: ${result.ignoredColumns.slice(0, 6).join(", ")}${result.ignoredColumns.length > 6 ? "…" : ""}.` : "") +
       (result.skippedRows ? ` ${result.skippedRows} row${result.skippedRows === 1 ? "" : "s"} had no usable date or values.` : ""),
   };
+}
+
+export async function addMissionAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: "Your session has ended. Sign in again." };
+  const { addMission } = await import("@/lib/missions-store");
+  const text = (k: string, max: number) => String(formData.get(k) ?? "").trim().slice(0, max);
+  const name = text("name", 80);
+  const envType = text("envType", 20);
+  const startDate = text("startDate", 10);
+  const endDate = text("endDate", 10);
+  const dose = text("doseRate", 10);
+  const crew = text("crewSize", 3);
+  if (!name) return { error: "Give your mission a name." };
+  if (!ENVIRONMENTS.some((e) => e.id === envType)) return { error: "Choose a mission type." };
+  const isDate = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d);
+  if (!isDate(startDate)) return { error: "Enter a start date." };
+  if (endDate && (!isDate(endDate) || endDate < startDate)) return { error: "The end date must be on or after the start date." };
+  const doseRate = dose ? Number(dose) : undefined;
+  if (doseRate !== undefined && (!Number.isFinite(doseRate) || doseRate < 0 || doseRate > 50)) return { error: "Dose rate must be between 0 and 50 mSv/day." };
+  const crewSize = crew ? Number(crew) : undefined;
+  if (crewSize !== undefined && (!Number.isInteger(crewSize) || crewSize < 1 || crewSize > 50)) return { error: "Crew size must be 1 to 50." };
+  const { problem } = await addMission(viewer, {
+    name, envType: envType as import("@/lib/environments").EnvironmentId, startDate, endDate: endDate || undefined, doseRate, crewSize,
+    location: text("location", 120) || undefined, objectives: text("objectives", 1000) || undefined,
+  });
+  if (problem) return { error: problem };
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+export async function missionItemAction(formData: FormData) {
+  const viewer = await getViewer();
+  if (!viewer) redirect("/login");
+  const store = await import("@/lib/missions-store");
+  const id = String(formData.get("id") ?? "");
+  const op = String(formData.get("op") ?? "");
+  if (op === "activate" && id) await store.setActiveMission(viewer, id);
+  else if (op === "deactivate") await store.setActiveMission(viewer, null);
+  else if (op === "delete" && id) await store.deleteMission(viewer, id);
+  revalidatePath("/", "layout");
+}
+
+export type JournalState = { error?: string; ok?: boolean; support?: boolean; lowMood?: boolean };
+
+export async function addJournalAction(_prev: JournalState, formData: FormData): Promise<JournalState> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: "Your session has ended. Sign in again." };
+  const { JOURNAL_TOPICS, PROMPTS, needsSupport } = await import("@/lib/journal");
+  const { addEntry } = await import("@/lib/journal-store");
+  const body = String(formData.get("body") ?? "").trim().slice(0, 5000);
+  const date = String(formData.get("date") ?? "");
+  const moodRaw = String(formData.get("mood") ?? "");
+  const prompt = String(formData.get("prompt") ?? "");
+  if (!body) return { error: "Write something first." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: "Choose a date." };
+  const mood = moodRaw ? Number(moodRaw) : undefined;
+  if (mood !== undefined && (!Number.isInteger(mood) || mood < 1 || mood > 5)) return { error: "Choose a mood from 1 to 5." };
+  const tags = formData.getAll("tag").map(String).filter((t) => JOURNAL_TOPICS.some((x) => x.id === t)).slice(0, 10);
+  const { problem } = await addEntry(viewer, { date, mood, body, tags, prompt: PROMPTS.includes(prompt) ? prompt : undefined });
+  if (problem) return { error: problem };
+  revalidatePath("/", "layout");
+  return { ok: true, support: needsSupport(body), lowMood: mood !== undefined && mood <= 2 };
+}
+
+export async function deleteJournalAction(formData: FormData) {
+  const viewer = await getViewer();
+  if (!viewer) redirect("/login");
+  const { deleteEntry } = await import("@/lib/journal-store");
+  await deleteEntry(viewer, String(formData.get("id") ?? ""));
+  revalidatePath("/journal");
 }

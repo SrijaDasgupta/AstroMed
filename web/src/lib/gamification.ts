@@ -6,7 +6,7 @@ import type { MissionEnvironment } from "@/lib/environments";
 import type { TipAction } from "@/lib/profile-store";
 import { TIPS, tipsForAlerts, tipsForEnvironment, type Tip } from "@/lib/tips";
 
-export const XP = { habit: 10, checkup: 20, allMissionsBonus: 15 };
+export const XP = { habit: 10, checkup: 20, journal: 10, allMissionsBonus: 15 };
 
 export const RANKS = [
   { xp: 0, name: "Cadet" },
@@ -33,16 +33,17 @@ export function dailyMissions(a: Assessment, env: MissionEnvironment, date = loc
 
 export type Badge = { id: string; name: string; description: string; earned: boolean };
 
-export function progress(logs: CheckupLog[], actions: TipAction[], missionIds: string[], today = localDate()) {
+export function progress(logs: CheckupLog[], actions: TipAction[], missionIds: string[], today = localDate(), journalDates: string[] = []) {
   // Imported readings are history, not activity: they earn no XP and don't build streaks.
   logs = logs.filter((l) => l.checkupId !== "import");
-  const activeDays = new Set<string>([...actions.map((a) => a.doneOn), ...logs.map((l) => localDate(new Date(l.createdAt)))]);
+  const journalDays = new Set(journalDates);
+  const activeDays = new Set<string>([...actions.map((a) => a.doneOn), ...logs.map((l) => localDate(new Date(l.createdAt))), ...journalDays]);
 
   // Days on which every one of that day's missions was done earn a bonus; only today's list is known, so count today.
   const doneToday = new Set(actions.filter((a) => a.doneOn === today).map((a) => a.tipId));
   const allMissionsToday = missionIds.length > 0 && missionIds.every((id) => doneToday.has(id));
 
-  const xp = actions.length * XP.habit + logs.length * XP.checkup + (allMissionsToday ? XP.allMissionsBonus : 0);
+  const xp = actions.length * XP.habit + logs.length * XP.checkup + journalDays.size * XP.journal + (allMissionsToday ? XP.allMissionsBonus : 0);
   const rankIndex = RANKS.reduce((i, r, idx) => (xp >= r.xp ? idx : i), 0);
   const next = RANKS[rankIndex + 1];
 
@@ -70,6 +71,7 @@ export function progress(logs: CheckupLog[], actions: TipAction[], missionIds: s
     { id: "all-checkups", name: "Full physical", description: "Do each of the 5 checkup types at least once.", earned: CHECKUPS.every((c) => checkupTypes.has(c.id)) },
     { id: "explorer", name: "Explorer", description: "Complete habits from 4 different topics.", earned: topicsDone.size >= 4 },
     { id: "habit-25", name: "Creature of habit", description: "Complete 25 habits.", earned: actions.length >= 25 },
+    { id: "reflective", name: "Reflective", description: "Write in your journal on 5 different days.", earned: journalDays.size >= 5 },
   ];
 
   return {

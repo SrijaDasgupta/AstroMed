@@ -4,6 +4,7 @@ import { ProjectionChart } from "@/components/ProjectionChart";
 import {
   boneSeries, CAREER_LIMIT_MSV, DEFAULT_LENGTH, gravityOf, IMMUNE_SIGNAL_LABELS, LENGTH_OPTIONS, myHazards, radiationSeries,
 } from "@/lib/hazards";
+import { getMissionContext } from "@/lib/mission";
 import { getMyHealth } from "@/lib/my-health";
 import { requireViewer } from "@/lib/session";
 
@@ -28,14 +29,20 @@ const signed = (v: number, dp = 0) => {
 
 export default async function HazardsPage({ searchParams }: { searchParams: Promise<{ length?: string }> }) {
   const viewer = await requireViewer();
-  const { env, assessment } = await getMyHealth(viewer);
+  const [{ env, assessment }, ctx] = await Promise.all([getMyHealth(viewer), getMissionContext()]);
+  const today = ctx.day;
+  // Projection options: the usual lengths, plus the mission's planned length if it has one.
+  const options = ctx.length && !LENGTH_OPTIONS.some((o) => o.days === ctx.length)
+    ? [{ days: ctx.length, label: `Planned end (${ctx.length} days)` }, ...LENGTH_OPTIONS]
+    : LENGTH_OPTIONS.map((o) => (o.days === ctx.length ? { ...o, label: `${o.label} · planned` } : o));
   const requested = Number((await searchParams).length);
-  const length = LENGTH_OPTIONS.some((o) => o.days === requested) ? requested : DEFAULT_LENGTH[env.id];
-  const { cardio, immune, today } = myHazards(assessment);
+  const chosen = options.some((o) => o.days === requested) ? requested : ctx.length ?? DEFAULT_LENGTH[env.id];
+  const length = Math.max(chosen, today, 1);
+  const { cardio, immune } = myHazards(assessment);
   const gravity = gravityOf(env);
 
   const rad = radiationSeries(env, length, today);
-  const radToday = env.radiationMsvPerDay * today;
+  const radToday = ctx.doseSoFar;
   const radEnd = env.radiationMsvPerDay * length;
   const daysToLimit = Math.floor(CAREER_LIMIT_MSV / env.radiationMsvPerDay);
 
@@ -53,13 +60,13 @@ export default async function HazardsPage({ searchParams }: { searchParams: Prom
         <p className="text-xs uppercase tracking-widest text-sky-400">Personalized</p>
         <h1 className="mt-1 text-2xl font-semibold">My exposure to space hazards</h1>
         <p className="mt-1 text-slate-400">
-          What {env.name.toLowerCase()} is doing to you so far (day {today}), and where it&apos;s heading if the mission continues.
+          {ctx.mission ? `${ctx.mission.name}: ` : ""}What {env.name.toLowerCase()} is doing to you so far ({ctx.startsIn ? `starts in ${ctx.startsIn} days` : `day ${today}${ctx.mission ? "" : ", assumed"}`}), and where it&apos;s heading if the mission continues.
         </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 text-sm" role="group" aria-label="Mission length to project to">
         <span className="text-slate-500">Project to</span>
-        {LENGTH_OPTIONS.map((o) => (
+        {options.map((o) => (
           <Link
             key={o.days}
             href={`/hazards?length=${o.days}`}

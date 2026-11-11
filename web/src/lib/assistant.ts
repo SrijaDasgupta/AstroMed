@@ -31,6 +31,9 @@ export type AssistantContext = {
   progress: { xp: number; rank: string; nextRank?: string; toNext: number; streak: number; bestStreak: number; badges: { name: string; earned: boolean }[] };
   missions: { id: string; habit?: string }[];
   doneToday: Set<string>;
+  missionDay: number;
+  doseSoFar: number;
+  missionName?: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -192,7 +195,7 @@ export function answer(rawQuestion: string, ctx: AssistantContext): Answer {
 
   // Radiation
   if (has(q, /\b(radiation|dose|msv|sievert|exposure|cosmic|solar)\b/)) {
-    const soFar = ctx.env.radiationMsvPerDay * MISSION_DAYS;
+    const soFar = ctx.doseSoFar;
     return {
       blocks: [
         { type: "stats", items: [
@@ -200,7 +203,7 @@ export function answer(rawQuestion: string, ctx: AssistantContext): Answer {
           { label: "Daily rate here", value: `≈ ${ctx.env.radiationMsvPerDay} mSv/day` },
           { label: "Share of career limit", value: `${fmt((soFar / CAREER_LIMIT_MSV) * 100, 1)}% of 600 mSv` },
         ] },
-        { type: "text", tone: "muted", text: `Estimated from ${MISSION_DAYS} days on your current mission (${ctx.env.name}), not counting earlier missions or solar storms. ${ctx.env.radiationSource}` },
+        { type: "text", tone: "muted", text: `Estimated from ${ctx.missionDay} day${ctx.missionDay === 1 ? "" : "s"} on ${ctx.missionName ?? `your current mission (${ctx.env.name}, assumed length)`}, not counting earlier missions or solar storms. ${ctx.env.radiationSource}` },
         { type: "tips", tipIds: ["career-limit", ...(ctx.env.id === "leo" || ctx.env.id === "earth-analog" ? [] : ["solar-storm-shelter"])] },
         { type: "links", links: [{ href: "/tools#radiation", label: "Enter your dosimeter reading" }, { href: "/hazards", label: "My exposure" }] },
       ],
@@ -211,7 +214,7 @@ export function answer(rawQuestion: string, ctx: AssistantContext): Answer {
   // Bone
   if (has(q, /\b(bones?|bone density|skeleton|osteo)/)) {
     const g = gravityOf(ctx.env);
-    const months = MISSION_DAYS / 30.4;
+    const months = ctx.missionDay / 30.4;
     const [l, h] = BONE_LOSS_PCT_PER_MONTH;
     return {
       blocks: [

@@ -9,7 +9,7 @@ const AREAS = [
     icon: ClipboardList,
     title: "General",
     blurb: "Quick, everyday use.",
-    items: ["Log today's data by hand: vitals, sleep, exercise, mood, symptoms", "Guided checkups with step-by-step instructions", "Health tools: radiation, bone loss and sleep calculators", "NASA-based health tips"],
+    items: ["Log today's data by hand: vitals, sleep, exercise, mood, symptoms", "Guided checkups with step-by-step instructions", "Health tools: radiation, bone loss and sleep calculators", "Add your mission and its details", "NASA-based health tips"],
     cta: "Log today's data",
   },
   {
@@ -17,7 +17,7 @@ const AREAS = [
     icon: LineChart,
     title: "Personalized",
     blurb: "Your long-term picture.",
-    items: ["Your trends against your own normal range", "Medicines and reminders, with a daily schedule", "Your body map, exposure and progress", "Ask questions about your own data"],
+    items: ["Your trends and long-term history against your own normal range", "Medicines and reminders, exercise plan and journal", "Your profile, records and smartwatch imports", "Your body map, exposure and progress", "Ask questions about your own data"],
     cta: "Open my space",
   },
 ];
