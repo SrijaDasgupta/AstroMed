@@ -7,7 +7,7 @@ import { getViewer } from "@/lib/session";
 import { LoginForm } from "./LoginForm";
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  if (await getViewer()) redirect("/me");
+  if (await getViewer()) redirect("/start");
   const { error } = await searchParams;
 
   return (

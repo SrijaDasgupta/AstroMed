@@ -34,7 +34,7 @@ export async function signIn(_prev: AuthState, formData: FormData): Promise<Auth
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: error.message };
   (await cookies()).delete(DEMO_COOKIE);
-  redirect("/me");
+  redirect("/start");
 }
 
 export async function signUp(_prev: AuthState, formData: FormData): Promise<AuthState> {
@@ -50,7 +50,7 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
     options: { emailRedirectTo: `${origin}/auth/callback` },
   });
   if (error) return { error: error.message };
-  if (data.session) redirect("/me");
+  if (data.session) redirect("/start");
   return { message: "Check your email for a confirmation link, then sign in." };
 }
 
@@ -63,6 +63,7 @@ export async function signOut() {
   store.delete(DEMO_COOKIE);
   store.delete(clearDemoLogsCookieName());
   DEMO_COOKIES.forEach((c) => store.delete(c));
+  store.delete((await import("@/lib/reminder-store")).DEMO_MEDS_COOKIE);
   redirect("/");
 }
 
@@ -74,7 +75,7 @@ export async function startDemo() {
     maxAge: 60 * 60 * 24 * 7,
     path: "/",
   });
-  redirect("/me");
+  redirect("/start");
 }
 
 export async function setEnvironment(formData: FormData) {
@@ -155,4 +156,80 @@ export async function askAssistant(question: string): Promise<import("@/lib/assi
     missions,
     doneToday: p.doneToday,
   });
+}
+
+export async function submitDailyLog(_prev: CheckupState, formData: FormData): Promise<CheckupState> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: "Your session has ended. Sign in again." };
+  const { DAILY_LOG_ID, evaluateDailyLog, parseDailyLog } = await import("@/lib/daily-log");
+  const parsed = parseDailyLog(formData);
+  if ("error" in parsed) return { error: parsed.error };
+  const member = getCrewMember((await getProfile(viewer)).crewId)!;
+  const { level, findings } = evaluateDailyLog(member, parsed.answers);
+  const answers = parsed.notes ? { ...parsed.answers, notes: parsed.notes } : parsed.answers;
+  const { problem } = await saveLog(viewer, { crewId: member.id, checkupId: DAILY_LOG_ID, escalation: level, answers: answers as import("@/lib/checkups").Answers });
+  revalidatePath("/", "layout");
+  return { result: { level, findings, saved: !problem, problem } };
+}
+
+export type FormState = { error?: string; ok?: boolean };
+
+function readTimes(formData: FormData) {
+  return [...new Set(formData.getAll("time").map(String).map((t) => t.trim()).filter(Boolean))].sort();
+}
+
+export async function addMedicationAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: "Your session has ended. Sign in again." };
+  const { addMedication, TIME_RE } = await import("@/lib/reminder-store");
+  const name = String(formData.get("name") ?? "").trim().slice(0, 80);
+  const dose = String(formData.get("dose") ?? "").trim().slice(0, 60);
+  const instructions = String(formData.get("instructions") ?? "").trim().slice(0, 200);
+  const times = readTimes(formData);
+  if (!name) return { error: "Enter the medicine's name." };
+  if (times.length === 0) return { error: "Add at least one time." };
+  if (times.length > 6 || !times.every((t) => TIME_RE.test(t))) return { error: "Times must look like 08:00 (up to 6)." };
+  const { problem } = await addMedication(viewer, { name, dose, instructions, times });
+  if (problem) return { error: problem };
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+export async function addReminderAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: "Your session has ended. Sign in again." };
+  const { addReminder, CATEGORIES, TIME_RE } = await import("@/lib/reminder-store");
+  const title = String(formData.get("title") ?? "").trim().slice(0, 80);
+  const category = String(formData.get("category") ?? "other");
+  const times = readTimes(formData);
+  const days = formData.getAll("day").map(Number).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6);
+  if (!title) return { error: "Enter what to be reminded about." };
+  if (!CATEGORIES.some((c) => c.id === category)) return { error: "Choose a type." };
+  if (times.length === 0) return { error: "Add at least one time." };
+  if (times.length > 6 || !times.every((t) => TIME_RE.test(t))) return { error: "Times must look like 08:00 (up to 6)." };
+  if (days.length === 0) return { error: "Choose at least one day." };
+  const { problem } = await addReminder(viewer, { title, category: category as import("@/lib/reminder-store").ReminderCategory, times, days: [...new Set(days)].sort() });
+  if (problem) return { error: problem };
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+export async function reminderItemAction(formData: FormData) {
+  const viewer = await getViewer();
+  if (!viewer) redirect("/login");
+  const store = await import("@/lib/reminder-store");
+  const kind = formData.get("kind") === "med" ? "med" : "rem";
+  const id = String(formData.get("id") ?? "");
+  const op = String(formData.get("op") ?? "");
+  if (!id) return;
+  if (op === "stop" || op === "resume") await store.setActive(viewer, kind, id, op === "resume");
+  else if (op === "remove") await store.removeItem(viewer, kind, id);
+  else {
+    const time = String(formData.get("time") ?? "");
+    if (!store.TIME_RE.test(time)) return;
+    const status = op === "taken" || op === "skipped" || op === "done" ? op : op === "undo" ? null : undefined;
+    if (status === undefined) return;
+    await store.tick(viewer, kind, id, time, status);
+  }
+  revalidatePath("/", "layout");
 }

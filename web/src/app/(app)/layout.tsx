@@ -3,18 +3,21 @@ import { LogOut } from "lucide-react";
 import { signOut } from "@/app/actions";
 import { Logo } from "@/components/Logo";
 import { NavLinks } from "@/components/NavLinks";
+import { ReminderNotifier } from "@/components/ReminderNotifier";
+import { loadSchedule, todaySchedule } from "@/lib/reminder-store";
 import { getCurrentEnvironment } from "@/lib/mission";
 import { requireViewer } from "@/lib/session";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const viewer = await requireViewer();
   const env = await getCurrentEnvironment();
+  const pending = todaySchedule(await loadSchedule(viewer)).filter((i) => i.state === "open").map(({ key, time, title, kind }) => ({ key, time, title, kind }));
   const who = viewer.kind === "demo" ? viewer.name : viewer.email;
 
   return (
     <div className="min-h-screen md:flex">
       <aside className="border-b border-white/10 p-4 md:flex md:w-60 md:flex-col md:border-r md:border-b-0">
-        <Link href="/me" className="block px-3 py-2"><Logo /></Link>
+        <Link href="/start" className="block px-3 py-2"><Logo /></Link>
         <div className="mt-2 md:mt-6"><NavLinks /></div>
         <div className="mt-4 hidden border-t border-white/10 pt-4 md:mt-auto md:block">
           <p className="truncate px-3 text-xs text-slate-500" title={who}>{who}</p>
@@ -44,6 +47,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
         </header>
         <main className="mx-auto max-w-5xl p-6">{children}</main>
+        <ReminderNotifier items={pending} />
       </div>
     </div>
   );

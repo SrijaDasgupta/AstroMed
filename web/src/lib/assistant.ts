@@ -183,7 +183,7 @@ export function answer(rawQuestion: string, ctx: AssistantContext): Answer {
     return {
       blocks: [
         { type: "text", text: due.length === 0 ? "All your checkups are done for now." : `${due.length} checkup${due.length > 1 ? "s are" : " is"} due: ${due.map((r) => r.c.title.toLowerCase()).join(", ")}.` },
-        ...(last ? [{ type: "text" as const, tone: "muted" as const, text: `Your last checkup was ${getCheckup(last.checkupId)?.title.toLowerCase()} on ${new Date(last.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}.` }] : []),
+        ...(last ? [{ type: "text" as const, tone: "muted" as const, text: `Your last entry was ${last.checkupId === "daily" ? "a daily log" : getCheckup(last.checkupId)?.title.toLowerCase()} on ${new Date(last.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}.` }] : []),
         { type: "links", links: [{ href: "/checkups", label: "Open checkups" }, ...(due[0] ? [{ href: `/checkups/${due[0].c.id}`, label: `Start ${due[0].c.title.toLowerCase()}` }] : [])] },
       ],
       suggestions: ["Give me the details for my heart rate", "How am I doing?"],

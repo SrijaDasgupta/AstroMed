@@ -50,7 +50,7 @@ export default async function HazardsPage({ searchParams }: { searchParams: Prom
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-xs uppercase tracking-widest text-sky-400">Personal</p>
+        <p className="text-xs uppercase tracking-widest text-sky-400">Personalized</p>
         <h1 className="mt-1 text-2xl font-semibold">My exposure to space hazards</h1>
         <p className="mt-1 text-slate-400">
           What {env.name.toLowerCase()} is doing to you so far (day {today}), and where it&apos;s heading if the mission continues.

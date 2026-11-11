@@ -2,26 +2,28 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Calculator, ClipboardCheck, Globe2, HeartPulse, MessageCircle, PersonStanding, ShieldAlert, User } from "lucide-react";
+import { BookOpen, Calculator, ClipboardCheck, ClipboardList, Globe2, HeartPulse, MessageCircle, PersonStanding, Pill, ShieldAlert, User } from "lucide-react";
 
 const GROUPS = [
   {
-    label: "Personal",
+    label: "General",
     links: [
-      { href: "/me", label: "My space", icon: User },
-      { href: "/vitals", label: "My vitals", icon: HeartPulse },
-      { href: "/body", label: "My body", icon: PersonStanding },
-      { href: "/assistant", label: "Ask AstroMed", icon: MessageCircle },
+      { href: "/log", label: "Daily log", icon: ClipboardList },
       { href: "/checkups", label: "Checkups", icon: ClipboardCheck },
-      { href: "/hazards", label: "My exposure", icon: ShieldAlert },
       { href: "/tools", label: "Health tools", icon: Calculator },
+      { href: "/tips", label: "Health tips", icon: BookOpen },
+      { href: "/mission", label: "Mission", icon: Globe2 },
     ],
   },
   {
-    label: "General",
+    label: "Personalized",
     links: [
-      { href: "/mission", label: "Mission", icon: Globe2 },
-      { href: "/tips", label: "Health tips", icon: BookOpen },
+      { href: "/me", label: "My space", icon: User },
+      { href: "/vitals", label: "My vitals", icon: HeartPulse },
+      { href: "/reminders", label: "Medicines & reminders", icon: Pill },
+      { href: "/body", label: "My body", icon: PersonStanding },
+      { href: "/hazards", label: "My exposure", icon: ShieldAlert },
+      { href: "/assistant", label: "Ask AstroMed", icon: MessageCircle },
     ],
   },
 ];

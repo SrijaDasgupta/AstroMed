@@ -58,7 +58,7 @@ export default async function BodyPage({ searchParams }: { searchParams: Promise
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-xs uppercase tracking-widest text-sky-400">Personal</p>
+        <p className="text-xs uppercase tracking-widest text-sky-400">Personalized</p>
         <h1 className="mt-1 text-2xl font-semibold">My body</h1>
         <p className="mt-1 text-slate-400">Choose a body part to see what spaceflight does to it, what to watch for, and your own data. Dot colors show your status from your own data; grey means AstroMed doesn&apos;t measure that part (some show estimates instead).</p>
       </div>

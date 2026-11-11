@@ -6,7 +6,7 @@ export default async function AssistantPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-xs uppercase tracking-widest text-sky-400">Personal</p>
+        <p className="text-xs uppercase tracking-widest text-sky-400">Personalized</p>
         <h1 className="mt-1 text-2xl font-semibold">Ask AstroMed</h1>
         <p className="mt-1 text-slate-400">Questions answered from your own data in AstroMed. No AI model is used yet, so it works best with short questions about one measure or topic.</p>
       </div>

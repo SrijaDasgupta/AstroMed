@@ -1,4 +1,5 @@
 import { CHECKUPS, type Checkup } from "@/lib/checkups";
+import { DAILY_LOG_ID, dailyLogCovers } from "@/lib/daily-log";
 import type { CheckupLog } from "@/lib/checkup-store";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -7,7 +8,8 @@ export type DueStatus = { due: boolean; last?: CheckupLog; nextDue?: Date };
 
 /** A check is due again once 90% of its interval has passed, so a daily check done yesterday morning is due this morning. */
 export function dueStatus(checkup: Checkup, logs: CheckupLog[], now = new Date()): DueStatus {
-  const last = logs.find((l) => l.checkupId === checkup.id);
+  // A daily log entry with the right readings also counts as doing the checkup.
+  const last = logs.find((l) => l.checkupId === checkup.id || (l.checkupId === DAILY_LOG_ID && dailyLogCovers(checkup.id, l.answers)));
   if (!last) return { due: true };
   const nextDue = new Date(new Date(last.createdAt).getTime() + checkup.everyDays * DAY * 0.9);
   return { due: now >= nextDue, last, nextDue };

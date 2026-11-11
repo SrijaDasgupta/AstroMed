@@ -19,7 +19,8 @@ const DEMO_MAX = 25;
 const SETUP_HINT = "The checkup_logs table isn't set up in Supabase yet. Run supabase/migrations/0001_checkup_logs.sql in the Supabase SQL Editor.";
 
 type DemoEntry = [crew: string, checkup: string, escalation: Escalation, epochSeconds: number, readings?: Record<string, number>];
-const METRIC_KEYS = new Set<string>(METRICS.map((m) => m.key));
+// Numeric answers worth keeping in demo mode: chart readings, plus what marks checkups as done.
+const KEEP_KEYS = new Set<string>([...METRICS.map((m) => m.key), "resistiveMin", "aerobicMin", "mood", "stress"]);
 
 async function readDemo(): Promise<DemoEntry[]> {
   try {
@@ -69,7 +70,7 @@ export async function saveLog(viewer: Viewer, log: Omit<CheckupLog, "createdAt">
   if (viewer.kind === "demo") {
     const entries = await readDemo();
     // Keep only numeric readings that feed the charts, to stay within the cookie size limit.
-    const readings = Object.fromEntries(Object.entries(log.answers ?? {}).filter(([k, v]) => METRIC_KEYS.has(k) && typeof v === "number")) as Record<string, number>;
+    const readings = Object.fromEntries(Object.entries(log.answers ?? {}).filter(([k, v]) => KEEP_KEYS.has(k) && typeof v === "number")) as Record<string, number>;
     entries.push(Object.keys(readings).length ? [log.crewId, log.checkupId, log.escalation, Math.floor(Date.now() / 1000), readings] : [log.crewId, log.checkupId, log.escalation, Math.floor(Date.now() / 1000)]);
     (await cookies()).set(DEMO_LOGS_COOKIE, JSON.stringify(entries.slice(-DEMO_MAX)), {
       httpOnly: true,

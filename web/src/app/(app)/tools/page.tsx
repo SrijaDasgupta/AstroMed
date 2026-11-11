@@ -20,7 +20,7 @@ export default async function ToolsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-xs uppercase tracking-widest text-sky-400">Personal</p>
+        <p className="text-xs uppercase tracking-widest text-sky-400">General</p>
         <h1 className="mt-1 text-2xl font-semibold">Health tools</h1>
         <p className="mt-1 text-slate-400">Enter your own numbers to get a result and matching NASA-based tips. Results update as you type.</p>
         <nav className="mt-3 flex flex-wrap gap-2 text-sm" aria-label="Tools">

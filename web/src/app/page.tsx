@@ -12,7 +12,7 @@ const FEATURES = [
 ];
 
 export default async function Home() {
-  if (await getViewer()) redirect("/me");
+  if (await getViewer()) redirect("/start");
 
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-6 py-8">

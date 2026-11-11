@@ -24,7 +24,7 @@ export default async function MePage() {
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-xs uppercase tracking-widest text-sky-400">Personal</p>
+        <p className="text-xs uppercase tracking-widest text-sky-400">Personalized</p>
         <h1 className="mt-1 text-2xl font-semibold">Hi, {profile.displayName}</h1>
         <p className="mt-1 text-slate-400">Your health, your daily missions and your progress. Everything here is about you.</p>
       </div>

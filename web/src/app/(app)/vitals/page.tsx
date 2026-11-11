@@ -44,7 +44,7 @@ export default async function MyVitalsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-widest text-sky-400">Personal</p>
+          <p className="text-xs uppercase tracking-widest text-sky-400">Personalized</p>
           <h1 className="mt-1 text-2xl font-semibold">My vitals</h1>
           <p className="text-slate-400">Last {MISSION_DAYS} days · {env.name}</p>
         </div>

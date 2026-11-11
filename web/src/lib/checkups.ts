@@ -146,7 +146,7 @@ export const ESCALATION_TEXT: Record<Escalation, { title: string; body: string }
   none: { title: "No action needed", body: "Everything is within the expected range. Keep up the routine." },
 };
 
-export type Answers = Record<string, number | boolean>;
+export type Answers = Record<string, number | boolean | string>;
 export type Finding = { level: Escalation; text: string };
 
 /**

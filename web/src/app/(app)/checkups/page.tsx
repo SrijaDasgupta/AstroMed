@@ -16,7 +16,7 @@ export default async function CheckupsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-xs uppercase tracking-widest text-sky-400">Personal</p>
+        <p className="text-xs uppercase tracking-widest text-sky-400">General</p>
         <h1 className="mt-1 text-2xl font-semibold">Guided checkups</h1>
         <p className="mt-1 text-slate-400">Routine checks with step-by-step instructions. Each one tells you whether to contact the flight surgeon.</p>
       </div>
@@ -67,7 +67,7 @@ export default async function CheckupsPage() {
             {recent.map((l) => (
               <li key={l.createdAt + l.checkupId} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
                 <span>
-                  <span className="font-medium">{getCheckup(l.checkupId)?.title ?? l.checkupId}</span>
+                  <span className="font-medium">{l.checkupId === "daily" ? "Daily log" : getCheckup(l.checkupId)?.title ?? l.checkupId}</span>
                   <span className="ml-2 text-slate-500">{ago(l.createdAt)}</span>
                 </span>
                 <EscalationBadge level={l.escalation} />
