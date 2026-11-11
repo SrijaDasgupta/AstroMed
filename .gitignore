@@ -1,0 +1,7 @@
+.DS_Store
+/data/raw/
+/data/private/
+.env*
+!.env.example
+__pycache__/
+.venv/
