@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { localDate } from "@/lib/dates";
+import { addDays, localDate, weekdayOf } from "@/lib/dates";
 import type { Viewer } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 
@@ -151,7 +151,7 @@ export type ScheduleItem = { key: string; kind: "med" | "rem"; id: string; time:
 
 /** Today's schedule, sorted by time. */
 export function todaySchedule(d: ScheduleData): ScheduleItem[] {
-  const weekday = new Date().getDay();
+  const weekday = weekdayOf(d.today);
   const items: ScheduleItem[] = [];
   for (const m of d.meds.filter((x) => x.active)) {
     for (const t of m.times) {
@@ -182,9 +182,8 @@ export type RoutineStats = {
 export async function routineStats(viewer: Viewer, days: number): Promise<RoutineStats> {
   const today = localDate();
   const dayList = Array.from({ length: days }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (days - 1 - i));
-    return { date: localDate(d), weekday: d.getDay() };
+    const date = addDays(today, -(days - 1 - i));
+    return { date, weekday: weekdayOf(date) };
   });
   if (viewer.kind === "demo") {
     const s = await loadSchedule(viewer);
@@ -193,7 +192,7 @@ export async function routineStats(viewer: Viewer, days: number): Promise<Routin
       taken: s.medLogs.filter((l) => l.medicationId === m.id && l.status === "taken").length,
       skipped: s.medLogs.filter((l) => l.medicationId === m.id && l.status === "skipped").length,
     }));
-    const weekday = new Date().getDay();
+    const weekday = weekdayOf(today);
     const remindersExpected = s.reminders.filter((r) => r.active && r.days.includes(weekday)).reduce((n, r) => n + r.times.length, 0);
     return { days: 1, meds, remindersExpected, remindersDone: s.remLogs.length };
   }

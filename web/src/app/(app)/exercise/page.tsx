@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Dumbbell, ExternalLink, OctagonAlert } from "lucide-react";
 import { EVIDENCE, lastWeek, PLANS, planFor, todayAdvice, type Cited } from "@/lib/exercise";
-import { localDate } from "@/lib/dates";
+import { localDate, weekdayOf } from "@/lib/dates";
 import { getMyHealth } from "@/lib/my-health";
 import { requireViewer } from "@/lib/session";
 import { SOURCES } from "@/lib/tips";
@@ -34,7 +34,7 @@ export default async function ExercisePage({ searchParams }: { searchParams: Pro
   const todayLog = week[week.length - 1];
   const activeDays = week.filter((d) => d.resistive + d.aerobic > 0).length;
   const total = week.reduce((s, d) => s + d.resistive + d.aerobic, 0);
-  const todayName = WEEKDAY[new Date().getDay()];
+  const todayName = WEEKDAY[weekdayOf(today)];
   const todaysPlan = plan.week.find((d) => d.day === todayName)?.plan;
   const advice = todayAdvice(assessment);
 

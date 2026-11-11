@@ -314,7 +314,7 @@ export async function importCsvAction(_prev: FormState, formData: FormData): Pro
   if (!/\.(csv|txt)$/i.test(file.name) && !["text/csv", "text/plain", "application/vnd.ms-excel"].includes(file.type)) return { error: "Choose a .csv file." };
 
   const { readImport } = await import("@/lib/csv-import");
-  const { localDate } = await import("@/lib/dates");
+  const { localDate, middayOf } = await import("@/lib/dates");
   const { createClient } = await import("@/lib/supabase/server");
   const result = readImport(await file.text());
   if (result.error) return { error: result.error };
@@ -326,7 +326,7 @@ export async function importCsvAction(_prev: FormState, formData: FormData): Pro
   const crewId = (await getProfile(viewer)).crewId;
   const rows = result.days
     .filter((d) => !already.has(d.date))
-    .map((d) => ({ user_id: viewer.id, crew_id: crewId, checkup_id: "import", escalation: "none", answers: d.answers, created_at: new Date(`${d.date}T12:00:00`).toISOString() }));
+    .map((d) => ({ user_id: viewer.id, crew_id: crewId, checkup_id: "import", escalation: "none", answers: d.answers, created_at: middayOf(d.date).toISOString() }));
   for (let i = 0; i < rows.length; i += 500) {
     const { error } = await supabase.from("checkup_logs").insert(rows.slice(i, i + 500));
     if (error) return { error: `Imported ${i} days, then stopped: ${error.message}` };
