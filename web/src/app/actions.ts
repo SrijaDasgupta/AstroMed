@@ -126,11 +126,50 @@ export type ProfileState = { error?: string; saved?: boolean };
 export async function updateProfile(_prev: ProfileState, formData: FormData): Promise<ProfileState> {
   const viewer = await getViewer();
   if (!viewer) return { error: "Your session has ended. Sign in again." };
-  const displayName = String(formData.get("displayName") ?? "").trim().slice(0, 40);
-  const crewId = String(formData.get("crewId") ?? "");
+  const { BASELINE_FIELDS } = await import("@/lib/personal-baseline");
+  const current = await getProfile(viewer);
+  const text = (k: string, max: number) => String(formData.get(k) ?? "").trim().slice(0, max);
+  const displayName = text("displayName", 40);
+  const crewId = String(formData.get("crewId") ?? current.crewId);
   if (!displayName) return { error: "Enter a name." };
-  if (!CREW.some((c) => c.id === crewId)) return { error: "Choose a crew member." };
-  const { problem } = await storeProfile(viewer, { displayName, crewId });
+  if (!CREW.some((c) => c.id === crewId)) return { error: "Choose a baseline recording." };
+
+  function optionalNumber(k: string, min: number, max: number, label: string): number | undefined | string {
+    const raw = text(k, 20);
+    if (!raw) return undefined;
+    const v = Number(raw);
+    return Number.isFinite(v) && v >= min && v <= max ? v : `${label} must be between ${min} and ${max}.`;
+  }
+  const checks = {
+    birthYear: optionalNumber("birthYear", 1900, new Date().getFullYear(), "Birth year"),
+    heightCm: optionalNumber("heightCm", 50, 250, "Height"),
+    weightKg: optionalNumber("weightKg", 20, 300, "Weight"),
+  };
+  for (const v of Object.values(checks)) if (typeof v === "string") return { error: v };
+  const sex = text("sex", 10);
+  const bloodType = text("bloodType", 3);
+  const baseline: Record<string, number> = {};
+  for (const f of BASELINE_FIELDS) {
+    const v = optionalNumber(`baseline_${f.key}`, f.min, f.max, `Usual ${f.label.toLowerCase()}`);
+    if (typeof v === "string") return { error: v };
+    if (typeof v === "number") baseline[f.key] = v;
+  }
+  if ((baseline.systolic === undefined) !== (baseline.diastolic === undefined)) return { error: "Enter both usual blood pressure numbers, or neither." };
+
+  const { problem } = await storeProfile(viewer, {
+    displayName,
+    crewId,
+    details: {
+      birthYear: checks.birthYear as number | undefined,
+      sex: ["female", "male", "other"].includes(sex) ? (sex as "female" | "male" | "other") : undefined,
+      heightCm: checks.heightCm as number | undefined,
+      weightKg: checks.weightKg as number | undefined,
+      bloodType: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].includes(bloodType) ? bloodType : undefined,
+      allergies: text("allergies", 300) || undefined,
+      conditions: text("conditions", 300) || undefined,
+    },
+    baseline,
+  });
   if (problem) return { error: problem };
   revalidatePath("/", "layout");
   return { saved: true };
@@ -172,7 +211,7 @@ export async function submitDailyLog(_prev: CheckupState, formData: FormData): P
   return { result: { level, findings, saved: !problem, problem } };
 }
 
-export type FormState = { error?: string; ok?: boolean };
+export type FormState = { error?: string; ok?: boolean; message?: string };
 
 function readTimes(formData: FormData) {
   return [...new Set(formData.getAll("time").map(String).map((t) => t.trim()).filter(Boolean))].sort();
@@ -232,4 +271,70 @@ export async function reminderItemAction(formData: FormData) {
     await store.tick(viewer, kind, id, time, status);
   }
   revalidatePath("/", "layout");
+}
+
+export async function uploadRecordAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: "Your session has ended. Sign in again." };
+  const { RECORD_KINDS, uploadRecord } = await import("@/lib/records-store");
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { error: "Choose a file to upload." };
+  const title = String(formData.get("title") ?? "").trim().slice(0, 120) || file.name.slice(0, 120);
+  const kind = String(formData.get("kind") ?? "other");
+  if (!RECORD_KINDS.some((k) => k.id === kind)) return { error: "Choose a record type." };
+  const recordedOn = String(formData.get("recordedOn") ?? "");
+  if (recordedOn && !/^\d{4}-\d{2}-\d{2}$/.test(recordedOn)) return { error: "Enter a valid date." };
+  const notes = String(formData.get("notes") ?? "").trim().slice(0, 500) || undefined;
+  const { problem } = await uploadRecord(viewer, file, { title, kind: kind as import("@/lib/records-store").RecordKind, recordedOn: recordedOn || undefined, notes });
+  if (problem) return { error: problem };
+  revalidatePath("/records");
+  return { ok: true };
+}
+
+export async function deleteRecordAction(formData: FormData) {
+  const viewer = await getViewer();
+  if (!viewer) redirect("/login");
+  const { deleteRecord } = await import("@/lib/records-store");
+  await deleteRecord(viewer, String(formData.get("id") ?? ""));
+  revalidatePath("/records");
+}
+
+export async function importCsvAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: "Your session has ended. Sign in again." };
+  if (viewer.kind === "demo") return { error: "Importing needs an account. Sign in to import your data." };
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { error: "Choose a CSV file." };
+  if (file.size > 2 * 1024 * 1024) return { error: "CSV files must be under 2 MB." };
+  if (!/\.(csv|txt)$/i.test(file.name) && !["text/csv", "text/plain", "application/vnd.ms-excel"].includes(file.type)) return { error: "Choose a .csv file." };
+
+  const { readImport } = await import("@/lib/csv-import");
+  const { localDate } = await import("@/lib/dates");
+  const { createClient } = await import("@/lib/supabase/server");
+  const result = readImport(await file.text());
+  if (result.error) return { error: result.error };
+  if (result.days.length === 0) return { error: `No usable readings found (${result.skippedRows} rows skipped). Check the dates and values.` };
+
+  const supabase = await createClient();
+  const { data: existing } = await supabase.from("checkup_logs").select("created_at").eq("checkup_id", "import");
+  const already = new Set((existing ?? []).map((r) => localDate(new Date(r.created_at as string))));
+  const crewId = (await getProfile(viewer)).crewId;
+  const rows = result.days
+    .filter((d) => !already.has(d.date))
+    .map((d) => ({ user_id: viewer.id, crew_id: crewId, checkup_id: "import", escalation: "none", answers: d.answers, created_at: new Date(`${d.date}T12:00:00`).toISOString() }));
+  for (let i = 0; i < rows.length; i += 500) {
+    const { error } = await supabase.from("checkup_logs").insert(rows.slice(i, i + 500));
+    if (error) return { error: `Imported ${i} days, then stopped: ${error.message}` };
+  }
+  revalidatePath("/", "layout");
+  const cols = result.matched.map((m) => `${m.column} → ${m.key}`).join(", ");
+  const dup = result.days.length - rows.length;
+  return {
+    ok: true,
+    message: `Imported ${rows.length} day${rows.length === 1 ? "" : "s"} (${result.days[0].date} to ${result.days[result.days.length - 1].date}).` +
+      (dup ? ` ${dup} day${dup === 1 ? " was" : "s were"} already imported and skipped.` : "") +
+      ` Columns used: ${cols}.` +
+      (result.ignoredColumns.length ? ` Not used: ${result.ignoredColumns.slice(0, 6).join(", ")}${result.ignoredColumns.length > 6 ? "…" : ""}.` : "") +
+      (result.skippedRows ? ` ${result.skippedRows} row${result.skippedRows === 1 ? "" : "s"} had no usable date or values.` : ""),
+  };
 }

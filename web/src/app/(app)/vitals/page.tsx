@@ -15,9 +15,10 @@ function explain(deviation: number, worseWhen: "higher" | "lower") {
 
 export default async function MyVitalsPage() {
   const viewer = await requireViewer();
-  const { env, member, assessment: a, recordedDays } = await getMyHealth(viewer);
+  const { env, member, sample, assessment: a, recordedDays, baselineSources } = await getMyHealth(viewer);
   const flagged = a.metrics.filter((m) => m.status !== "good");
-  const b = member.baseline;
+  const b = sample.baseline;
+  void member;
   const tips = tipsForAlerts(flagged.map((m) => ({ key: m.def.key, deviation: m.deviation })), env.id);
 
   const measured: [string, string][] = [
@@ -97,7 +98,7 @@ export default async function MyVitalsPage() {
           <h2 className="mb-3 font-medium">{group}</h2>
           <div className="grid gap-4 lg:grid-cols-2">
             {a.metrics.filter((m) => m.def.group === group).map((m) => (
-              <MetricChart key={m.def.key} label={m.def.label} unit={m.def.unit} decimals={m.def.decimals} values={m.values} range={m.range} baseline={m.baseline} baselineKind={m.def.baselineKind} recorded={m.recorded} />
+              <MetricChart key={m.def.key} label={m.def.label} unit={m.def.unit} decimals={m.def.decimals} values={m.values} range={m.range} baseline={m.baseline} baselineKind={baselineSources[m.def.key] ? "yours" : m.def.baselineKind} recorded={m.recorded} />
             ))}
           </div>
         </section>
@@ -105,8 +106,8 @@ export default async function MyVitalsPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-          <h2 className="font-medium">My baseline</h2>
-          <p className="text-xs text-slate-500">Your normal ranges come from a real 24-hour recording (MMASH participant {b.participant.replace("user_", "#")}, used as &ldquo;{member.callSign}&rdquo;). Change it in <Link href="/me" className="text-sky-300 hover:text-sky-200">My space</Link>.</p>
+          <h2 className="font-medium">Sample recording</h2>
+          <p className="text-xs text-slate-500">Fills in any measure where you haven&apos;t entered a usual value or recorded {7} days of readings (MMASH participant {b.participant.replace("user_", "#")}). Charts marked &ldquo;Your baseline&rdquo; use your own values instead. <Link href="/profile" className="text-sky-300 hover:text-sky-200">Edit in My profile</Link>.</p>
           <dl className="mt-3 divide-y divide-white/5 text-sm">
             {measured.map(([k, v]) => (
               <div key={k} className="flex justify-between gap-4 py-1.5">

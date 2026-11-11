@@ -10,7 +10,7 @@ type Props = {
   range: [number, number];
   baseline: number;
   /** Where the personal baseline comes from. */
-  baselineKind: "measured" | "simulated";
+  baselineKind: "measured" | "simulated" | "yours";
   /** Days that hold the person's own reading (others are sample data). */
   recorded?: boolean[];
 };
@@ -78,10 +78,10 @@ export function MetricChart({ label, unit, decimals, values, range, baseline, ba
         <span className="flex items-center gap-2">
           <span id={titleId} className="text-sm font-medium text-slate-100">{label}</span>
           <span
-            className={`rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide ${baselineKind === "measured" ? "bg-sky-400/10 text-sky-200" : "bg-white/5 text-slate-400"}`}
-            title={baselineKind === "measured" ? "Baseline from this person's real MMASH recording" : "Baseline simulated within a normal adult range; MMASH did not record this"}
+            className={`rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide ${baselineKind === "yours" ? "bg-emerald-400/10 text-emerald-200" : baselineKind === "measured" ? "bg-sky-400/10 text-sky-200" : "bg-white/5 text-slate-400"}`}
+            title={baselineKind === "yours" ? "Baseline from your own values or readings" : baselineKind === "measured" ? "Baseline from a real MMASH recording" : "Baseline simulated within a normal adult range; MMASH did not record this"}
           >
-            {baselineKind === "measured" ? "Measured baseline" : "Simulated baseline"}
+            {baselineKind === "yours" ? "Your baseline" : baselineKind === "measured" ? "Sample baseline" : "Simulated baseline"}
           </span>
         </span>
         <span className="text-xs text-slate-400">

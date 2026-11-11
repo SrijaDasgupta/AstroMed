@@ -34,6 +34,8 @@ export function dailyMissions(a: Assessment, env: MissionEnvironment, date = loc
 export type Badge = { id: string; name: string; description: string; earned: boolean };
 
 export function progress(logs: CheckupLog[], actions: TipAction[], missionIds: string[], today = localDate()) {
+  // Imported readings are history, not activity: they earn no XP and don't build streaks.
+  logs = logs.filter((l) => l.checkupId !== "import");
   const activeDays = new Set<string>([...actions.map((a) => a.doneOn), ...logs.map((l) => localDate(new Date(l.createdAt)))]);
 
   // Days on which every one of that day's missions was done earn a bonus; only today's list is known, so count today.

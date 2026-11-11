@@ -4,17 +4,15 @@ import { HabitButton } from "@/components/HabitButton";
 import { RankBar } from "@/components/RankBar";
 import { StatusBadge } from "@/components/StatusBadge";
 import { dueCount } from "@/lib/checkup-schedule";
-import { CREW } from "@/lib/crew";
 import { getMyHealth } from "@/lib/my-health";
 import { SUMMARY_COLUMNS, summaryCell } from "@/lib/vitals";
 import { dailyMissions, progress, XP } from "@/lib/gamification";
 import { loadTipActions } from "@/lib/profile-store";
 import { requireViewer } from "@/lib/session";
-import { ProfileForm } from "./ProfileForm";
 
 export default async function MePage() {
   const viewer = await requireViewer();
-  const [{ env, profile, member, logs, assessment: a, recordedDays }, actions] = await Promise.all([getMyHealth(viewer), loadTipActions(viewer)]);
+  const [{ env, profile, logs, assessment: a, recordedDays }, actions] = await Promise.all([getMyHealth(viewer), loadTipActions(viewer)]);
   const missions = dailyMissions(a, env);
   const p = progress(logs, actions, missions.map((m) => m.id));
   const flagged = a.metrics.filter((m) => m.status !== "good");
@@ -91,9 +89,12 @@ export default async function MePage() {
         </section>
 
         <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-          <h2 className="font-medium">Settings</h2>
-          <div className="mt-3">
-            <ProfileForm displayName={profile.displayName} crewId={member.id} crew={CREW.map((c) => ({ id: c.id, label: `${c.callSign} · ${c.baseline.age ?? "?"}-year-old ${c.baseline.sex === "F" ? "woman" : "man"}, resting HR ${c.baseline.restingHr} bpm` }))} />
+          <h2 className="font-medium">My profile and records</h2>
+          <p className="mt-1 text-sm text-slate-400">Your details, your usual values, uploaded records and long-term history.</p>
+          <div className="mt-4 flex flex-wrap gap-3 text-sm">
+            <Link href="/profile" className="text-sky-300 hover:text-sky-200">Edit my profile</Link>
+            <Link href="/records" className="text-sky-300 hover:text-sky-200">My records</Link>
+            <Link href="/history" className="text-sky-300 hover:text-sky-200">Long-term history</Link>
           </div>
         </section>
       </div>

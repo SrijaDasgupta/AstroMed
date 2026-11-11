@@ -50,7 +50,7 @@ export async function loadLogs(viewer: Viewer, crewId?: string): Promise<LoadRes
     .from("checkup_logs")
     .select("crew_id, checkup_id, escalation, answers, created_at")
     .order("created_at", { ascending: false })
-    .limit(200);
+    .limit(3000);
   if (crewId) query = query.eq("crew_id", crewId);
   const { data, error } = await query;
   if (error) return { logs: [], storage: "supabase", problem: friendly(error.message) };

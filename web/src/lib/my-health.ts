@@ -2,6 +2,7 @@ import { loadLogs, type CheckupLog } from "@/lib/checkup-store";
 import { assess, getCrewMember, METRICS, MISSION_DAYS, type MetricKey, type Readings } from "@/lib/crew";
 import { daysBetween, localDate } from "@/lib/dates";
 import { getCurrentEnvironment } from "@/lib/mission";
+import { personalize } from "@/lib/personal-baseline";
 import { getProfile } from "@/lib/profile-store";
 import type { Viewer } from "@/lib/session";
 
@@ -32,9 +33,11 @@ export function readingsFromLogs(logs: CheckupLog[], today = localDate()): { rea
 /** Everything about the signed-in person: profile, mission, their checkups and their health assessment. */
 export async function getMyHealth(viewer: Viewer) {
   const [env, profile, logResult] = await Promise.all([getCurrentEnvironment(), getProfile(viewer), loadLogs(viewer)]);
-  const member = getCrewMember(profile.crewId)!;
+  const sample = getCrewMember(profile.crewId)!;
+  // Your own usual values replace the sample recording's wherever you have them.
+  const { me: member, sources: baselineSources, readingDays } = personalize(sample, profile.baseline, logResult.logs);
   const { readings, recordedDays } = readingsFromLogs(logResult.logs);
   // Demo mode shows scripted sample events so alerts can be explored; a real user's alerts come only from their own readings.
   const assessment = assess(member, env, { readings, events: viewer.kind === "demo" });
-  return { env, profile, member, ...logResult, assessment, recordedDays };
+  return { env, profile, member, sample, ...logResult, assessment, recordedDays, baselineSources, readingDays };
 }
