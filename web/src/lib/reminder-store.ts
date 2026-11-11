@@ -167,3 +167,53 @@ export function todaySchedule(d: ScheduleData): ScheduleItem[] {
   }
   return items.sort((a, b) => a.time.localeCompare(b.time));
 }
+
+export type RoutineStats = {
+  days: number;
+  meds: { name: string; expected: number; taken: number; skipped: number }[];
+  remindersExpected: number;
+  remindersDone: number;
+};
+
+/**
+ * Medicines and reminders over the last `days` days, counting each scheduled time once a day
+ * from when the medicine or reminder was added. Demo mode only keeps today's ticks.
+ */
+export async function routineStats(viewer: Viewer, days: number): Promise<RoutineStats> {
+  const today = localDate();
+  const dayList = Array.from({ length: days }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (days - 1 - i));
+    return { date: localDate(d), weekday: d.getDay() };
+  });
+  if (viewer.kind === "demo") {
+    const s = await loadSchedule(viewer);
+    const meds = s.meds.filter((m) => m.active).map((m) => ({
+      name: m.name, expected: m.times.length,
+      taken: s.medLogs.filter((l) => l.medicationId === m.id && l.status === "taken").length,
+      skipped: s.medLogs.filter((l) => l.medicationId === m.id && l.status === "skipped").length,
+    }));
+    const weekday = new Date().getDay();
+    const remindersExpected = s.reminders.filter((r) => r.active && r.days.includes(weekday)).reduce((n, r) => n + r.times.length, 0);
+    return { days: 1, meds, remindersExpected, remindersDone: s.remLogs.length };
+  }
+  const supabase = await createClient();
+  const from = dayList[0].date;
+  const [m, r, ml, rl] = await Promise.all([
+    supabase.from("medications").select("id, name, times, active, created_at"),
+    supabase.from("reminders").select("id, times, days, active, created_at"),
+    supabase.from("medication_logs").select("medication_id, status").gte("taken_on", from).lte("taken_on", today),
+    supabase.from("reminder_logs").select("reminder_id").gte("done_on", from).lte("done_on", today),
+  ]);
+  const meds = (m.data ?? []).filter((x) => x.active).map((x) => {
+    const since = localDate(new Date(x.created_at));
+    const activeDays = dayList.filter((d) => d.date >= since).length;
+    const logs = (ml.data ?? []).filter((l) => l.medication_id === x.id);
+    return { name: x.name as string, expected: activeDays * (x.times?.length ?? 0), taken: logs.filter((l) => l.status === "taken").length, skipped: logs.filter((l) => l.status === "skipped").length };
+  });
+  const remindersExpected = (r.data ?? []).filter((x) => x.active).reduce((n, x) => {
+    const since = localDate(new Date(x.created_at));
+    return n + dayList.filter((d) => d.date >= since && (x.days ?? []).includes(d.weekday)).length * (x.times?.length ?? 0);
+  }, 0);
+  return { days, meds, remindersExpected, remindersDone: (rl.data ?? []).length };
+}

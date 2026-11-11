@@ -25,7 +25,7 @@ export default async function MePage() {
       <div>
         <p className="text-xs uppercase tracking-widest text-sky-400">Personalized</p>
         <h1 className="mt-1 text-2xl font-semibold">Hi, {profile.displayName}</h1>
-        <p className="mt-1 text-slate-400">Your health, your daily missions and your progress. Everything here is about you.</p>
+        <p className="mt-1 text-slate-400">Your daily missions and progress. For the overall picture and suggestions, see <Link href="/summary" className="text-sky-300 hover:text-sky-200">My summary</Link>.</p>
       </div>
 
       <RankBar xp={p.xp} rank={p.rank} nextRank={p.nextRank} toNext={p.toNext} rankProgress={p.rankProgress} streak={p.streak} />

@@ -16,3 +16,12 @@ body {
   background: var(--background);
   color: var(--foreground);
 }
+
+/* Printed weekly report: black on white, no app chrome. */
+@media print {
+  body { background: #fff !important; color: #111 !important; }
+  [class*="text-slate-"], [class*="text-sky-"], [class*="text-amber-"], [class*="text-emerald-"] { color: #111 !important; }
+  [class*="bg-white/"], [class*="bg-sky-"], [class*="bg-amber-"] { background: transparent !important; }
+  [class*="border-"] { border-color: #ccc !important; }
+  a { text-decoration: none; }
+}

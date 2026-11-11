@@ -17,7 +17,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen md:flex">
-      <aside className="border-b border-white/10 p-4 md:flex md:w-60 md:flex-col md:border-r md:border-b-0">
+      <aside className="border-b border-white/10 p-4 print:hidden md:flex md:w-60 md:flex-col md:border-r md:border-b-0">
         <Link href="/start" className="block px-3 py-2"><Logo /></Link>
         <div className="mt-2 md:mt-6"><NavLinks /></div>
         <div className="mt-4 hidden border-t border-white/10 pt-4 md:mt-auto md:block">
@@ -32,7 +32,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </aside>
 
       <div className="flex-1">
-        <header className="flex items-center justify-between gap-4 border-b border-white/10 px-6 py-3">
+        <header className="flex items-center justify-between gap-4 border-b border-white/10 px-6 py-3 print:hidden">
           <Link href="/mission" className="text-sm text-slate-400 hover:text-white">
             Mission: <span className="font-medium text-slate-100">{ctx.mission?.name ?? env.name}</span>
             {ctx.mission && <span className="ml-2 text-slate-500">{ctx.startsIn ? `starts in ${ctx.startsIn} d` : `day ${ctx.day}`}</span>}

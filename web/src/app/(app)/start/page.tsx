@@ -13,12 +13,12 @@ const AREAS = [
     cta: "Log today's data",
   },
   {
-    href: "/me",
+    href: "/summary",
     icon: LineChart,
     title: "Personalized",
     blurb: "Your long-term picture.",
-    items: ["Your trends and long-term history against your own normal range", "Medicines and reminders, exercise plan and journal", "Your profile, records and smartwatch imports", "Your body map, exposure and progress", "Ask questions about your own data"],
-    cta: "Open my space",
+    items: ["Your overall summary of physical and mental health, with suggestions", "Your trends and long-term history against your own normal range", "Medicines and reminders, exercise plan and journal", "Your profile, records and smartwatch imports", "Your body map, exposure and progress", "Ask questions about your own data"],
+    cta: "See my summary",
   },
 ];
 
