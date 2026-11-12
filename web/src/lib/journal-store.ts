@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import type { Viewer } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
+import { fetchAll } from "@/lib/supabase/fetch-all";
 
 export type JournalEntry = { id: string; date: string; mood?: number; prompt?: string; body: string; tags: string[]; createdAt: string };
 
@@ -20,14 +21,13 @@ async function readDemo(): Promise<JournalEntry[]> {
 
 export async function listEntries(viewer: Viewer, limit = 90): Promise<{ entries: JournalEntry[]; problem?: string }> {
   if (viewer.kind === "demo") return { entries: await readDemo() };
-  const { data, error } = await (await createClient())
-    .from("journal_entries")
-    .select("id, entry_date, mood, prompt, body, tags, created_at")
-    .order("entry_date", { ascending: false })
-    .order("created_at", { ascending: false })
-    .limit(limit);
+  const supabase = await createClient();
+  const { data, error } = await fetchAll<{ id: string; entry_date: string; mood: number | null; prompt: string | null; body: string; tags: string[] | null; created_at: string }>(
+    (from, to) => supabase.from("journal_entries").select("id, entry_date, mood, prompt, body, tags, created_at").order("entry_date", { ascending: false }).order("created_at", { ascending: false }).range(from, to),
+    limit,
+  );
   return {
-    problem: error?.message,
+    problem: error,
     entries: (data ?? []).map((e) => ({ id: e.id, date: e.entry_date, mood: e.mood ?? undefined, prompt: e.prompt ?? undefined, body: e.body, tags: e.tags ?? [], createdAt: e.created_at })),
   };
 }

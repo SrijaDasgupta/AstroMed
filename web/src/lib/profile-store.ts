@@ -3,6 +3,7 @@ import { CREW } from "@/lib/crew";
 import { localDate } from "@/lib/dates";
 import type { Viewer } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
+import { fetchAll } from "@/lib/supabase/fetch-all";
 
 export type ProfileDetails = {
   birthYear?: number;
@@ -104,7 +105,7 @@ async function readDemoTips(): Promise<TipAction[]> {
 export async function loadTipActions(viewer: Viewer): Promise<TipAction[]> {
   if (viewer.kind === "demo") return readDemoTips();
   const supabase = await createClient();
-  const { data } = await supabase.from("tip_actions").select("tip_id, done_on").order("done_on", { ascending: false }).limit(500);
+  const { data } = await fetchAll<{ tip_id: string; done_on: string }>((from, to) => supabase.from("tip_actions").select("tip_id, done_on").order("done_on", { ascending: false }).order("tip_id").range(from, to));
   return (data ?? []).map((r) => ({ tipId: r.tip_id as string, doneOn: r.done_on as string }));
 }
 

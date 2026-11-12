@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import type { BodyNote, NoteUpdate } from "@/lib/body-notes";
 import type { Viewer } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
+import { fetchAll } from "@/lib/supabase/fetch-all";
 
 const DEMO = "astromed_demo_body";
 export const DEMO_BODY_COOKIE = DEMO;
@@ -9,6 +10,9 @@ const DEMO_MAX = 10;
 const DEMO_MAX_UPDATES = 4;
 const DEMO_MAX_TEXT = 240;
 const demoOptions = { httpOnly: true, sameSite: "lax" as const, secure: process.env.NODE_ENV === "production", maxAge: 60 * 60 * 24 * 7, path: "/" };
+
+type NoteRow = { id: string; area: string; side: BodyNote["side"] | null; kind: BodyNote["kind"]; severity: number; started_on: string; notes: string | null; photo_path: string | null; photo_analysis: BodyNote["photoAnalysis"] | null; topics: string[] | null; resolved_on: string | null; created_at: string };
+type UpdateRow = { id: string; note_id: string; severity: number; body: string | null; photo_path: string | null; photo_analysis: NoteUpdate["photoAnalysis"] | null; created_at: string };
 
 const PHOTO_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/heic": "heic" };
 const PHOTO_MAX = 8 * 1024 * 1024;
@@ -47,8 +51,8 @@ export async function listBodyNotes(viewer: Viewer): Promise<{ notes: BodyNote[]
   if (viewer.kind === "demo") return { notes: await readDemo() };
   const supabase = await createClient();
   const [n, u] = await Promise.all([
-    supabase.from("body_notes").select("id, area, side, kind, severity, started_on, notes, photo_path, photo_analysis, topics, resolved_on, created_at").order("created_at", { ascending: false }).limit(300),
-    supabase.from("body_note_updates").select("id, note_id, severity, body, photo_path, photo_analysis, created_at").order("created_at").limit(2000),
+    fetchAll<NoteRow>((from, to) => supabase.from("body_notes").select("id, area, side, kind, severity, started_on, notes, photo_path, photo_analysis, topics, resolved_on, created_at").order("created_at", { ascending: false }).order("id").range(from, to)),
+    fetchAll<UpdateRow>((from, to) => supabase.from("body_note_updates").select("id, note_id, severity, body, photo_path, photo_analysis, created_at").order("created_at").order("id").range(from, to)),
   ]);
   const updates = new Map<string, NoteUpdate[]>();
   for (const x of u.data ?? []) {
@@ -57,7 +61,7 @@ export async function listBodyNotes(viewer: Viewer): Promise<{ notes: BodyNote[]
     updates.set(x.note_id, list);
   }
   return {
-    problem: n.error?.message ?? u.error?.message,
+    problem: n.error ?? u.error,
     notes: (n.data ?? []).map((x) => ({
       id: x.id, area: x.area, side: x.side ?? undefined, kind: x.kind, severity: x.severity, startedOn: x.started_on,
       notes: x.notes ?? undefined, photoPath: x.photo_path ?? undefined, photoAnalysis: x.photo_analysis ?? undefined, topics: x.topics ?? [], resolvedOn: x.resolved_on ?? undefined,

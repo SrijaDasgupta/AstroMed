@@ -1,3 +1,4 @@
+import { Download } from "lucide-react";
 import { CREW, getMetric } from "@/lib/crew";
 import { getMyHealth } from "@/lib/my-health";
 import { BASELINE_FIELDS, MIN_DAYS_FOR_BASELINE } from "@/lib/personal-baseline";
@@ -33,6 +34,13 @@ export default async function ProfilePage() {
         details={profile.details}
         baselineFields={baselineFields}
       />
+      <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+        <h2 className="flex items-center gap-2 text-lg font-medium"><Download className="h-5 w-5 text-slate-400" aria-hidden />Your data</h2>
+        <p className="mt-1 text-sm text-slate-300">AstroMed keeps everything you enter for as long as you have an account; nothing is deleted automatically. You can also download a complete copy at any time and keep it yourself.</p>
+        {viewer.kind === "user"
+          ? <a href="/api/export" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-sky-400"><Download className="h-4 w-4" aria-hidden />Download my data</a>
+          : <p className="mt-2 text-sm text-slate-500">Downloading needs an account; demo data stays in this browser for a week.</p>}
+      </section>
     </div>
   );
 }

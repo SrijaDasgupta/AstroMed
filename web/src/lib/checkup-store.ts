@@ -3,6 +3,7 @@ import type { Answers, Escalation } from "@/lib/checkups";
 import { METRICS } from "@/lib/crew";
 import type { Viewer } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
+import { fetchAll } from "@/lib/supabase/fetch-all";
 
 export type CheckupLog = {
   crewId: string;
@@ -54,14 +55,13 @@ export async function loadLogs(viewer: Viewer, crewId?: string): Promise<LoadRes
   }
 
   const supabase = await createClient();
-  let query = supabase
-    .from("checkup_logs")
-    .select("crew_id, checkup_id, escalation, answers, created_at")
-    .order("created_at", { ascending: false })
-    .limit(3000);
-  if (crewId) query = query.eq("crew_id", crewId);
-  const { data, error } = await query;
-  if (error) return { logs: [], storage: "supabase", problem: friendly(error.message) };
+  // Every log the person has ever made (years of history), read 1,000 at a time.
+  const { data, error } = await fetchAll<{ crew_id: string; checkup_id: string; escalation: string; answers: unknown; created_at: string }>((from, to) => {
+    let q = supabase.from("checkup_logs").select("crew_id, checkup_id, escalation, answers, created_at").order("created_at", { ascending: false }).order("id", { ascending: false });
+    if (crewId) q = q.eq("crew_id", crewId);
+    return q.range(from, to);
+  });
+  if (error && data.length === 0) return { logs: [], storage: "supabase", problem: friendly(error) };
   return {
     storage: "supabase",
     logs: (data ?? []).map((r) => ({

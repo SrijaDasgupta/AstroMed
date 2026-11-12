@@ -9,6 +9,7 @@ import { requireViewer } from "@/lib/session";
 const RANGES = [
   { id: "90", label: "90 days", days: 90 },
   { id: "365", label: "1 year", days: 365 },
+  { id: "1825", label: "5 years", days: 1825 },
   { id: "all", label: "All time", days: 0 },
 ];
 const KEYS: MetricKey[] = ["restingHr", "systolic", "diastolic", "glucose", "temperature", "sleepHours"];
