@@ -21,7 +21,7 @@ export function MissionForm({ types }: { types: { id: string; name: string; dose
             {types.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select>
         </label>
-        <label className="block"><span className="text-sm text-slate-300">Location or vehicle (optional)</span><input name="location" maxLength={120} placeholder="e.g. ISS, Gateway, habitat" className={`mt-1 ${field}`} /></label>
+        <label className="block"><span className="text-sm text-slate-300">Location or vehicle (optional)</span><input name="location" maxLength={120} placeholder="e.g. ISS, Gateway, surface base, pressurized rover" className={`mt-1 ${field}`} /></label>
         <label className="block"><span className="text-sm text-slate-300">Start date</span><input name="startDate" type="date" required className={`mt-1 ${field} [color-scheme:dark]`} /></label>
         <label className="block"><span className="text-sm text-slate-300">Planned end date (optional)</span><input name="endDate" type="date" className={`mt-1 ${field} [color-scheme:dark]`} /></label>
         <label className="block"><span className="text-sm text-slate-300">Radiation dose rate, mSv/day (optional)</span>

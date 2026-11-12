@@ -74,12 +74,13 @@ export async function loadLogs(viewer: Viewer, crewId?: string): Promise<LoadRes
   };
 }
 
-export async function saveLog(viewer: Viewer, log: Omit<CheckupLog, "createdAt">): Promise<{ problem?: string }> {
+export async function saveLog(viewer: Viewer, log: Omit<CheckupLog, "createdAt"> & { createdAt?: string }): Promise<{ problem?: string }> {
   if (viewer.kind === "demo") {
     const entries = await readDemo();
     // Keep only numeric readings that feed the charts, to stay within the cookie size limit.
     const readings = Object.fromEntries(Object.entries(log.answers ?? {}).filter(([k, v]) => KEEP_KEYS.has(k) && typeof v === "number")) as Record<string, number>;
-    entries.push(Object.keys(readings).length ? [log.crewId, log.checkupId, log.escalation, Math.floor(Date.now() / 1000), readings] : [log.crewId, log.checkupId, log.escalation, Math.floor(Date.now() / 1000)]);
+    const t = Math.floor((log.createdAt ? Date.parse(log.createdAt) : Date.now()) / 1000);
+    entries.push(Object.keys(readings).length ? [log.crewId, log.checkupId, log.escalation, t, readings] : [log.crewId, log.checkupId, log.escalation, t]);
     (await cookies()).set(DEMO_LOGS_COOKIE, JSON.stringify(fitDemoLogs(entries)), {
       httpOnly: true,
       sameSite: "lax",
@@ -95,6 +96,7 @@ export async function saveLog(viewer: Viewer, log: Omit<CheckupLog, "createdAt">
     checkup_id: log.checkupId,
     escalation: log.escalation,
     answers: log.answers ?? {},
+    ...(log.createdAt ? { created_at: log.createdAt } : {}),
   });
   return error ? { problem: friendly(error.message) } : {};
 }

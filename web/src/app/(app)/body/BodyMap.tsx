@@ -94,7 +94,7 @@ function Figure({ parts, notes, selected, onSelect, focusNote }: { parts: PartVi
       <AnatomyFigure />
       {anchor && (
         <g aria-hidden className="hidden lg:inline">
-          <path d={`M${anchor.x},${anchor.y} C${anchor.x + 70},${anchor.y} 250,24 310,24`} fill="none" stroke="#f43f5e" strokeWidth={1.4} />
+          <path key={`${anchor.x}-${anchor.y}`} className="am-draw" d={`M${anchor.x},${anchor.y} C${anchor.x + 70},${anchor.y} 250,24 310,24`} fill="none" stroke="#f43f5e" strokeWidth={1.4} />
           <circle cx={310} cy={24} r={3.5} fill="#f43f5e" />
         </g>
       )}
@@ -113,6 +113,7 @@ function Figure({ parts, notes, selected, onSelect, focusNote }: { parts: PartVi
           >
             <title>{p.name}</title>
             <circle cx={p.x} cy={p.y} r={14} fill="#ffffff" fillOpacity={active ? 0.25 : 0.12} stroke={active ? "#e0f2fe" : "transparent"} strokeWidth={1.5} />
+            {active && <circle cx={p.x} cy={p.y} r={10} fill="none" stroke="#e0f2fe" strokeWidth={1.5} className="am-pulse" aria-hidden />}
             <circle cx={p.x} cy={p.y} r={active ? 6.5 : 5.5} fill={STATUS[p.status].color === "#64748b" ? "#f8fafc" : STATUS[p.status].color} stroke="#ffffff" strokeWidth={2} />
           </g>
         );
@@ -265,7 +266,7 @@ export function BodyMap({ parts, systems, notes, photos, vitals, records, bmi, a
         </div>
 
         {/* Right: selected part, advice, overview */}
-        <section id="part-panel" className="order-3 scroll-mt-20 space-y-4" aria-live="polite">
+        <section key={selected} id="part-panel" className="am-fade order-3 scroll-mt-20 space-y-4" aria-live="polite">
           <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
             <div className="flex items-start justify-between gap-3">
               <h2 className="text-lg font-semibold">{part.name}</h2>

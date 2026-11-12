@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Siren, Sparkles } from "lucide-react";
+import { Siren, Sparkles } from "lucide-react";
+import { PhotoPicker } from "./PhotoPicker";
 import { addBodyNoteAction, type BodyNoteState } from "@/app/actions";
 import { analyzeText, HAZARDS } from "@/lib/space-conditions";
 
@@ -19,8 +20,7 @@ export function ReportForm({ areas, kinds, today, defaultArea = "", canAttach, e
   const [area, setArea] = useState(defaultArea);
   const [text, setText] = useState("");
   const [severity, setSeverity] = useState(3);
-  const [photoName, setPhotoName] = useState("");
-  useEffect(() => { if (state.ok) { ref.current?.reset(); setText(""); setSeverity(3); setPhotoName(""); } }, [state]);
+  useEffect(() => { if (state.ok) { ref.current?.reset(); setText(""); setSeverity(3); } }, [state]);
   const deferred = useDeferredValue(text);
   const live = useMemo(() => analyzeText(deferred, area || undefined), [deferred, area]);
   const sided = areas.find((a) => a.id === area)?.sided ?? false;
@@ -81,13 +81,9 @@ export function ReportForm({ areas, kinds, today, defaultArea = "", canAttach, e
         <label className="block"><span className="text-sm text-slate-300">Started</span>
           <input name="startedOn" type="date" max={today} defaultValue={today} required className={`mt-1 ${field} [color-scheme:dark]`} />
         </label>
-        <label className="block"><span className="text-sm text-slate-300">Photo (optional)</span>
-          <span className={`mt-1 flex cursor-pointer items-center gap-2 ${field} ${canAttach ? "hover:border-white/25" : "cursor-not-allowed opacity-50"}`}>
-            <Camera className="h-4 w-4 shrink-0 text-slate-400" aria-hidden />
-            <span className="truncate text-slate-300">{photoName || (canAttach ? "Add a photo" : "Needs an account")}</span>
-            <input name="photo" type="file" accept="image/jpeg,image/png,image/webp,image/heic" disabled={!canAttach} className="sr-only" onChange={(e) => setPhotoName(e.target.files?.[0]?.name ?? "")} />
-          </span>
-        </label>
+        <div className="block sm:col-span-2 lg:col-span-1"><span className="text-sm text-slate-300">Photo (optional)</span>
+          <div className="mt-1"><PhotoPicker disabled={!canAttach} /></div>
+        </div>
       </div>
       <p className="text-xs text-slate-500">Photos are stored privately so you can compare changes and show your flight surgeon. To have a photo analyzed, connect your own AI on the <a href="/ai" className="text-sky-300 hover:text-sky-200">AI connection</a> page, then press Analyze on the saved problem.</p>
       <div className="flex flex-wrap items-center gap-3">

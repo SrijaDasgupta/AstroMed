@@ -225,7 +225,7 @@ export async function submitDailyLog(_prev: CheckupState, formData: FormData): P
   const { localDate } = await import("@/lib/dates");
   const { level, findings } = evaluateDailyLog(member, parsed.answers, energyTarget(profile.details, Number(localDate().slice(0, 4))).kcal);
   const answers = parsed.notes ? { ...parsed.answers, notes: parsed.notes } : parsed.answers;
-  const { problem } = await saveLog(viewer, { crewId: member.id, checkupId: DAILY_LOG_ID, escalation: level, answers: answers as import("@/lib/checkups").Answers });
+  const { problem } = await saveLog(viewer, { crewId: member.id, checkupId: DAILY_LOG_ID, escalation: level, answers: answers as import("@/lib/checkups").Answers, createdAt: parsed.loggedAt });
   revalidatePath("/", "layout");
   const { contactText } = await import("@/lib/contact");
   const { getMissionContext } = await import("@/lib/mission");

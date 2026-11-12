@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
-import { AlertTriangle, ArrowDownRight, ArrowRight, ArrowUpRight, Camera, CheckCircle2, Siren, Sparkles, Stethoscope } from "lucide-react";
+import { AlertTriangle, ArrowDownRight, ArrowRight, ArrowUpRight, CheckCircle2, Siren, Sparkles, Stethoscope } from "lucide-react";
 import { addProblemUpdateAction, bodyNoteItemAction, type UpdateState } from "@/app/actions";
 import { CiteLink } from "@/components/CiteLink";
 import { AnalysisPanel, AnalyzeButton } from "@/components/problems/PhotoAnalysis";
+import { PhotoPicker } from "@/components/problems/PhotoPicker";
 import { problemText, type Advice, type BodyNote, type Trend } from "@/lib/body-notes";
 import type { Escalation } from "@/lib/checkups";
 
@@ -69,9 +70,8 @@ function Photo({ url, alt }: { url?: string; alt: string }) {
 function UpdateForm({ id, last, canAttach, onDone }: { id: string; last: number; canAttach: boolean; onDone: () => void }) {
   const [state, action, pending] = useActionState<UpdateState, FormData>(addProblemUpdateAction, {});
   const [severity, setSeverity] = useState(last);
-  const [photoName, setPhotoName] = useState("");
   const ref = useRef<HTMLFormElement>(null);
-  useEffect(() => { if (state.ok) { ref.current?.reset(); setPhotoName(""); onDone(); } }, [state, onDone]);
+  useEffect(() => { if (state.ok) { ref.current?.reset(); onDone(); } }, [state, onDone]);
   const field = "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-sky-400";
   return (
     <form ref={ref} action={action} className="mt-3 space-y-3 rounded-xl border border-white/10 bg-black/20 p-3">
@@ -81,10 +81,7 @@ function UpdateForm({ id, last, canAttach, onDone }: { id: string; last: number;
       </label>
       <textarea name="body" rows={2} maxLength={3000} placeholder="What's changed? New symptoms, what helped, what made it worse." className={field} />
       <div className="flex flex-wrap items-center gap-3">
-        <label className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-300 ${canAttach ? "hover:bg-white/5" : "cursor-not-allowed opacity-50"}`}>
-          <Camera className="h-3.5 w-3.5" aria-hidden />{photoName || (canAttach ? "Add photo" : "Photos need an account")}
-          <input name="photo" type="file" accept="image/jpeg,image/png,image/webp,image/heic" disabled={!canAttach} className="sr-only" onChange={(e) => setPhotoName(e.target.files?.[0]?.name ?? "")} />
-        </label>
+        <PhotoPicker disabled={!canAttach} compact />
         <button type="submit" disabled={pending} className="rounded-lg bg-sky-500 px-3 py-1.5 text-xs font-medium text-slate-950 hover:bg-sky-400 disabled:opacity-60">{pending ? "Saving…" : "Save update"}</button>
         {state.error && <p role="alert" className="text-xs text-rose-300">{state.error}</p>}
       </div>

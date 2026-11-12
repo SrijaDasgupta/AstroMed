@@ -1,3 +1,4 @@
+import { ClearOfflineCache } from "@/components/ServiceWorker";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DemoButton } from "@/components/DemoButton";
@@ -12,6 +13,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
 
   return (
     <main className="flex min-h-screen items-center justify-center px-6">
+      <ClearOfflineCache />
       <div className="w-full max-w-sm">
         <Link href="/"><Logo className="text-lg" /></Link>
         <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6">

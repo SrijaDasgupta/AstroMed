@@ -1,15 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import { queueLog } from "@/lib/offline-queue";
 import { submitDailyLog, type CheckupState } from "@/app/actions";
 import { EscalationBadge, ESCALATION_COLOR } from "@/components/EscalationBadge";
 import { DAILY_SECTIONS, SYMPTOMS } from "@/lib/daily-log";
 
 const input = "w-28 rounded-lg border border-white/10 bg-white/5 px-3 py-2 tabular-nums outline-none focus:border-sky-400";
 
-export function DailyLogForm() {
+export function DailyLogForm({ owner }: { owner: string }) {
   const [state, action, pending] = useActionState<CheckupState, FormData>(submitDailyLog, {});
+  const [queued, setQueued] = useState(false);
+
+  // Offline: keep the entry on this device; OfflineSync sends it when the connection returns.
+  function keepOffline(e: React.FormEvent<HTMLFormElement>) {
+    if (navigator.onLine) return;
+    e.preventDefault();
+    queueLog(owner, new FormData(e.currentTarget));
+    e.currentTarget.reset();
+    setQueued(true);
+  }
 
   if (state.result) {
     const t = state.result.contact;
@@ -33,7 +44,8 @@ export function DailyLogForm() {
   }
 
   return (
-    <form action={action} className="space-y-6">
+    <form action={action} onSubmit={keepOffline} className="space-y-6">
+      {queued && <p role="status" className="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100">Saved on this device. It will be sent, with the time you logged it, as soon as you&apos;re back online. You can log something else meanwhile.</p>}
       {DAILY_SECTIONS.map((s) => (
         <fieldset key={s.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
           <legend className="px-1 text-sm font-medium text-slate-200">{s.title}</legend>

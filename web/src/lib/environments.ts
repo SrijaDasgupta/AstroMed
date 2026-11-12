@@ -35,7 +35,7 @@ export const ENVIRONMENTS: MissionEnvironment[] = [
   {
     id: "leo",
     name: "Low Earth orbit",
-    tagline: "International Space Station",
+    tagline: "Space station, such as the ISS",
     gravity: "Microgravity",
     radiation: "≈ 0.7 mSv/day",
     radiationMsvPerDay: 0.7,
@@ -47,7 +47,7 @@ export const ENVIRONMENTS: MissionEnvironment[] = [
   {
     id: "lunar-surface",
     name: "Lunar surface",
-    tagline: "Artemis surface missions",
+    tagline: "Artemis surface base or pressurized rover",
     gravity: "0.17 g",
     radiation: "≈ 0.9 mSv/day",
     radiationMsvPerDay: 0.9,
@@ -59,7 +59,7 @@ export const ENVIRONMENTS: MissionEnvironment[] = [
   {
     id: "mars-transit",
     name: "Mars transit",
-    tagline: "Deep-space cruise between planets",
+    tagline: "Spacecraft cruising between planets",
     gravity: "Microgravity",
     radiation: "≈ 1.5 mSv/day",
     radiationMsvPerDay: 1.5,
@@ -71,7 +71,7 @@ export const ENVIRONMENTS: MissionEnvironment[] = [
   {
     id: "mars-surface",
     name: "Mars surface",
-    tagline: "Long surface stay",
+    tagline: "Surface base or pressurized rover, long stay",
     gravity: "0.38 g",
     radiation: "≈ 0.5 mSv/day",
     radiationMsvPerDay: 0.5,

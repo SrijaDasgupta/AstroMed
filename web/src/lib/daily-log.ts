@@ -54,12 +54,20 @@ export const SYMPTOMS = [
   { id: "backPain", label: "Back pain" },
   { id: "blurred", label: "Change in vision" },
   { id: "rash", label: "Rash or skin problem" },
+  { id: "coldSore", label: "Cold sore, mouth ulcer or blisters" },
 ];
 
 const NUMBERS = DAILY_SECTIONS.flatMap((s) => s.numbers ?? []);
 const SCALES = DAILY_SECTIONS.flatMap((s) => s.scales ?? []);
 
-export function parseDailyLog(form: FormData): { answers: Answers; notes: string } | { error: string } {
+/** When an entry made offline was really logged: accepted up to 7 days back, never in the future. */
+function loggedAt(form: FormData): string | undefined {
+  const t = Date.parse(String(form.get("loggedAt") ?? ""));
+  if (!Number.isFinite(t) || t > Date.now() + 5 * 60000 || t < Date.now() - 7 * 86400000) return undefined;
+  return new Date(t).toISOString();
+}
+
+export function parseDailyLog(form: FormData): { answers: Answers; notes: string; loggedAt?: string } | { error: string } {
   const answers: Answers = {};
   for (const f of NUMBERS) {
     const raw = String(form.get(f.id) ?? "").trim();
@@ -79,7 +87,7 @@ export function parseDailyLog(form: FormData): { answers: Answers; notes: string
   const notes = String(form.get("notes") ?? "").trim().slice(0, 300);
   if (Object.keys(answers).length === 0 && !notes) return { error: "Enter at least one thing to log." };
   if ((answers.systolic === undefined) !== (answers.diastolic === undefined)) return { error: "Enter both blood pressure numbers, or neither." };
-  return { answers, notes };
+  return { answers, notes, loggedAt: loggedAt(form) };
 }
 
 /** Same rules as the guided checkups, plus symptoms and water. */
@@ -97,6 +105,7 @@ export function evaluateDailyLog(member: CrewMember, a: Answers, kcalTarget?: nu
   if (a.nausea) extra.push({ level: "routine", text: "Nausea or dizziness. If you can't keep fluids down or it lasts more than a day, contact your flight surgeon." });
   if (a.backPain) extra.push({ level: "routine", text: "Back pain. Common while adapting to weightlessness; mention it if it continues." });
   if (a.rash) extra.push({ level: "routine", text: "Rash or skin problem. Report it if it spreads or looks infected." });
+  if (a.coldSore) extra.push({ level: "routine", text: "Cold sore, mouth ulcer or blisters. Stress in spaceflight has been linked to dormant viruses reactivating, so mention it; report blisters in a band on one side of the body today (Behavioral health evidence report, p. 31)." });
   if (a.congestion) extra.push({ level: "none", text: "Blocked nose or sore throat. Take your temperature to check for fever." });
   if (typeof a.kcal === "number" && kcalTarget) {
     const need = kcalTarget + 200 * (typeof a.evaHours === "number" ? a.evaHours : 0);

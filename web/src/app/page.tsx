@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Activity, HeartPulse, Moon } from "lucide-react";
 import { DemoButton } from "@/components/DemoButton";
 import { Logo } from "@/components/Logo";
+import { ClearOfflineCache } from "@/components/ServiceWorker";
 import { getViewer } from "@/lib/session";
 
 const FEATURES = [
@@ -16,6 +17,7 @@ export default async function Home() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-6 py-8">
+      <ClearOfflineCache />
       <header className="flex items-center justify-between">
         <Logo className="text-lg" />
         <Link href="/login" className="text-sm text-slate-300 hover:text-white">Sign in</Link>

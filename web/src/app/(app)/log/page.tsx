@@ -29,7 +29,7 @@ export default async function DailyLogPage() {
           <CiteLink c={ENERGY_CITE} />
         </span>
       </p>
-      <DailyLogForm />
+      <DailyLogForm owner={viewer.kind === "user" ? viewer.id : "demo"} />
       <p className="text-xs text-slate-500">Readings are checked against your own normal range and general clinical limits set for this demo. Not medical advice; contact your flight surgeon with concerns.</p>
     </div>
   );

@@ -30,3 +30,15 @@ body {
 @media (max-width: 767px) {
   input, select, textarea { font-size: 16px !important; }
 }
+
+/* Body map motion. Turned off for people who ask for reduced motion. */
+@keyframes am-draw { to { stroke-dashoffset: 0; } }
+@keyframes am-pulse { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(2.2); opacity: 0; } }
+@keyframes am-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.am-draw { stroke-dasharray: 600; stroke-dashoffset: 600; animation: am-draw 0.7s ease-out forwards; }
+.am-pulse { transform-box: fill-box; transform-origin: center; animation: am-pulse 1.8s ease-out infinite; }
+.am-fade { animation: am-fade 0.3s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .am-draw { animation: none; stroke-dashoffset: 0; }
+  .am-pulse, .am-fade { animation: none; }
+}

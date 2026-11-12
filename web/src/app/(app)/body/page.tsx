@@ -73,6 +73,16 @@ export default async function BodyPage({ searchParams }: { searchParams: Promise
       const dose = ctx.doseSoFar;
       readings.push({ label: "Estimated dose so far", value: `${dose.toFixed(1)} mSv`, detail: `${((dose / CAREER_LIMIT_MSV) * 100).toFixed(1)}% of the 600 mSv career limit` });
     }
+    if (p.id === "immune") {
+      // Indirect immune signs in the person's own logs over the last 14 days.
+      const since = Date.now() - 14 * 86400000;
+      const recent = logs.filter((l) => new Date(l.createdAt).getTime() >= since && l.answers);
+      const fever = recent.filter((l) => typeof l.answers!.temperature === "number" && (l.answers!.temperature as number) >= 37.8).length;
+      const sores = recent.filter((l) => l.answers!.coldSore === true).length;
+      const colds = recent.filter((l) => l.answers!.congestion === true).length;
+      const total = fever + sores + colds;
+      readings.push({ label: "Immune-related signs, last 14 days", value: total === 0 ? "None logged" : [fever && `${fever} raised temperature`, sores && `${sores} cold sore or blisters`, colds && `${colds} cold symptoms`].filter(Boolean).join(", "), detail: "From your daily logs", status: total === 0 ? "good" : total >= 3 ? "warning" : "good" });
+    }
     const statuses = readings.map((r) => r.status).filter(Boolean) as PartStatus[];
     const status = statuses.length === 0 ? "none" : statuses.reduce<PartStatus>((s, x) => (RANK[x] > RANK[s] ? x : s), "none");
     return { id: p.id, name: p.name, x: p.x, y: p.y, summary: p.summary, effects: p.effects, conditions: p.conditions, actions: p.actions, tipIds: p.tipIds, readings, status };
