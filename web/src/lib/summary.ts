@@ -3,6 +3,7 @@
  * ranked suggestions, and questions for the flight surgeon. Suggestions explain the data behind
  * them and cite the NASA page they rest on. No diagnosis and no medicine recommendations.
  */
+import { adviceFor, areaOf, noteTitle, type BodyNote } from "@/lib/body-notes";
 import type { CheckupLog } from "@/lib/checkup-store";
 import type { Assessment, MetricKey, Status } from "@/lib/crew";
 import { addDays, localDate } from "@/lib/dates";
@@ -28,6 +29,8 @@ type Input = {
   progress: { xp: number; rank: string; streak: number };
   days: number;
   today?: string;
+  /** Body notes (pain, injuries…) the person recorded on the body map. */
+  bodyNotes?: BodyNote[];
   /** Demo mode: also use sample-data alerts so suggestions can be explored. */
   includeSample?: boolean;
 };
@@ -167,10 +170,20 @@ export function buildSummary(i: Input) {
     if (l.answers.pain === true) questions.push({ text: "I had pain during exercise. Should I change my exercise plan?", reason: `Reported on ${d}` });
   }
 
+  // Open body notes from the body map: their advice becomes suggestions and questions.
+  const bodyNotes = i.bodyNotes ?? [];
+  const openNotes = bodyNotes.filter((n) => !n.resolvedOn).map((n) => ({ n, a: adviceFor(n, bodyNotes, today) }));
+  for (const { n, a } of openNotes) {
+    const priority = a.level === "now" || a.level === "today" ? 1 : a.level === "routine" ? 2 : 3;
+    suggestions[a.level === "now" ? "unshift" : "push"]({ id: `body-${n.id}`, area: "physical", priority, title: `${noteTitle(n)}: ${a.headline.toLowerCase()}`, reason: `${n.severity}/10 since ${n.startedOn}. ${a.why[0]}`, action: { text: "See advice on My body", href: `/body?part=${areaOf(n.area)?.part ?? "skin"}` }, cite: a.context?.cite });
+    if (a.question) questions.push({ text: a.question, reason: a.why.join(" ") });
+  }
+  const bodyWorst = openNotes.some(({ a }) => a.level === "now" || a.level === "today") ? "urgent" : openNotes.some(({ a }) => a.level === "routine") ? "routine" : undefined;
+
   // ---------------- Statuses ----------------
-  const physicalStatus: AreaStatus = flagged.some((m) => m.status === "critical" && m.def.group !== "Mood") ? "concern"
-    : flagged.some((m) => m.def.group !== "Mood") || shortNights >= 3 ? "watch"
-    : vitals.some((v) => v.days > 0) || sleep.length > 0 ? "good" : "nodata";
+  const physicalStatus: AreaStatus = flagged.some((m) => m.status === "critical" && m.def.group !== "Mood") || bodyWorst === "urgent" ? "concern"
+    : flagged.some((m) => m.def.group !== "Mood") || shortNights >= 3 || bodyWorst === "routine" ? "watch"
+    : vitals.some((v) => v.days > 0) || sleep.length > 0 || openNotes.length > 0 ? "good" : "nodata";
   const mentalStatus: AreaStatus = moods.length === 0 && stress.length === 0 ? "nodata"
     : lowStreak >= 3 || (moodAvg ?? 5) <= 2.5 ? "concern"
     : lowDays >= 2 || (stressAvg ?? 0) >= 4 ? "watch" : "good";
@@ -180,7 +193,7 @@ export function buildSummary(i: Input) {
   const unique = (qs: Question[]) => qs.filter((q, idx) => qs.findIndex((x) => x.text === q.text) === idx);
   return {
     from, to: today,
-    physical: { status: physicalStatus, vitals, sleepAvg, sleepNights: sleep.length, shortNights, exerciseDays: exerciseDates.size, exerciseMin, waterAvg, dose: i.ctx.doseSoFar, dosePct, missionDay: i.ctx.day, lastReading },
+    physical: { status: physicalStatus, vitals, sleepAvg, sleepNights: sleep.length, shortNights, exerciseDays: exerciseDates.size, exerciseMin, waterAvg, dose: i.ctx.doseSoFar, dosePct, missionDay: i.ctx.day, lastReading, bodyNotesOpen: openNotes.length },
     mental: { status: mentalStatus, moodAvg, moodDays: moods.length, lowDays, lowStreak, stressAvg, entries: entries.length, topics, moods },
     routine: { status: routineStatus, adherence, taken, expected, missed, remindersPct, remindersDone: i.routine.remindersDone, remindersExpected: i.routine.remindersExpected, checkupsDue: i.checkupsDue, streak: i.progress.streak, xp: i.progress.xp, rank: i.progress.rank, statsDays: i.routine.days },
     suggestions: suggestions.sort((x, y) => x.priority - y.priority).slice(0, 8),

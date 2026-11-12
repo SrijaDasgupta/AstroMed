@@ -2,10 +2,15 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { AlertTriangle, CheckCircle2, CircleDashed, ExternalLink, OctagonAlert } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, CheckCircle2, CircleDashed, ExternalLink, FileText, OctagonAlert, Plus, Siren, Stethoscope } from "lucide-react";
 import { TipCard } from "@/components/TipCard";
 import type { Cite, Fact } from "@/lib/body";
+import type { Advice, BodyNote } from "@/lib/body-notes";
+import type { Escalation } from "@/lib/checkups";
 import { SOURCES, TIPS } from "@/lib/tips";
+import { AnatomyDefs, AnatomyFigure, Floor } from "./Anatomy";
+import { NoteForm } from "./NoteForm";
+import { NoteOps } from "./NoteOps";
 
 export type PartStatus = "good" | "warning" | "critical" | "none";
 export type PartView = {
@@ -21,12 +26,24 @@ export type PartView = {
   readings: { label: string; value: string; detail?: string; status?: PartStatus }[];
   status: PartStatus;
 };
+export type NoteView = BodyNote & { title: string; part: string; pin?: { x: number; y: number }; advice: Advice };
+export type VitalCard = { key: string; label: string; value: string; unit: string; status: PartStatus; values: number[]; range: [number, number]; mine: boolean };
+export type RecordItem = { id: string; title: string; detail: string };
+export type Bmi = { value: number; weightKg: number; heightCm: number } | null;
+export type Option = { id: string; name: string };
 
 const STATUS: Record<PartStatus, { label: string; color: string; Icon: typeof CheckCircle2 }> = {
   good: { label: "Normal", color: "#0ca30c", Icon: CheckCircle2 },
   warning: { label: "Watch", color: "#fab219", Icon: AlertTriangle },
   critical: { label: "Check now", color: "#d03b3b", Icon: OctagonAlert },
   none: { label: "Not measured", color: "#64748b", Icon: CircleDashed },
+};
+
+export const LEVEL: Record<Escalation, { label: string; color: string; Icon: typeof CheckCircle2 }> = {
+  none: { label: "Self-care", color: "#0ca30c", Icon: CheckCircle2 },
+  routine: { label: "Next check-in", color: "#fab219", Icon: Stethoscope },
+  today: { label: "Today", color: "#ec835a", Icon: AlertTriangle },
+  now: { label: "Now", color: "#d03b3b", Icon: Siren },
 };
 
 function Status({ s }: { s: PartStatus }) {
@@ -37,6 +54,21 @@ function Status({ s }: { s: PartStatus }) {
       {label}
     </span>
   );
+}
+
+export function Level({ l }: { l: Escalation }) {
+  const { label, color, Icon } = LEVEL[l];
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-white/5 px-2 py-0.5 text-xs text-slate-200">
+      <Icon className="h-3.5 w-3.5" style={{ color }} aria-hidden />
+      {label}
+    </span>
+  );
+}
+
+function StatusIcon({ s }: { s: PartStatus }) {
+  const { label, color, Icon } = STATUS[s];
+  return <Icon className="h-4 w-4 shrink-0" style={{ color }} aria-label={label} />;
 }
 
 function CiteLink({ c }: { c: Cite }) {
@@ -50,140 +82,327 @@ function CiteLink({ c }: { c: Cite }) {
   );
 }
 
-function Figure({ parts, selected, onSelect }: { parts: PartView[]; selected: string; onSelect: (id: string) => void }) {
-  const body = "#1e293b";
-  const edge = "#334155";
+function Sparkline({ values, range, color }: { values: number[]; range: [number, number]; color: string }) {
+  const w = 120, h = 34;
+  const lo = Math.min(range[0], ...values), hi = Math.max(range[1], ...values);
+  const sx = (i: number) => (i / Math.max(values.length - 1, 1)) * w;
+  const sy = (v: number) => h - 3 - ((v - lo) / (hi - lo || 1)) * (h - 6);
+  const d = values.map((v, i) => `${i ? "L" : "M"}${sx(i).toFixed(1)},${sy(v).toFixed(1)}`).join("");
   return (
-    <svg viewBox="0 0 240 520" className="mx-auto h-auto w-full max-w-[260px]" role="group" aria-label="Body map. Choose a body part.">
-      <g fill={body} stroke={edge} strokeWidth={1.5}>
-        <ellipse cx="120" cy="52" rx="32" ry="38" />
-        <rect x="106" y="86" width="28" height="22" rx="8" />
-        <path d="M70 112 Q120 98 170 112 L176 238 Q160 250 150 300 L90 300 Q80 250 64 238 Z" />
-        <path d="M70 114 Q52 120 48 150 L38 250 Q36 266 48 268 Q58 268 60 252 L74 160 Z" />
-        <path d="M170 114 Q188 120 192 150 L202 250 Q204 266 192 268 Q182 268 180 252 L166 160 Z" />
-        <path d="M90 296 L118 296 L114 420 L110 490 Q108 504 94 504 Q84 502 86 488 L86 420 Z" />
-        <path d="M122 296 L150 296 L154 420 L154 488 Q156 502 146 504 Q132 504 130 490 L126 420 Z" />
-      </g>
+    <svg viewBox={`0 0 ${w} ${h}`} className="mt-2 h-9 w-full" aria-hidden preserveAspectRatio="none">
+      <rect x={0} y={sy(range[1])} width={w} height={Math.max(sy(range[0]) - sy(range[1]), 1)} fill="#ffffff" fillOpacity={0.05} />
+      <path d={d} fill="none" stroke={color} strokeWidth={1.6} strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+      <circle cx={sx(values.length - 1)} cy={sy(values[values.length - 1])} r={2.5} fill={color} />
+    </svg>
+  );
+}
+
+const TINTS = ["bg-amber-300/10 border-amber-300/20", "bg-sky-400/10 border-sky-400/20", "bg-violet-400/10 border-violet-400/20", "bg-emerald-400/10 border-emerald-400/20"];
+const LINE = ["#fbbf24", "#38bdf8", "#a78bfa", "#34d399"];
+
+function Figure({ parts, notes, selected, onSelect, focusNote }: { parts: PartView[]; notes: NoteView[]; selected: string; onSelect: (id: string, note?: string) => void; focusNote?: string }) {
+  const sel = parts.find((p) => p.id === selected);
+  const focus = notes.find((n) => n.id === focusNote && n.pin);
+  const anchor = focus?.pin ?? (sel ? { x: sel.x, y: sel.y } : undefined);
+  return (
+    <svg viewBox="-10 0 320 650" className="mx-auto h-auto w-full max-w-[360px]" role="group" aria-label="Body map. Choose a body part.">
+      <AnatomyDefs />
+      <Floor />
+      <AnatomyFigure />
+      {anchor && (
+        <g aria-hidden className="hidden lg:inline">
+          <path d={`M${anchor.x},${anchor.y} C${anchor.x + 70},${anchor.y} 250,24 310,24`} fill="none" stroke="#f43f5e" strokeWidth={1.4} />
+          <circle cx={310} cy={24} r={3.5} fill="#f43f5e" />
+        </g>
+      )}
       {parts.map((p) => {
-        const active = p.id === selected;
+        const active = p.id === selected && !focus;
         return (
           <g
             key={p.id}
             role="button"
             tabIndex={0}
             aria-label={`${p.name}: ${STATUS[p.status].label}`}
-            aria-pressed={active}
+            aria-pressed={p.id === selected}
             onClick={() => onSelect(p.id)}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(p.id); } }}
-            className="cursor-pointer outline-none [&:focus-visible>circle:first-child]:stroke-sky-300"
+            className="cursor-pointer outline-none [&:focus-visible>circle:first-of-type]:stroke-sky-300"
           >
             <title>{p.name}</title>
-            <circle cx={p.x} cy={p.y} r={18} fill="transparent" stroke={active ? "#7dd3fc" : "transparent"} strokeWidth={2} />
-            <circle cx={p.x} cy={p.y} r={active ? 9 : 7} fill={STATUS[p.status].color} stroke="#070b16" strokeWidth={2} />
+            <circle cx={p.x} cy={p.y} r={14} fill="#ffffff" fillOpacity={active ? 0.25 : 0.12} stroke={active ? "#e0f2fe" : "transparent"} strokeWidth={1.5} />
+            <circle cx={p.x} cy={p.y} r={active ? 6.5 : 5.5} fill={STATUS[p.status].color === "#64748b" ? "#f8fafc" : STATUS[p.status].color} stroke="#ffffff" strokeWidth={2} />
           </g>
         );
       })}
+      {notes.filter((n) => n.pin && !n.resolvedOn).map((n) => (
+        <g key={n.id} role="button" tabIndex={0} aria-label={`Your note: ${n.title}, ${LEVEL[n.advice.level].label}`}
+          onClick={() => onSelect(n.part, n.id)}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(n.part, n.id); } }}
+          className="cursor-pointer outline-none">
+          <title>{n.title}</title>
+          <circle cx={n.pin!.x} cy={n.pin!.y} r={10} fill="#f43f5e" fillOpacity={0.25} className="motion-safe:animate-pulse" />
+          <circle cx={n.pin!.x} cy={n.pin!.y} r={n.id === focusNote ? 6 : 4.5} fill="#f43f5e" stroke="#fff" strokeWidth={1.5} />
+        </g>
+      ))}
     </svg>
   );
 }
 
-export function BodyMap({ parts, systems, initial }: { parts: PartView[]; systems: PartView[]; initial?: string }) {
-  const all = [...parts, ...systems];
-  const [selected, setSelected] = useState(all.some((p) => p.id === initial) ? initial! : "heart");
-  const part = all.find((p) => p.id === selected)!;
+function BmiStrip({ bmi }: { bmi: Bmi }) {
+  if (!bmi) {
+    return (
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">
+        <p className="font-medium text-slate-200">Body mass index</p>
+        <p className="mt-1">Add your height and weight in <Link href="/profile" className="text-sky-300 hover:text-sky-200">My profile</Link> to see it here.</p>
+      </div>
+    );
+  }
+  const w = Math.round(bmi.weightKg);
+  const ticks = Array.from({ length: 9 }, (_, i) => w - 4 + i);
+  const band = bmi.value < 18.5 ? "below the usual range" : bmi.value < 25 ? "in the usual range" : bmi.value < 30 ? "above the usual range" : "well above the usual range";
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="text-sm font-medium text-slate-200">Body mass index</p>
+        <p className="text-sm tabular-nums text-slate-300"><span className="text-lg font-semibold text-white">{bmi.value.toFixed(1)}</span> · {band}</p>
+      </div>
+      <div className="mt-3 flex items-end justify-between gap-1 tabular-nums" aria-label={`Weight ${w} kilograms`}>
+        {ticks.map((t) => (
+          <span key={t} className={`flex flex-col items-center ${t === w ? "text-base font-semibold text-white" : "text-xs text-slate-500"}`}>
+            {t === w && <span className="text-[10px] font-normal text-slate-400">kg</span>}
+            {t}
+            <span className={`mt-1 block w-px ${t === w ? "h-3 bg-sky-300" : "h-1.5 bg-white/20"}`} />
+          </span>
+        ))}
+      </div>
+      <p className="mt-2 text-xs text-slate-500">{bmi.heightCm} cm · from My profile. BMI is a rough guide and doesn&apos;t tell muscle from fat.</p>
+    </div>
+  );
+}
 
-  function select(id: string) {
+function AdviceCard({ n }: { n: NoteView }) {
+  const a = n.advice;
+  const urgent = a.level === "now" || a.level === "today";
+  return (
+    <article className={`rounded-2xl border p-4 ${a.level === "now" ? "border-rose-500/50 bg-rose-500/10" : urgent ? "border-orange-400/40 bg-orange-400/5" : "border-white/10 bg-white/[0.03]"}`}>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h4 className="font-medium">{n.title}</h4>
+          <p className="text-xs text-slate-500">{n.severity}/10 · since {n.startedOn}{n.resolvedOn ? ` · resolved ${n.resolvedOn}` : ""}</p>
+        </div>
+        <Level l={a.level} />
+      </div>
+      <p className={`mt-3 text-sm font-medium ${a.level === "now" ? "text-rose-200" : urgent ? "text-orange-200" : "text-slate-100"}`}>{a.headline}</p>
+      <ul className="mt-1 space-y-0.5 text-sm text-slate-300">{a.why.map((w) => <li key={w}>{w}</li>)}</ul>
+      {a.level === "now" && <p className="mt-2 text-sm text-rose-200">Don&apos;t wait for AstroMed. If you&apos;re on Earth, call your local emergency number.</p>}
+      {n.notes && <p className="mt-2 whitespace-pre-line rounded-lg bg-black/20 p-2 text-xs text-slate-400">{n.notes}</p>}
+      {a.selfCare.length > 0 && (
+        <>
+          <p className="mt-3 text-xs font-medium uppercase tracking-widest text-slate-500">Meanwhile</p>
+          <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-300">{a.selfCare.map((s) => <li key={s}>{s}</li>)}</ul>
+        </>
+      )}
+      {a.context && <p className="mt-3 text-xs text-slate-400">In space: {a.context.text} <CiteLink c={a.context.cite} /></p>}
+      {a.question && <p className="mt-3 rounded-lg border border-white/10 p-2 text-xs text-slate-300"><Stethoscope className="mr-1 inline h-3.5 w-3.5 text-slate-400" aria-hidden />Ask your flight surgeon: {a.question}</p>}
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+        {a.links.map((l) => <Link key={l.href} href={l.href} className="text-sm text-sky-300 hover:text-sky-200">{l.text} →</Link>)}
+        <span className="ml-auto"><NoteOps id={n.id} resolved={Boolean(n.resolvedOn)} /></span>
+      </div>
+    </article>
+  );
+}
+
+export function BodyMap({ parts, systems, notes, vitals, records, bmi, areas, kinds, sideAreas, today, initial, canUpload }: {
+  parts: PartView[]; systems: PartView[]; notes: NoteView[]; vitals: VitalCard[]; records: RecordItem[]; bmi: Bmi;
+  areas: (Option & { part: string })[]; kinds: Option[]; sideAreas: string[]; today: string; initial?: string; canUpload: boolean;
+}) {
+  const all = [...parts, ...systems];
+  const firstNote = notes.find((n) => !n.resolvedOn);
+  const [selected, setSelected] = useState(all.some((p) => p.id === initial) ? initial! : firstNote?.part ?? "heart");
+  const [focusNote, setFocusNote] = useState<string | undefined>(initial ? undefined : firstNote?.id);
+  const part = all.find((p) => p.id === selected)!;
+  const active = notes.filter((n) => !n.resolvedOn);
+  const partNotes = active.filter((n) => n.part === selected);
+  const tips = part.tipIds.map((id) => TIPS.find((t) => t.id === id)).filter(Boolean);
+  const worst = active.reduce<Escalation>((w, n) => (["none", "routine", "today", "now"].indexOf(n.advice.level) > ["none", "routine", "today", "now"].indexOf(w) ? n.advice.level : w), "none");
+
+  function select(id: string, note?: string) {
     setSelected(id);
+    setFocusNote(note);
     window.history.replaceState(null, "", `/body?part=${id}`);
     if (window.matchMedia("(max-width: 1023px)").matches) document.getElementById("part-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  const tips = part.tipIds.map((id) => TIPS.find((t) => t.id === id)).filter(Boolean);
-
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)]">
-      <div className="space-y-4">
-        <Figure parts={parts} selected={selected} onSelect={select} />
-        <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs text-slate-400">
-          {(Object.keys(STATUS) as PartStatus[]).map((s) => <Status key={s} s={s} />)}
+    <div className="space-y-8">
+      <div className="grid gap-5 lg:grid-cols-[250px_minmax(0,1fr)_340px]">
+        {/* Left: vitals, notes, records */}
+        <div className="order-2 space-y-4 lg:order-1">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-1 xl:grid-cols-2">
+            {vitals.map((v, i) => (
+              <Link key={v.key} href="/vitals" className={`rounded-2xl border p-3 transition hover:brightness-125 ${TINTS[i % TINTS.length]}`}>
+                <p className="flex items-start justify-between gap-1 text-xs leading-tight text-slate-300">{v.label}<StatusIcon s={v.status} /></p>
+                <p className="mt-1 text-xl font-semibold tabular-nums">{v.value} <span className="text-xs font-normal text-slate-400">{v.unit}</span></p>
+                <Sparkline values={v.values} range={v.range} color={LINE[i % LINE.length]} />
+                <p className="text-[10px] text-slate-500">{v.mine ? "Your reading" : "Sample data"} · 14 days</p>
+              </Link>
+            ))}
+          </div>
+
+          <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-sm font-medium">My body notes</h2>
+              <a href="#add-note" className="inline-flex items-center gap-1 rounded-full bg-sky-400 px-2 py-0.5 text-xs font-medium text-slate-950 hover:bg-sky-300"><Plus className="h-3 w-3" aria-hidden />Add</a>
+            </div>
+            {active.length === 0 ? (
+              <p className="mt-2 text-xs text-slate-400">Nothing recorded. Add pain, an injury or anything else you notice, and AstroMed will suggest what to do.</p>
+            ) : (
+              <ul className="mt-2 space-y-1">
+                {active.map((n) => (
+                  <li key={n.id}>
+                    <button type="button" onClick={() => select(n.part, n.id)} className={`flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-xs ${focusNote === n.id ? "bg-white/10" : "hover:bg-white/5"}`}>
+                      <span className="min-w-0"><span className="block truncate text-slate-200">{n.title}</span><span className="text-slate-500">{n.severity}/10</span></span>
+                      <Level l={n.advice.level} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-sm font-medium">Records</h2>
+              <Link href="/records" className="inline-flex items-center gap-0.5 text-xs text-slate-400 hover:text-white">View all <ArrowUpRight className="h-3 w-3" aria-hidden /></Link>
+            </div>
+            {records.length === 0 ? (
+              <p className="mt-2 text-xs text-slate-400">{canUpload ? "Upload lab reports, scans and prescriptions in My records." : "Records need an account."}</p>
+            ) : (
+              <ul className="mt-2 space-y-1">
+                {records.map((r) => (
+                  <li key={r.id}>
+                    <a href={`/records/${r.id}/open`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs hover:bg-white/5">
+                      <FileText className="h-4 w-4 shrink-0 text-slate-400" aria-hidden />
+                      <span className="min-w-0"><span className="block truncate text-slate-200">{r.title}</span><span className="text-slate-500">{r.detail}</span></span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </div>
-        <nav aria-label="Body parts" className="space-y-1">
-          {[...parts, ...systems].map((p, i) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => select(p.id)}
-              aria-current={p.id === selected ? "true" : undefined}
-              className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-1.5 text-left text-sm ${i === parts.length ? "mt-3" : ""} ${p.id === selected ? "bg-sky-400/15 text-sky-100" : "text-slate-300 hover:bg-white/5"}`}
-            >
-              {p.name}
-              <Status s={p.status} />
-            </button>
-          ))}
-        </nav>
+
+        {/* Centre: the figure */}
+        <div className="order-1 space-y-4 lg:order-2">
+          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[radial-gradient(ellipse_at_top,rgba(56,189,248,0.10),transparent_60%)] px-2 pt-4">
+            <Figure parts={parts} notes={notes} selected={selected} onSelect={select} focusNote={focusNote} />
+            <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 pb-3 text-xs text-slate-400">
+              {(["good", "warning", "critical"] as PartStatus[]).map((s) => <Status key={s} s={s} />)}
+              <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-slate-50" aria-hidden />Not measured</span>
+              <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-rose-500" aria-hidden />Your note</span>
+            </div>
+          </div>
+          <div className="flex flex-wrap justify-center gap-2">
+            {systems.map((s) => (
+              <button key={s.id} type="button" onClick={() => select(s.id)} aria-pressed={selected === s.id}
+                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm ${selected === s.id ? "border-sky-400 bg-sky-400/15 text-sky-100" : "border-white/15 text-slate-300 hover:bg-white/5"}`}>
+                {s.name}<Status s={s.status} />
+              </button>
+            ))}
+          </div>
+          <BmiStrip bmi={bmi} />
+        </div>
+
+        {/* Right: selected part, advice, overview */}
+        <section id="part-panel" className="order-3 scroll-mt-20 space-y-4" aria-live="polite">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="text-lg font-semibold">{part.name}</h2>
+              <Status s={part.status} />
+            </div>
+            <p className="mt-1 text-sm text-slate-400">{part.summary}</p>
+            {part.readings.length > 0 && (
+              <dl className="mt-3 grid grid-cols-2 gap-2">
+                {part.readings.map((r) => (
+                  <div key={r.label} className="rounded-xl bg-white/[0.04] p-2.5">
+                    <dt className="text-[11px] text-slate-500">{r.label}</dt>
+                    <dd className="mt-0.5 text-sm tabular-nums text-slate-100">{r.value}</dd>
+                    {r.status && <dd className="mt-0.5"><Status s={r.status} /></dd>}
+                  </div>
+                ))}
+              </dl>
+            )}
+            {part.conditions.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {part.conditions.slice(0, 4).map((c) => <span key={c.name} className="rounded-full bg-white/5 px-2 py-0.5 text-xs text-slate-300">{c.name}</span>)}
+              </div>
+            )}
+            <a href="#learn" className="mt-3 inline-block text-sm text-sky-300 hover:text-sky-200">What spaceflight does to it ↓</a>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium">Advice for you</h3>
+            {partNotes.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-white/15 p-4 text-sm text-slate-400">
+                No notes for {part.name.toLowerCase()}. Something bothering you here? <a href="#add-note" className="text-sky-300 hover:text-sky-200">Add a body note</a> to get advice.
+              </p>
+            ) : partNotes.map((n) => <AdviceCard key={n.id} n={n} />)}
+          </div>
+
+          <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 p-4 ring-1 ring-white/10">
+            <p className="text-xs uppercase tracking-widest text-sky-300">Your body at a glance</p>
+            <p className="mt-2 text-sm text-slate-200">
+              {active.length === 0 ? "No open body notes." : `${active.length} open body note${active.length === 1 ? "" : "s"}.`}
+              {active.length > 0 && <> Most urgent: <Level l={worst} /></>}
+            </p>
+            <Link href="/summary" className="mt-3 inline-flex items-center gap-1 text-sm text-sky-300 hover:text-sky-200">See it in My summary <ArrowUpRight className="h-4 w-4" aria-hidden /></Link>
+          </div>
+        </section>
       </div>
 
-      <section id="part-panel" className="scroll-mt-6 space-y-5" aria-live="polite">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+      <section id="add-note" className="scroll-mt-20 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+        <h2 className="text-lg font-medium">Add a body detail</h2>
+        <p className="mt-1 text-sm text-slate-400">Record pain, an injury, swelling or anything else you notice. AstroMed suggests what to do and how soon to involve your flight surgeon.</p>
+        <div className="mt-4">
+          <NoteForm key={selected} areas={areas} kinds={kinds} sideAreas={sideAreas} today={today} defaultArea={areas.find((a) => a.part === selected)?.id ?? ""} />
+        </div>
+      </section>
+
+      {notes.some((n) => n.resolvedOn) && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-medium">Resolved notes</h2>
+          <div className="grid gap-3 md:grid-cols-2">{notes.filter((n) => n.resolvedOn).map((n) => <AdviceCard key={n.id} n={n} />)}</div>
+        </section>
+      )}
+
+      <section id="learn" className="scroll-mt-20 space-y-5 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+        <h2 className="text-lg font-medium">{part.name}: what spaceflight does</h2>
+        <ul className="space-y-2 text-sm text-slate-300">
+          {part.effects.map((f, i) => <li key={i}>{f.text} <CiteLink c={f.cite} /></li>)}
+        </ul>
+        {part.conditions.length > 0 && (
           <div>
-            <h2 className="text-xl font-semibold">{part.name}</h2>
-            <p className="mt-1 text-sm text-slate-400">{part.summary}</p>
-          </div>
-          <Status s={part.status} />
-        </div>
-
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-          <h3 className="text-sm font-medium">Your data</h3>
-          {part.readings.length === 0 ? (
-            <p className="mt-2 text-sm text-slate-400">AstroMed doesn&apos;t track anything for this part yet.</p>
-          ) : (
-            <dl className="mt-3 grid gap-3 sm:grid-cols-2">
-              {part.readings.map((r) => (
-                <div key={r.label} className="rounded-xl bg-white/[0.03] p-3">
-                  <dt className="flex items-center justify-between gap-2 text-xs text-slate-500">{r.label}{r.status && <Status s={r.status} />}</dt>
-                  <dd className="mt-1 tabular-nums text-slate-100">{r.value}</dd>
-                  {r.detail && <dd className="mt-0.5 text-xs text-slate-500">{r.detail}</dd>}
-                </div>
+            <h3 className="text-sm font-medium">Possible conditions</h3>
+            <ul className="mt-2 divide-y divide-white/5 rounded-2xl border border-white/10 text-sm">
+              {part.conditions.map((c) => (
+                <li key={c.name} className="flex flex-wrap items-baseline justify-between gap-3 px-4 py-2">
+                  <span className="text-slate-200">{c.name}</span>
+                  {c.perMission !== undefined ? <span className="text-xs tabular-nums text-slate-400">{c.perMission} expected per mission*</span>
+                    : c.note ? <span className="text-xs text-slate-400">{c.note.text} <CiteLink c={c.note.cite} /></span> : null}
+                </li>
               ))}
-            </dl>
-          )}
-        </div>
-
-        <div>
-          <h3 className="text-sm font-medium">What spaceflight does</h3>
-          <ul className="mt-2 space-y-2 text-sm text-slate-300">
-            {part.effects.map((f, i) => <li key={i}>{f.text} <CiteLink c={f.cite} /></li>)}
-          </ul>
-        </div>
-
-        <div>
-          <h3 className="text-sm font-medium">Possible conditions</h3>
-          <ul className="mt-2 divide-y divide-white/5 rounded-2xl border border-white/10 text-sm">
-            {part.conditions.map((c) => (
-              <li key={c.name} className="flex flex-wrap items-baseline justify-between gap-3 px-4 py-2">
-                <span className="text-slate-200">{c.name}</span>
-                {c.perMission !== undefined ? (
-                  <span className="text-xs tabular-nums text-slate-400">{c.perMission} expected per mission*</span>
-                ) : c.note ? (
-                  <span className="text-xs text-slate-400">{c.note.text} <CiteLink c={c.note.cite} /></span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-          {part.conditions.some((c) => c.perMission !== undefined) && (
-            <p className="mt-2 text-xs text-slate-500">* From NASA&apos;s sample medical-risk model output: expected cases per mission, not a prediction for you. <CiteLink c={{ source: "std1", page: 82 }} /></p>
-          )}
-        </div>
-
+            </ul>
+            {part.conditions.some((c) => c.perMission !== undefined) && (
+              <p className="mt-2 text-xs text-slate-500">* From NASA&apos;s sample medical-risk model output: expected cases per mission, not a prediction for you. <CiteLink c={{ source: "std1", page: 82 }} /></p>
+            )}
+          </div>
+        )}
         <div>
           <h3 className="text-sm font-medium">What you can do</h3>
           <ul className="mt-2 space-y-1.5 text-sm">
-            {part.actions.map((a) => (
-              <li key={a.text}>{a.href ? <Link href={a.href} className="text-sky-300 hover:text-sky-200">{a.text} →</Link> : <span className="text-slate-300">{a.text}</span>}</li>
-            ))}
+            {part.actions.map((a) => <li key={a.text}>{a.href ? <Link href={a.href} className="text-sky-300 hover:text-sky-200">{a.text} →</Link> : <span className="text-slate-300">{a.text}</span>}</li>)}
           </ul>
         </div>
-
         {tips.length > 0 && (
           <div>
             <h3 className="mb-2 text-sm font-medium">Related tips</h3>

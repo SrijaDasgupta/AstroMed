@@ -2,6 +2,7 @@ import Link from "next/link";
 import { LogOut } from "lucide-react";
 import { signOut } from "@/app/actions";
 import { Logo } from "@/components/Logo";
+import { Main } from "@/components/Main";
 import { MobileNav } from "@/components/MobileNav";
 import { NavLinks } from "@/components/NavLinks";
 import { ReminderNotifier } from "@/components/ReminderNotifier";
@@ -54,7 +55,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <span className="shrink-0 rounded-full bg-amber-400/15 px-2.5 py-0.5 text-xs font-medium text-amber-200">Demo mode</span>
           )}
         </header>
-        <main className="mx-auto max-w-5xl p-6">{children}</main>
+        <Main>{children}</Main>
         <ReminderNotifier items={pending} />
       </div>
     </div>

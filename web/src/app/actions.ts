@@ -67,6 +67,7 @@ export async function signOut() {
   store.delete((await import("@/lib/reminder-store")).DEMO_MEDS_COOKIE);
   store.delete((await import("@/lib/missions-store")).DEMO_MISSIONS_COOKIE);
   store.delete((await import("@/lib/journal-store")).DEMO_JOURNAL_COOKIE);
+  store.delete((await import("@/lib/body-notes-store")).DEMO_BODY_COOKIE);
   redirect("/");
 }
 
@@ -419,4 +420,46 @@ export async function deleteJournalAction(formData: FormData) {
   const { deleteEntry } = await import("@/lib/journal-store");
   await deleteEntry(viewer, String(formData.get("id") ?? ""));
   revalidatePath("/journal");
+}
+
+export type BodyNoteState = { error?: string; ok?: boolean; level?: import("@/lib/checkups").Escalation; headline?: string; title?: string };
+
+export async function addBodyNoteAction(_prev: BodyNoteState, formData: FormData): Promise<BodyNoteState> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: "Your session has ended. Sign in again." };
+  const { BODY_AREAS, NOTE_KINDS, adviceFor, noteTitle } = await import("@/lib/body-notes");
+  const { addBodyNote, listBodyNotes } = await import("@/lib/body-notes-store");
+  const { localDate } = await import("@/lib/dates");
+  const area = BODY_AREAS.find((a) => a.id === String(formData.get("area") ?? ""));
+  if (!area) return { error: "Choose where on your body." };
+  const kind = NOTE_KINDS.find((k) => k.id === String(formData.get("kind") ?? ""))?.id;
+  if (!kind) return { error: "Choose what you noticed." };
+  const severity = Number(formData.get("severity"));
+  if (!Number.isInteger(severity) || severity < 0 || severity > 10) return { error: "Rate it from 0 to 10." };
+  const today = localDate();
+  const startedOn = String(formData.get("startedOn") ?? "") || today;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startedOn) || startedOn > today) return { error: "Choose a start date that isn't in the future." };
+  const sideRaw = String(formData.get("side") ?? "");
+  const side = area.sided && ["left", "right", "both"].includes(sideRaw) ? (sideRaw as "left" | "right" | "both") : undefined;
+  const notes = String(formData.get("notes") ?? "").trim().slice(0, 1000) || undefined;
+  const note = { area: area.id, side, kind, severity, startedOn, notes };
+  const { problem } = await addBodyNote(viewer, note);
+  if (problem) return { error: problem };
+  const { notes: all } = await listBodyNotes(viewer);
+  const advice = adviceFor({ ...note, id: "new", createdAt: new Date().toISOString() }, all, today);
+  revalidatePath("/", "layout");
+  return { ok: true, level: advice.level, headline: advice.headline, title: noteTitle(note) };
+}
+
+export async function bodyNoteItemAction(formData: FormData) {
+  const viewer = await getViewer();
+  if (!viewer) redirect("/login");
+  const { deleteBodyNote, resolveBodyNote } = await import("@/lib/body-notes-store");
+  const { localDate } = await import("@/lib/dates");
+  const id = String(formData.get("id") ?? "");
+  const op = String(formData.get("op") ?? "");
+  if (op === "resolve") await resolveBodyNote(viewer, id, localDate());
+  else if (op === "reopen") await resolveBodyNote(viewer, id, null);
+  else if (op === "delete") await deleteBodyNote(viewer, id);
+  revalidatePath("/", "layout");
 }

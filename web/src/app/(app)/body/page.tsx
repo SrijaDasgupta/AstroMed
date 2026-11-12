@@ -5,7 +5,12 @@ import { CAREER_LIMIT_MSV, boneSeries } from "@/lib/hazards";
 import { getMissionContext } from "@/lib/mission";
 import { getMyHealth } from "@/lib/my-health";
 import { requireViewer } from "@/lib/session";
-import { BodyMap, type PartStatus, type PartView } from "./BodyMap";
+import { BODY_AREAS, NOTE_KINDS, adviceFor, areaOf, noteTitle, pinOf } from "@/lib/body-notes";
+import { listBodyNotes } from "@/lib/body-notes-store";
+import { localDate } from "@/lib/dates";
+import { getProfile } from "@/lib/profile-store";
+import { listRecords } from "@/lib/records-store";
+import { BodyMap, type Bmi, type NoteView, type PartStatus, type PartView, type VitalCard } from "./BodyMap";
 
 const RANK: Record<PartStatus, number> = { none: -1, good: 0, warning: 1, critical: 2 };
 const fromEscalation = (e: Escalation): PartStatus => (e === "none" ? "good" : e === "routine" ? "warning" : "critical");
@@ -14,6 +19,27 @@ export default async function BodyPage({ searchParams }: { searchParams: Promise
   const viewer = await requireViewer();
   const [{ env, assessment, logs }, ctx] = await Promise.all([getMyHealth(viewer), getMissionContext()]);
   const day = Math.max(ctx.day, 0);
+  const today = localDate();
+  const [{ notes }, profile, { records }] = await Promise.all([
+    listBodyNotes(viewer),
+    getProfile(viewer),
+    viewer.kind === "user" ? listRecords(viewer) : Promise.resolve({ records: [] }),
+  ]);
+  const noteViews: NoteView[] = notes.map((n) => ({ ...n, title: noteTitle(n), part: areaOf(n.area)?.part ?? "skin", pin: pinOf(n), advice: adviceFor(n, notes, today) }));
+  const metric = (k: string) => assessment.metrics.find((m) => m.def.key === k)!;
+  const card = (key: string, label: string, value: string, unit: string, k: string): VitalCard => {
+    const m = metric(k);
+    return { key, label, value, unit, status: m.status, values: m.values.slice(-14), range: m.range, mine: m.recorded[m.recorded.length - 1] };
+  };
+  const sys = metric("systolic"), dia = metric("diastolic"), hr = metric("restingHr"), sleep = metric("sleepHours");
+  const vitals: VitalCard[] = [
+    { ...card("bp", "Blood pressure", `${Math.round(sys.latest)}/${Math.round(dia.latest)}`, "mmHg", "systolic"), status: [sys.status, dia.status].includes("critical") ? "critical" : [sys.status, dia.status].includes("warning") ? "warning" : "good" },
+    card("hr", "Resting heart rate", String(Math.round(hr.latest)), "bpm", "restingHr"),
+    card("sleep", "Sleep", sleep.latest.toFixed(1), "h", "sleepHours"),
+    card("temp", "Temperature", metric("temperature").latest.toFixed(1), "°C", "temperature"),
+  ];
+  const { heightCm, weightKg } = profile.details;
+  const bmi: Bmi = heightCm && weightKg ? { value: weightKg / (heightCm / 100) ** 2, weightKg, heightCm } : null;
   const initial = (await searchParams).part;
 
   function view(p: BodyPart): PartView {
@@ -61,9 +87,22 @@ export default async function BodyPage({ searchParams }: { searchParams: Promise
       <div>
         <p className="text-xs uppercase tracking-widest text-sky-400">Personalized</p>
         <h1 className="mt-1 text-2xl font-semibold">My body</h1>
-        <p className="mt-1 text-slate-400">Choose a body part to see what spaceflight does to it, what to watch for, and your own data. Dot colors show your status from your own data; grey means AstroMed doesn&apos;t measure that part (some show estimates instead).</p>
+        <p className="mt-1 text-slate-400">Tap a dot to see what spaceflight does to that part and your own data. Add anything you notice, such as pain or an injury, to get advice. Red pins are your own notes.</p>
       </div>
-      <BodyMap parts={BODY_PARTS.map(view)} systems={SYSTEMS.map(view)} initial={initial} />
+      <BodyMap
+        parts={BODY_PARTS.map(view)}
+        systems={SYSTEMS.map(view)}
+        notes={noteViews}
+        vitals={vitals}
+        records={records.slice(0, 4).map((r) => ({ id: r.id, title: r.title, detail: r.recordedOn ?? r.createdAt.slice(0, 10) }))}
+        bmi={bmi}
+        areas={BODY_AREAS.map((a) => ({ id: a.id, name: a.name, part: a.part }))}
+        kinds={NOTE_KINDS.map((k) => ({ id: k.id, name: k.name }))}
+        sideAreas={BODY_AREAS.filter((a) => a.sided).map((a) => a.id)}
+        today={today}
+        initial={initial}
+        canUpload={viewer.kind === "user"}
+      />
       <p className="text-xs text-slate-500">For education and demonstration, not medical advice. For symptoms or concerns, contact your flight surgeon.</p>
     </div>
   );

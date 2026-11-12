@@ -7,7 +7,7 @@ export type Fact = { text: string; cite: Cite };
 export type BodyPart = {
   id: string;
   name: string;
-  /** Hotspot position on the 240 × 520 figure. */
+  /** Hotspot position on the 300 × 640 front-view figure. */
   x: number;
   y: number;
   summary: string;
@@ -26,7 +26,7 @@ export const IMM_NOTE = "Expected cases per mission in NASA's sample medical-ris
 
 export const BODY_PARTS: BodyPart[] = [
   {
-    id: "brain", name: "Brain and mind", x: 120, y: 34,
+    id: "brain", name: "Brain and mind", x: 150, y: 30,
     summary: "Sleep, mood, stress and thinking under isolation, workload and schedule changes.",
     effects: [
       { text: "Astronauts sleep about six hours a night in space, less than recommended.", cite: { source: "sleep", page: 11 } },
@@ -39,7 +39,7 @@ export const BODY_PARTS: BodyPart[] = [
     tipIds: ["protect-sleep-period", "private-conference"],
   },
   {
-    id: "eyes", name: "Eyes", x: 106, y: 56,
+    id: "eyes", name: "Eyes", x: 140, y: 55,
     summary: "Vision changes linked to spaceflight (SANS), and everyday eye injuries.",
     effects: [
       { text: "The headward fluid shift in weightlessness is thought to contribute to Spaceflight Associated Neuro-ocular Syndrome (SANS); one sign is swelling of the layer behind the eye.", cite: { source: "cardio", page: 95 } },
@@ -52,7 +52,7 @@ export const BODY_PARTS: BodyPart[] = [
     tipIds: [],
   },
   {
-    id: "ears", name: "Inner ear and balance", x: 155, y: 58,
+    id: "ears", name: "Inner ear and balance", x: 175, y: 63,
     summary: "Balance and motion sickness while adapting to a new gravity level.",
     effects: [
       { text: "NASA requires preventive measures for balance (neuro-vestibular) problems during gravity changes such as launch and landing.", cite: { source: "std1", page: 20 } },
@@ -65,7 +65,7 @@ export const BODY_PARTS: BodyPart[] = [
     tipIds: ["landing-orthostatic"],
   },
   {
-    id: "airways", name: "Nose, throat and lungs", x: 96, y: 140,
+    id: "airways", name: "Nose, throat and lungs", x: 128, y: 146,
     summary: "Congestion and respiratory infections in a closed habitat.",
     effects: [
       { text: "Blood markers in flight suggest a low-level, ongoing inflammation.", cite: { source: "cardio", page: 96 } },
@@ -76,7 +76,7 @@ export const BODY_PARTS: BodyPart[] = [
     tipIds: ["temperature-regulation"],
   },
   {
-    id: "heart", name: "Heart and blood vessels", x: 136, y: 142,
+    id: "heart", name: "Heart and blood vessels", x: 165, y: 152,
     summary: "How the heart and circulation adapt to weightlessness and readapt to gravity.",
     effects: [
       { text: "In flight, heart rate and blood pressure were lower than before launch; after landing, blood pressure dropped on standing.", cite: { source: "cardio", page: 23 } },
@@ -89,7 +89,7 @@ export const BODY_PARTS: BodyPart[] = [
     tipIds: ["exercise-heart", "bp-lower-in-flight"],
   },
   {
-    id: "gut", name: "Gut and metabolism", x: 140, y: 212,
+    id: "gut", name: "Gut and metabolism", x: 150, y: 226,
     summary: "Digestion, blood sugar and how medicines are absorbed.",
     effects: [
       { text: "After long flights, blood glucose was unchanged but insulin was about 50% higher, a sign of insulin resistance.", cite: { source: "cardio", page: 40 } },
@@ -101,7 +101,7 @@ export const BODY_PARTS: BodyPart[] = [
     tipIds: ["glucose-insulin"],
   },
   {
-    id: "kidneys", name: "Kidneys and bladder", x: 98, y: 212,
+    id: "kidneys", name: "Kidneys and bladder", x: 150, y: 286,
     summary: "Kidney stones linked to bone loss, and urinary infections.",
     effects: [
       { text: "Calcium released by bone loss can raise the risk of kidney stones, which may affect a mission more than the bone loss itself.", cite: { source: "std1", page: 39 } },
@@ -114,7 +114,7 @@ export const BODY_PARTS: BodyPart[] = [
     tipIds: ["resistive-exercise-bone"],
   },
   {
-    id: "bones", name: "Bones and spine", x: 120, y: 262,
+    id: "bones", name: "Bones and spine", x: 120, y: 300,
     summary: "Bone density loss in the hips and spine, and back problems.",
     effects: [
       { text: "Astronauts lose about 1–1.5% of hip and spine bone density per month in weightlessness.", cite: { source: "bone", page: 42 } },
@@ -128,7 +128,7 @@ export const BODY_PARTS: BodyPart[] = [
     tipIds: ["resistive-exercise-bone"],
   },
   {
-    id: "muscles", name: "Muscles and joints", x: 100, y: 352,
+    id: "muscles", name: "Muscles and joints", x: 126, y: 372,
     summary: "Strength, fitness and sprains.",
     effects: [
       { text: "NASA requires keeping up strength and aerobic fitness, which crews need for emergency tasks such as leaving the vehicle.", cite: { source: "std1", page: 20 } },
@@ -141,7 +141,7 @@ export const BODY_PARTS: BodyPart[] = [
     tipIds: ["exercise-heart", "resistive-exercise-bone"],
   },
   {
-    id: "skin", name: "Skin", x: 186, y: 250,
+    id: "skin", name: "Skin", x: 84, y: 252,
     summary: "Scrapes, rashes and skin infections, the most common problems in flight.",
     effects: [{ text: "Skin abrasions and rashes are the second and third most likely medical conditions in NASA's sample model.", cite: IMM }],
     conditions: [{ name: "Skin abrasion", perMission: 9.86 }, { name: "Skin rash", perMission: 9.83 }, { name: "Skin infection", perMission: 1.38 }],

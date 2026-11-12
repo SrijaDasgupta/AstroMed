@@ -10,6 +10,7 @@ import { getMyHealth } from "@/lib/my-health";
 import { loadTipActions } from "@/lib/profile-store";
 import { routineStats } from "@/lib/reminder-store";
 import { requireViewer } from "@/lib/session";
+import { listBodyNotes } from "@/lib/body-notes-store";
 import { buildSummary, STATUS_TEXT, type AreaStatus, type Cite } from "@/lib/summary";
 import { SOURCES } from "@/lib/tips";
 import { PrintButton } from "./PrintButton";
@@ -44,14 +45,14 @@ function Row({ k, v }: { k: string; v: React.ReactNode }) {
 export default async function SummaryPage({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
   const viewer = await requireViewer();
   const days = (await searchParams).days === "30" ? 30 : 7;
-  const [health, ctx, { entries }, actions, routine, { logs }] = await Promise.all([
-    getMyHealth(viewer), getMissionContext(), listEntries(viewer, 400), loadTipActions(viewer), routineStats(viewer, days), loadLogs(viewer),
+  const [health, ctx, { entries }, actions, routine, { logs }, { notes: bodyNotes }] = await Promise.all([
+    getMyHealth(viewer), getMissionContext(), listEntries(viewer, 400), loadTipActions(viewer), routineStats(viewer, days), loadLogs(viewer), listBodyNotes(viewer),
   ]);
   const missions = dailyMissions(health.assessment, health.env);
   const p = progress(logs, actions, missions.map((m) => m.id), undefined, entries.map((e) => e.date));
   const s = buildSummary({
     assessment: health.assessment, logs, journal: entries, ctx, routine, checkupsDue: dueCount(logs),
-    progress: { xp: p.xp, rank: p.rank, streak: p.streak }, days, includeSample: viewer.kind === "demo",
+    progress: { xp: p.xp, rank: p.rank, streak: p.streak }, days, includeSample: viewer.kind === "demo", bodyNotes,
   });
   const fmt = (v: number | undefined, dp = 0, unit = "") => (v === undefined ? "—" : `${v.toFixed(dp)}${unit}`);
 
@@ -118,6 +119,7 @@ export default async function SummaryPage({ searchParams }: { searchParams: Prom
             <Row k="Sleep" v={s.physical.sleepNights ? <>{fmt(s.physical.sleepAvg, 1, " h")} <span className="text-xs text-slate-500">{s.physical.shortNights} short</span></> : <span className="text-slate-500">no logs</span>} />
             <Row k="Exercise" v={`${s.physical.exerciseDays} of ${days} days · ${Math.round(s.physical.exerciseMin)} min`} />
             <Row k="Water" v={fmt(s.physical.waterAvg, 1, " L/day")} />
+            <Row k="Body notes" v={s.physical.bodyNotesOpen ? <Link href="/body" className="text-sky-300 hover:text-sky-200">{s.physical.bodyNotesOpen} open</Link> : <span className="text-slate-500">none open</span>} />
             <Row k={ctx.mission ? "Radiation this mission" : ctx.none ? "Radiation (no mission set)" : `Radiation (assumed ${ctx.day} days)`} v={`${s.physical.dose.toFixed(1)} mSv (${s.physical.dosePct.toFixed(1)}%)`} />
           </dl>
           <Link href="/vitals" className="mt-3 inline-block text-sm text-sky-300 hover:text-sky-200 print:hidden">My vitals →</Link>
