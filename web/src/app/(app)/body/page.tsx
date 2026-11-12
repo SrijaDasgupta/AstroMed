@@ -5,12 +5,10 @@ import { CAREER_LIMIT_MSV, boneSeries } from "@/lib/hazards";
 import { getMissionContext } from "@/lib/mission";
 import { getMyHealth } from "@/lib/my-health";
 import { requireViewer } from "@/lib/session";
-import { BODY_AREAS, NOTE_KINDS, adviceFor, areaOf, noteTitle, pinOf } from "@/lib/body-notes";
-import { listBodyNotes } from "@/lib/body-notes-store";
-import { localDate } from "@/lib/dates";
+import { loadProblems } from "@/lib/problems";
 import { getProfile } from "@/lib/profile-store";
 import { listRecords } from "@/lib/records-store";
-import { BodyMap, type Bmi, type NoteView, type PartStatus, type PartView, type VitalCard } from "./BodyMap";
+import { BodyMap, type Bmi, type PartStatus, type PartView, type VitalCard } from "./BodyMap";
 
 const RANK: Record<PartStatus, number> = { none: -1, good: 0, warning: 1, critical: 2 };
 const fromEscalation = (e: Escalation): PartStatus => (e === "none" ? "good" : e === "routine" ? "warning" : "critical");
@@ -19,13 +17,11 @@ export default async function BodyPage({ searchParams }: { searchParams: Promise
   const viewer = await requireViewer();
   const [{ env, assessment, logs }, ctx] = await Promise.all([getMyHealth(viewer), getMissionContext()]);
   const day = Math.max(ctx.day, 0);
-  const today = localDate();
-  const [{ notes }, profile, { records }] = await Promise.all([
-    listBodyNotes(viewer),
+  const [{ views: noteViews, photos, areas, kinds, today }, profile, { records }] = await Promise.all([
+    loadProblems(viewer),
     getProfile(viewer),
     viewer.kind === "user" ? listRecords(viewer) : Promise.resolve({ records: [] }),
   ]);
-  const noteViews: NoteView[] = notes.map((n) => ({ ...n, title: noteTitle(n), part: areaOf(n.area)?.part ?? "skin", pin: pinOf(n), advice: adviceFor(n, notes, today) }));
   const metric = (k: string) => assessment.metrics.find((m) => m.def.key === k)!;
   const card = (key: string, label: string, value: string, unit: string, k: string): VitalCard => {
     const m = metric(k);
@@ -96,9 +92,9 @@ export default async function BodyPage({ searchParams }: { searchParams: Promise
         vitals={vitals}
         records={records.slice(0, 4).map((r) => ({ id: r.id, title: r.title, detail: r.recordedOn ?? r.createdAt.slice(0, 10) }))}
         bmi={bmi}
-        areas={BODY_AREAS.map((a) => ({ id: a.id, name: a.name, part: a.part }))}
-        kinds={NOTE_KINDS.map((k) => ({ id: k.id, name: k.name }))}
-        sideAreas={BODY_AREAS.filter((a) => a.sided).map((a) => a.id)}
+        areas={areas}
+        kinds={kinds}
+        photos={photos}
         today={today}
         initial={initial}
         canUpload={viewer.kind === "user"}

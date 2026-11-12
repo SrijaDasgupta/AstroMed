@@ -422,18 +422,29 @@ export async function deleteJournalAction(formData: FormData) {
   revalidatePath("/journal");
 }
 
-export type BodyNoteState = { error?: string; ok?: boolean; level?: import("@/lib/checkups").Escalation; headline?: string; title?: string };
+export type BodyNoteState = { error?: string; ok?: boolean; level?: import("@/lib/checkups").Escalation; headline?: string; title?: string; related?: string[]; redFlags?: string[] };
+
+const KIND_FROM_CATEGORY: Record<string, string> = {
+  environmental: "exposure", eyes: "vision", ent: "other", dental: "dental", heart: "pain", lungs: "breathing", gut: "nausea-gut",
+  urinary: "urinary", musculoskeletal: "pain", skin: "skin", neuro: "other", mind: "mood-stress", other: "other",
+};
 
 export async function addBodyNoteAction(_prev: BodyNoteState, formData: FormData): Promise<BodyNoteState> {
   const viewer = await getViewer();
   if (!viewer) return { error: "Your session has ended. Sign in again." };
   const { BODY_AREAS, NOTE_KINDS, adviceFor, noteTitle } = await import("@/lib/body-notes");
-  const { addBodyNote, listBodyNotes } = await import("@/lib/body-notes-store");
+  const { addBodyNote, checkPhoto, listBodyNotes } = await import("@/lib/body-notes-store");
+  const { analyzeText } = await import("@/lib/space-conditions");
   const { localDate } = await import("@/lib/dates");
-  const area = BODY_AREAS.find((a) => a.id === String(formData.get("area") ?? ""));
-  if (!area) return { error: "Choose where on your body." };
-  const kind = NOTE_KINDS.find((k) => k.id === String(formData.get("kind") ?? ""))?.id;
-  if (!kind) return { error: "Choose what you noticed." };
+  const notes = String(formData.get("notes") ?? "").trim().slice(0, 3000) || undefined;
+  const pickedKind = NOTE_KINDS.find((k) => k.id === String(formData.get("kind") ?? ""))?.id;
+  if (!notes && !pickedKind) return { error: "Describe what's happening, or choose what you noticed." };
+  const analysis = analyzeText(notes ?? "", String(formData.get("area") ?? ""));
+  const best = analysis.matches[0]?.condition;
+  const area = BODY_AREAS.find((a) => a.id === String(formData.get("area") ?? ""))
+    ?? BODY_AREAS.find((a) => a.id === best?.areas[0])
+    ?? BODY_AREAS.find((a) => a.id === "whole-body")!;
+  const kind = (pickedKind ?? (best ? KIND_FROM_CATEGORY[best.category] : "other")) as (typeof NOTE_KINDS)[number]["id"];
   const severity = Number(formData.get("severity"));
   if (!Number.isInteger(severity) || severity < 0 || severity > 10) return { error: "Rate it from 0 to 10." };
   const today = localDate();
@@ -441,14 +452,35 @@ export async function addBodyNoteAction(_prev: BodyNoteState, formData: FormData
   if (!/^\d{4}-\d{2}-\d{2}$/.test(startedOn) || startedOn > today) return { error: "Choose a start date that isn't in the future." };
   const sideRaw = String(formData.get("side") ?? "");
   const side = area.sided && ["left", "right", "both"].includes(sideRaw) ? (sideRaw as "left" | "right" | "both") : undefined;
-  const notes = String(formData.get("notes") ?? "").trim().slice(0, 1000) || undefined;
-  const note = { area: area.id, side, kind, severity, startedOn, notes };
-  const { problem } = await addBodyNote(viewer, note);
+  const photo = formData.get("photo") instanceof File ? (formData.get("photo") as File) : null;
+  const bad = checkPhoto(photo);
+  if (bad) return { error: bad };
+  const note = { area: area.id, side, kind, severity, startedOn, notes, topics: analysis.matches.slice(0, 3).map((m) => m.condition.id) };
+  const { problem } = await addBodyNote(viewer, note, photo);
   if (problem) return { error: problem };
   const { notes: all } = await listBodyNotes(viewer);
   const advice = adviceFor({ ...note, id: "new", createdAt: new Date().toISOString() }, all, today);
   revalidatePath("/", "layout");
-  return { ok: true, level: advice.level, headline: advice.headline, title: noteTitle(note) };
+  return { ok: true, level: advice.level, headline: advice.headline, title: noteTitle(note), related: advice.related.map((r) => r.name), redFlags: advice.redFlags };
+}
+
+export type UpdateState = { error?: string; ok?: boolean };
+
+export async function addProblemUpdateAction(_prev: UpdateState, formData: FormData): Promise<UpdateState> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: "Your session has ended. Sign in again." };
+  const { addNoteUpdate, checkPhoto } = await import("@/lib/body-notes-store");
+  const id = String(formData.get("id") ?? "");
+  const severity = Number(formData.get("severity"));
+  if (!Number.isInteger(severity) || severity < 0 || severity > 10) return { error: "Rate it from 0 to 10." };
+  const body = String(formData.get("body") ?? "").trim().slice(0, 3000) || undefined;
+  const photo = formData.get("photo") instanceof File ? (formData.get("photo") as File) : null;
+  const bad = checkPhoto(photo);
+  if (bad) return { error: bad };
+  const { problem } = await addNoteUpdate(viewer, id, { severity, body }, photo);
+  if (problem) return { error: problem };
+  revalidatePath("/", "layout");
+  return { ok: true };
 }
 
 export async function bodyNoteItemAction(formData: FormData) {

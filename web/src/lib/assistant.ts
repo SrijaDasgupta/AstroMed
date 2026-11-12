@@ -4,6 +4,7 @@
  * builds an answer from My vitals, checkups, exposure and progress. An AI model can later be
  * placed in front of this, using the same data.
  */
+import { analyzeText, type Analysis } from "@/lib/space-conditions";
 import { CHECKUPS, getCheckup } from "@/lib/checkups";
 import type { CheckupLog } from "@/lib/checkup-store";
 import { dueStatus } from "@/lib/checkup-schedule";
@@ -178,6 +179,18 @@ export function answer(rawQuestion: string, ctx: AssistantContext): Answer {
 
   if (q.trim().length < 2 || has(q, /\b(help|what can you|how do i use|examples?)\b/)) return help();
 
+  // Emergency warning signs come before anything else.
+  const read = analyzeText(rawQuestion);
+  if (read.redFlags.length) {
+    return {
+      blocks: [
+        { type: "text", tone: "warning", text: `That sounds like it could be an emergency (${read.redFlags.map((f) => f.label.toLowerCase()).join(", ")}). Contact your flight surgeon or emergency services now; don't wait for AstroMed.${read.redFlags.some((f) => f.id === "self-harm") ? " If you're thinking about harming yourself, please reach out now. On Earth in the US you can call or text 988." : ""}` },
+        { type: "links", links: [{ href: "/problems", label: "Record it in Problems & advice" }] },
+      ],
+      suggestions: [],
+    };
+  }
+
   // Checkups
   if (has(q, /\b(checkups?|check-ups?|due|reminders?|exam)\b/)) {
     const rows = CHECKUPS.map((c) => ({ c, s: dueStatus(c, ctx.logs) }));
@@ -278,9 +291,35 @@ export function answer(rawQuestion: string, ctx: AssistantContext): Answer {
   }
 
   // Tips about a topic
+  if (read.matches.length && has(q, /\b(advice|should i|what can i do|what do i do|help with|is it normal|my)\b/)) return problemAnswer(read);
   if (has(q, /\b(tip|tips|advice|recommend|should i|what can i do)\b/)) {
     return { blocks: [{ type: "text", text: "Here are tips for your mission. Ask about a specific measure, such as \"tips for sleep\", for more targeted ones." }, { type: "tips", tipIds: TIPS.filter((t) => t.habit).slice(0, 3).map((t) => t.id) }, { type: "links", links: [{ href: "/tips", label: "All health tips" }] }], suggestions: SUGGESTIONS.slice(0, 3) };
   }
 
+  // A symptom or spaceflight problem described in the person's own words.
+  if (read.matches.length) return problemAnswer(read);
+
   return { blocks: [{ type: "text", text: "Sorry, I didn't understand that. I can answer questions about your vitals, checkups, radiation, bone loss and progress." }, ...help().blocks.slice(1)], suggestions: SUGGESTIONS };
+}
+
+const WHEN: Record<string, string> = {
+  now: "Contact your flight surgeon or emergency services now.",
+  today: "Contact your flight surgeon today.",
+  routine: "Bring it up at your next check-in, sooner if it gets worse.",
+  none: "Usually fine to manage yourself; keep an eye on it.",
+};
+
+function problemAnswer(read: Analysis): Answer {
+  const c = read.matches[0].condition;
+  const others = read.matches.slice(1, 3).map((m) => m.condition.name.toLowerCase());
+  return {
+    blocks: [
+      { type: "text", text: `That sounds most like ${c.name.toLowerCase()}${others.length ? ` (or possibly ${others.join(" or ")})` : ""}. ${WHEN[c.level]}`, tone: c.level === "today" || c.level === "now" ? "warning" : "normal" },
+      { type: "text", text: `Meanwhile: ${c.care.join(" ")}` },
+      ...(c.watch.length ? [{ type: "text" as const, text: `Get help sooner if: ${c.watch.join("; ").toLowerCase()}.`, tone: "muted" as const }] : []),
+      ...(c.fact ? [{ type: "text" as const, text: `In space: ${c.fact.text}`, tone: "muted" as const }] : []),
+      { type: "links", links: [{ href: "/problems", label: "Record it and get advice as it changes" }, ...(c.links ?? []).map((l) => ({ href: l.href, label: l.text }))].slice(0, 3) },
+    ],
+    suggestions: ["How am I doing?", "Which checkups are due?"],
+  };
 }

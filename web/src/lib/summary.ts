@@ -3,7 +3,7 @@
  * ranked suggestions, and questions for the flight surgeon. Suggestions explain the data behind
  * them and cite the NASA page they rest on. No diagnosis and no medicine recommendations.
  */
-import { adviceFor, areaOf, noteTitle, type BodyNote } from "@/lib/body-notes";
+import { adviceFor, noteTitle, type BodyNote } from "@/lib/body-notes";
 import type { CheckupLog } from "@/lib/checkup-store";
 import type { Assessment, MetricKey, Status } from "@/lib/crew";
 import { addDays, localDate } from "@/lib/dates";
@@ -175,7 +175,7 @@ export function buildSummary(i: Input) {
   const openNotes = bodyNotes.filter((n) => !n.resolvedOn).map((n) => ({ n, a: adviceFor(n, bodyNotes, today) }));
   for (const { n, a } of openNotes) {
     const priority = a.level === "now" || a.level === "today" ? 1 : a.level === "routine" ? 2 : 3;
-    suggestions[a.level === "now" ? "unshift" : "push"]({ id: `body-${n.id}`, area: "physical", priority, title: `${noteTitle(n)}: ${a.headline.toLowerCase()}`, reason: `${n.severity}/10 since ${n.startedOn}. ${a.why[0]}`, action: { text: "See advice on My body", href: `/body?part=${areaOf(n.area)?.part ?? "skin"}` }, cite: a.context?.cite });
+    suggestions[a.level === "now" ? "unshift" : "push"]({ id: `body-${n.id}`, area: "physical", priority, title: `${noteTitle(n)}: ${a.headline.toLowerCase()}`, reason: `${n.severity}/10 since ${n.startedOn}. ${a.why[0]}`, action: { text: "See the advice", href: `/problems#p-${n.id}` }, cite: a.context?.cite });
     if (a.question) questions.push({ text: a.question, reason: a.why.join(" ") });
   }
   const bodyWorst = openNotes.some(({ a }) => a.level === "now" || a.level === "today") ? "urgent" : openNotes.some(({ a }) => a.level === "routine") ? "routine" : undefined;

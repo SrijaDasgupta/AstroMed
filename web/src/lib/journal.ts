@@ -37,7 +37,7 @@ export function promptOfDay(date: string) {
 }
 
 /** Words that mean the person may be at risk. Shown support resources, never blocked or stored differently. */
-const RISK = /\b(suicid\w*|kill (my|him|her)self|end (my|it all)|self[- ]?harm|hurt(ing)? myself|want to die|don'?t want to (live|be here)|no reason to live|better off dead)\b/i;
+const RISK = /\b(suicid\w*|kill(ing)? (my|him|her)self|end(ing)? (my life|it all)|self[- ]?harm|hurt(ing)? myself|want to die|don'?t want to (live|be here|be alive)|no reason to live|better off dead)\b/i;
 export function needsSupport(text: string) {
   return RISK.test(text);
 }

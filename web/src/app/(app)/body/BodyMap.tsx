@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { AlertTriangle, ArrowUpRight, CheckCircle2, CircleDashed, ExternalLink, FileText, OctagonAlert, Plus, Siren, Stethoscope } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, CheckCircle2, CircleDashed, ExternalLink, FileText, OctagonAlert, Plus } from "lucide-react";
 import { TipCard } from "@/components/TipCard";
 import type { Cite, Fact } from "@/lib/body";
-import type { Advice, BodyNote } from "@/lib/body-notes";
 import type { Escalation } from "@/lib/checkups";
+import { Level, ProblemCard, type ProblemView } from "@/components/problems/ProblemCard";
+import { currentSeverity } from "@/lib/body-notes";
+import { ReportForm, type AreaOption } from "@/components/problems/ReportForm";
 import { SOURCES, TIPS } from "@/lib/tips";
 import { AnatomyDefs, AnatomyFigure, Floor } from "./Anatomy";
-import { NoteForm } from "./NoteForm";
-import { NoteOps } from "./NoteOps";
 
 export type PartStatus = "good" | "warning" | "critical" | "none";
 export type PartView = {
@@ -26,7 +26,7 @@ export type PartView = {
   readings: { label: string; value: string; detail?: string; status?: PartStatus }[];
   status: PartStatus;
 };
-export type NoteView = BodyNote & { title: string; part: string; pin?: { x: number; y: number }; advice: Advice };
+export type NoteView = ProblemView;
 export type VitalCard = { key: string; label: string; value: string; unit: string; status: PartStatus; values: number[]; range: [number, number]; mine: boolean };
 export type RecordItem = { id: string; title: string; detail: string };
 export type Bmi = { value: number; weightKg: number; heightCm: number } | null;
@@ -39,27 +39,10 @@ const STATUS: Record<PartStatus, { label: string; color: string; Icon: typeof Ch
   none: { label: "Not measured", color: "#64748b", Icon: CircleDashed },
 };
 
-export const LEVEL: Record<Escalation, { label: string; color: string; Icon: typeof CheckCircle2 }> = {
-  none: { label: "Self-care", color: "#0ca30c", Icon: CheckCircle2 },
-  routine: { label: "Next check-in", color: "#fab219", Icon: Stethoscope },
-  today: { label: "Today", color: "#ec835a", Icon: AlertTriangle },
-  now: { label: "Now", color: "#d03b3b", Icon: Siren },
-};
-
 function Status({ s }: { s: PartStatus }) {
   const { label, color, Icon } = STATUS[s];
   return (
     <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-slate-300">
-      <Icon className="h-3.5 w-3.5" style={{ color }} aria-hidden />
-      {label}
-    </span>
-  );
-}
-
-export function Level({ l }: { l: Escalation }) {
-  const { label, color, Icon } = LEVEL[l];
-  return (
-    <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-white/5 px-2 py-0.5 text-xs text-slate-200">
       <Icon className="h-3.5 w-3.5" style={{ color }} aria-hidden />
       {label}
     </span>
@@ -135,7 +118,7 @@ function Figure({ parts, notes, selected, onSelect, focusNote }: { parts: PartVi
         );
       })}
       {notes.filter((n) => n.pin && !n.resolvedOn).map((n) => (
-        <g key={n.id} role="button" tabIndex={0} aria-label={`Your note: ${n.title}, ${LEVEL[n.advice.level].label}`}
+        <g key={n.id} role="button" tabIndex={0} aria-label={`Your note: ${n.title}`}
           onClick={() => onSelect(n.part, n.id)}
           onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(n.part, n.id); } }}
           className="cursor-pointer outline-none">
@@ -180,41 +163,9 @@ function BmiStrip({ bmi }: { bmi: Bmi }) {
   );
 }
 
-function AdviceCard({ n }: { n: NoteView }) {
-  const a = n.advice;
-  const urgent = a.level === "now" || a.level === "today";
-  return (
-    <article className={`rounded-2xl border p-4 ${a.level === "now" ? "border-rose-500/50 bg-rose-500/10" : urgent ? "border-orange-400/40 bg-orange-400/5" : "border-white/10 bg-white/[0.03]"}`}>
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h4 className="font-medium">{n.title}</h4>
-          <p className="text-xs text-slate-500">{n.severity}/10 · since {n.startedOn}{n.resolvedOn ? ` · resolved ${n.resolvedOn}` : ""}</p>
-        </div>
-        <Level l={a.level} />
-      </div>
-      <p className={`mt-3 text-sm font-medium ${a.level === "now" ? "text-rose-200" : urgent ? "text-orange-200" : "text-slate-100"}`}>{a.headline}</p>
-      <ul className="mt-1 space-y-0.5 text-sm text-slate-300">{a.why.map((w) => <li key={w}>{w}</li>)}</ul>
-      {a.level === "now" && <p className="mt-2 text-sm text-rose-200">Don&apos;t wait for AstroMed. If you&apos;re on Earth, call your local emergency number.</p>}
-      {n.notes && <p className="mt-2 whitespace-pre-line rounded-lg bg-black/20 p-2 text-xs text-slate-400">{n.notes}</p>}
-      {a.selfCare.length > 0 && (
-        <>
-          <p className="mt-3 text-xs font-medium uppercase tracking-widest text-slate-500">Meanwhile</p>
-          <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-300">{a.selfCare.map((s) => <li key={s}>{s}</li>)}</ul>
-        </>
-      )}
-      {a.context && <p className="mt-3 text-xs text-slate-400">In space: {a.context.text} <CiteLink c={a.context.cite} /></p>}
-      {a.question && <p className="mt-3 rounded-lg border border-white/10 p-2 text-xs text-slate-300"><Stethoscope className="mr-1 inline h-3.5 w-3.5 text-slate-400" aria-hidden />Ask your flight surgeon: {a.question}</p>}
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-        {a.links.map((l) => <Link key={l.href} href={l.href} className="text-sm text-sky-300 hover:text-sky-200">{l.text} →</Link>)}
-        <span className="ml-auto"><NoteOps id={n.id} resolved={Boolean(n.resolvedOn)} /></span>
-      </div>
-    </article>
-  );
-}
-
-export function BodyMap({ parts, systems, notes, vitals, records, bmi, areas, kinds, sideAreas, today, initial, canUpload }: {
-  parts: PartView[]; systems: PartView[]; notes: NoteView[]; vitals: VitalCard[]; records: RecordItem[]; bmi: Bmi;
-  areas: (Option & { part: string })[]; kinds: Option[]; sideAreas: string[]; today: string; initial?: string; canUpload: boolean;
+export function BodyMap({ parts, systems, notes, photos, vitals, records, bmi, areas, kinds, today, initial, canUpload }: {
+  parts: PartView[]; systems: PartView[]; notes: NoteView[]; photos: Record<string, string>; vitals: VitalCard[]; records: RecordItem[]; bmi: Bmi;
+  areas: (AreaOption & { part: string })[]; kinds: Option[]; today: string; initial?: string; canUpload: boolean;
 }) {
   const all = [...parts, ...systems];
   const firstNote = notes.find((n) => !n.resolvedOn);
@@ -261,7 +212,7 @@ export function BodyMap({ parts, systems, notes, vitals, records, bmi, areas, ki
                 {active.map((n) => (
                   <li key={n.id}>
                     <button type="button" onClick={() => select(n.part, n.id)} className={`flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-xs ${focusNote === n.id ? "bg-white/10" : "hover:bg-white/5"}`}>
-                      <span className="min-w-0"><span className="block truncate text-slate-200">{n.title}</span><span className="text-slate-500">{n.severity}/10</span></span>
+                      <span className="min-w-0"><span className="block truncate text-slate-200">{n.title}</span><span className="text-slate-500">{currentSeverity(n)}/10</span></span>
                       <Level l={n.advice.level} />
                     </button>
                   </li>
@@ -346,7 +297,7 @@ export function BodyMap({ parts, systems, notes, vitals, records, bmi, areas, ki
               <p className="rounded-2xl border border-dashed border-white/15 p-4 text-sm text-slate-400">
                 No notes for {part.name.toLowerCase()}. Something bothering you here? <a href="#add-note" className="text-sky-300 hover:text-sky-200">Add a body note</a> to get advice.
               </p>
-            ) : partNotes.map((n) => <AdviceCard key={n.id} n={n} />)}
+            ) : partNotes.map((n) => <ProblemCard key={n.id} n={n} photos={photos} canAttach={canUpload} compact />)}
           </div>
 
           <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 p-4 ring-1 ring-white/10">
@@ -361,19 +312,13 @@ export function BodyMap({ parts, systems, notes, vitals, records, bmi, areas, ki
       </div>
 
       <section id="add-note" className="scroll-mt-20 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
-        <h2 className="text-lg font-medium">Add a body detail</h2>
-        <p className="mt-1 text-sm text-slate-400">Record pain, an injury, swelling or anything else you notice. AstroMed suggests what to do and how soon to involve your flight surgeon.</p>
+        <h2 className="text-lg font-medium">Report a problem</h2>
+        <p className="mt-1 text-sm text-slate-400">Describe anything you notice in your own words, add a photo if it helps, and get advice. Follow it over time in <Link href="/problems" className="text-sky-300 hover:text-sky-200">Problems &amp; advice</Link>.</p>
         <div className="mt-4">
-          <NoteForm key={selected} areas={areas} kinds={kinds} sideAreas={sideAreas} today={today} defaultArea={areas.find((a) => a.part === selected)?.id ?? ""} />
+          <ReportForm key={selected} areas={areas} kinds={kinds} today={today} canAttach={canUpload} defaultArea={areas.find((a) => a.part === selected)?.id ?? ""} />
         </div>
       </section>
 
-      {notes.some((n) => n.resolvedOn) && (
-        <section className="space-y-3">
-          <h2 className="text-lg font-medium">Resolved notes</h2>
-          <div className="grid gap-3 md:grid-cols-2">{notes.filter((n) => n.resolvedOn).map((n) => <AdviceCard key={n.id} n={n} />)}</div>
-        </section>
-      )}
 
       <section id="learn" className="scroll-mt-20 space-y-5 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
         <h2 className="text-lg font-medium">{part.name}: what spaceflight does</h2>

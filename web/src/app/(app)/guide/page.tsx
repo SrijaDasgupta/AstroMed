@@ -18,6 +18,7 @@ const PAGES: { area: string; items: [string, string, string][] }[] = [
     area: "Personalized: your long-term picture",
     items: [
       ["/summary", "My summary", "Everything in one place: physical and mental health, routine, suggestions and questions for your flight surgeon. Printable."],
+      ["/problems", "Problems & advice", "Report any problem, physical, mental or environmental, in your own words with photos. Get advice and follow it with updates."],
       ["/me", "My space", "Your rank, streak, badges and today's missions."],
       ["/vitals", "My vitals", "Charts of each vital against your own normal range."],
       ["/history", "Long-term history", "Weeks and months of your readings."],
@@ -102,7 +103,7 @@ export default async function GuidePage() {
         <h2 className="text-lg font-medium">3. A routine that works</h2>
         <div className="grid gap-4 md:grid-cols-3">
           {[
-            { icon: Sun, title: "Every day", items: [["/log", "Log today's data (about a minute)"], ["/reminders", "Tick off medicines and reminders"], ["/tips", "Do today's missions for XP"]] },
+            { icon: Sun, title: "Every day", items: [["/log", "Log today's data (about a minute)"], ["/reminders", "Tick off medicines and reminders"], ["/problems", "Report anything new, or update an ongoing problem"], ["/tips", "Do today's missions for XP"]] },
             { icon: CalendarDays, title: "Every week", items: [["/checkups", "Do the checkups that are due"], ["/summary", "Read My summary and its suggestions"], ["/journal", "Write a journal entry or two"]] },
             { icon: CalendarCheck, title: "Before seeing your flight surgeon", items: [["/summary", "Print My summary"], ["/summary", "Bring the “Discuss with your flight surgeon” questions"], ["/history", "Check long-term trends"]] },
           ].map(({ icon: Icon, title, items }) => (

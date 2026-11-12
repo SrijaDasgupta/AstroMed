@@ -18,7 +18,7 @@ const AREAS = [
     icon: LineChart,
     title: "Personalized",
     blurb: "Your long-term picture.",
-    items: ["Your overall summary of physical and mental health, with suggestions", "Your trends and long-term history against your own normal range", "Medicines and reminders, exercise plan and journal", "Your profile, records and smartwatch imports", "Your body map, exposure and progress", "Ask questions about your own data"],
+    items: ["Your overall summary of physical and mental health, with suggestions", "Report any problem in your own words, with photos, and get advice", "Your trends and long-term history against your own normal range", "Medicines and reminders, exercise plan and journal", "Your profile, records and smartwatch imports", "Your body map, exposure and progress", "Ask questions about your own data"],
     cta: "See my summary",
   },
 ];
