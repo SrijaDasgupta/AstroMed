@@ -29,6 +29,8 @@ type Input = {
   progress: { xp: number; rank: string; streak: number };
   days: number;
   today?: string;
+  /** Daily food energy need in kcal (NASA's formula from the profile, or its default). */
+  energyTarget?: number;
   /** Body notes (pain, injuries…) the person recorded on the body map. */
   bodyNotes?: BodyNote[];
   /** Demo mode: also use sample-data alerts so suggestions can be explored. */
@@ -74,6 +76,17 @@ export function buildSummary(i: Input) {
   const exerciseMin = [...resist, ...aero].reduce((s, x) => s + x.value, 0);
   const water = daily(i.logs, "waterL", from, today);
   const waterAvg = avg(water.map((x) => x.value));
+  // Nutrition: energy eaten against the person's need (+200 kcal per EVA hour), and weight change.
+  const kcal = daily(i.logs, "kcal", from, today);
+  const eva = daily(i.logs, "evaHours", from, today);
+  const need = (d: string) => (i.energyTarget ?? 3035) + 200 * (eva.find((x) => x.date === d)?.value ?? 0);
+  const kcalAvg = avg(kcal.map((x) => x.value));
+  const kcalPct = kcal.length ? avg(kcal.map((x) => (x.value / need(x.date)) * 100)) : undefined;
+  const lowFoodDays = kcal.filter((x) => x.value < need(x.date) * 0.9).length;
+  const weights = daily(i.logs, "weightKg", addDays(today, -29), today);
+  const weightNow = weights.at(-1)?.value;
+  const weightChange = weights.length >= 2 ? weights.at(-1)!.value - weights[0].value : undefined;
+  const weightChangePct = weightChange !== undefined ? (weightChange / weights[0].value) * 100 : undefined;
   const lastReading = [...i.logs].filter((l) => l.answers && VITALS.some((k) => typeof l.answers![k] === "number")).map((l) => localDate(new Date(l.createdAt))).sort().at(-1);
   const dosePct = (i.ctx.doseSoFar / 600) * 100;
 
@@ -100,6 +113,17 @@ export function buildSummary(i: Input) {
   }
   if (water.length >= 2 && waterAvg !== undefined && waterAvg < 2.5) {
     suggestions.push({ id: "water", area: "physical", priority: 3, title: "Drink more water", reason: `You averaged ${waterAvg.toFixed(1)} L a day; NASA's minimum is 2.5 L per crewmember per day.`, action: { text: "Add a water reminder", href: "/reminders" }, cite: { source: "std2", page: 68 } });
+  }
+  if (kcal.length >= 3 && kcalPct !== undefined && kcalPct < 90) {
+    suggestions.push({ id: "food", area: "physical", priority: kcalPct < 75 ? 1 : 2, title: "Eat enough to meet your energy needs", reason: `You averaged ${Math.round(kcalAvg!).toLocaleString("en-US")} kcal a day, ${Math.round(kcalPct)}% of your need, and fell short on ${lowFoodDays} of ${kcal.length} logged days. NASA plans for each crewmember to get 100% of their calculated needs.`, action: { text: "Log today's food", href: "/log" }, cite: { source: "std1", page: 37 } });
+    if (kcalPct < 75) questions.push({ text: "I've been eating well under my energy needs. Should we change my menu or add snacks or supplements?", reason: `${Math.round(kcalPct)}% of need over ${kcal.length} days` });
+  }
+  if (weightChangePct !== undefined && weightChangePct <= -2) {
+    suggestions.push({ id: "weight", area: "physical", priority: weightChangePct <= -5 ? 1 : 2, title: "Your weight is dropping", reason: `Down ${Math.abs(weightChange!).toFixed(1)} kg (${Math.abs(weightChangePct).toFixed(1)}%) over your last ${weights.length} weigh-ins. Losing weight in flight usually means eating less than you use.`, action: { text: "Log food and weight", href: "/log" }, cite: { source: "std1", page: 37 } });
+    questions.push({ text: "My weight has been going down. Is my food intake enough for my exercise and spacewalks?", reason: `${weightChange!.toFixed(1)} kg in ${weights.length} weigh-ins` });
+  }
+  if (kcal.length === 0 && i.ctx.env.id !== "earth-analog") {
+    suggestions.push({ id: "log-food", area: "physical", priority: 3, title: "Track what you eat", reason: `Your need is about ${(i.energyTarget ?? 3035).toLocaleString("en-US")} kcal a day, plus 200 kcal per spacewalk hour. Logging a rough estimate shows whether you're keeping up.`, action: { text: "Log today's food", href: "/log" }, cite: { source: "std2", page: 116 } });
   }
   if (dosePct >= 50) {
     suggestions.push({ id: "radiation", area: "physical", priority: dosePct >= 90 ? 1 : 2, title: "Your radiation dose is getting high", reason: `About ${i.ctx.doseSoFar.toFixed(0)} mSv so far on this mission, ${dosePct.toFixed(0)}% of NASA's 600 mSv career limit, before any earlier missions.`, action: { text: "Check in the radiation tool", href: "/tools#radiation" }, cite: { source: "std1", page: 40 } });
@@ -172,7 +196,7 @@ export function buildSummary(i: Input) {
 
   // Open body notes from the body map: their advice becomes suggestions and questions.
   const bodyNotes = i.bodyNotes ?? [];
-  const openNotes = bodyNotes.filter((n) => !n.resolvedOn).map((n) => ({ n, a: adviceFor(n, bodyNotes, today) }));
+  const openNotes = bodyNotes.filter((n) => !n.resolvedOn).map((n) => ({ n, a: adviceFor(n, bodyNotes, today, i.ctx.env) }));
   for (const { n, a } of openNotes) {
     const priority = a.level === "now" || a.level === "today" ? 1 : a.level === "routine" ? 2 : 3;
     suggestions[a.level === "now" ? "unshift" : "push"]({ id: `body-${n.id}`, area: "physical", priority, title: `${noteTitle(n)}: ${a.headline.toLowerCase()}`, reason: `${n.severity}/10 since ${n.startedOn}. ${a.why[0]}`, action: { text: "See the advice", href: `/problems#p-${n.id}` }, cite: a.context?.cite });
@@ -193,7 +217,7 @@ export function buildSummary(i: Input) {
   const unique = (qs: Question[]) => qs.filter((q, idx) => qs.findIndex((x) => x.text === q.text) === idx);
   return {
     from, to: today,
-    physical: { status: physicalStatus, vitals, sleepAvg, sleepNights: sleep.length, shortNights, exerciseDays: exerciseDates.size, exerciseMin, waterAvg, dose: i.ctx.doseSoFar, dosePct, missionDay: i.ctx.day, lastReading, bodyNotesOpen: openNotes.length },
+    physical: { status: physicalStatus, vitals, sleepAvg, sleepNights: sleep.length, shortNights, exerciseDays: exerciseDates.size, exerciseMin, waterAvg, dose: i.ctx.doseSoFar, dosePct, missionDay: i.ctx.day, lastReading, bodyNotesOpen: openNotes.length, kcalAvg, kcalPct, kcalDays: kcal.length, energyTarget: i.energyTarget ?? 3035, weightNow, weightChange },
     mental: { status: mentalStatus, moodAvg, moodDays: moods.length, lowDays, lowStreak, stressAvg, entries: entries.length, topics, moods },
     routine: { status: routineStatus, adherence, taken, expected, missed, remindersPct, remindersDone: i.routine.remindersDone, remindersExpected: i.routine.remindersExpected, checkupsDue: i.checkupsDue, streak: i.progress.streak, xp: i.progress.xp, rank: i.progress.rank, statsDays: i.routine.days },
     suggestions: suggestions.sort((x, y) => x.priority - y.priority).slice(0, 8),

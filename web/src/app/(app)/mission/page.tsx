@@ -1,6 +1,8 @@
 import { Check, Rocket } from "lucide-react";
 import { missionItemAction, setEnvironment } from "@/app/actions";
+import { CiteLink } from "@/components/CiteLink";
 import { EnvironmentStats } from "@/components/EnvironmentStats";
+import { contactText, DELAY_CITE, reachOf, supportLine } from "@/lib/contact";
 import { ENVIRONMENTS, getEnvironment } from "@/lib/environments";
 import { getMissionContext } from "@/lib/mission";
 import { listMissions } from "@/lib/missions-store";
@@ -68,6 +70,19 @@ export default async function MissionPage() {
           </div>
         )
       )}
+
+      <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+        <h2 className="text-lg font-medium">Medical support at this distance</h2>
+        <p className="mt-1 text-sm text-slate-300">{supportLine(ctx.env)}{reachOf(ctx.env) === "far" && <> <CiteLink c={DELAY_CITE} /></>}</p>
+        <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-3">
+          {(["now", "today", "routine"] as const).map((l) => (
+            <div key={l} className="rounded-xl bg-white/[0.04] p-3">
+              <dt className="text-xs uppercase tracking-widest text-slate-500">{l === "now" ? "Emergency" : l === "today" ? "Same day" : "Not urgent"}</dt>
+              <dd className="mt-1 text-slate-100">{contactText(l, ctx.env).title}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
 
       {missions.length > 0 && (
         <section className="space-y-3">

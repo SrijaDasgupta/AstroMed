@@ -125,7 +125,7 @@ export function ProblemCard({ n, photos, canAttach, compact = false }: { n: Prob
 
       <p className={`mt-3 text-sm font-medium ${a.level === "now" ? "text-rose-200" : urgent ? "text-orange-200" : "text-slate-100"}`}>{a.headline}</p>
       <ul className="mt-1 space-y-0.5 text-sm text-slate-300">{a.why.map((w) => <li key={w}>{w}</li>)}</ul>
-      {a.level === "now" && <p className="mt-2 text-sm text-rose-200">Don&apos;t wait for AstroMed. If you&apos;re on Earth, call your local emergency number.{a.redFlags.includes("Thoughts of self-harm") ? " In the US you can call or text 988." : ""}</p>}
+      {a.howTo && <p className={`mt-2 text-sm ${a.level === "now" ? "text-rose-200" : "text-slate-300"}`}>{a.howTo}{a.redFlags.includes("Thoughts of self-harm") ? " If you're thinking about harming yourself, tell someone now. On Earth in the US you can call or text 988." : ""}</p>}
 
       <div className="mt-3 flex flex-wrap items-start gap-4">
         {(n.notes || n.photoPath) && (

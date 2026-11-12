@@ -17,7 +17,7 @@ export default async function BodyPage({ searchParams }: { searchParams: Promise
   const viewer = await requireViewer();
   const [{ env, assessment, logs }, ctx] = await Promise.all([getMyHealth(viewer), getMissionContext()]);
   const day = Math.max(ctx.day, 0);
-  const [{ views: noteViews, photos, areas, kinds, today }, profile, { records }] = await Promise.all([
+  const [{ views: noteViews, photos, areas, kinds, today, emergency }, profile, { records }] = await Promise.all([
     loadProblems(viewer),
     getProfile(viewer),
     viewer.kind === "user" ? listRecords(viewer) : Promise.resolve({ records: [] }),
@@ -95,6 +95,7 @@ export default async function BodyPage({ searchParams }: { searchParams: Promise
         areas={areas}
         kinds={kinds}
         photos={photos}
+        emergency={emergency}
         today={today}
         initial={initial}
         canUpload={viewer.kind === "user"}

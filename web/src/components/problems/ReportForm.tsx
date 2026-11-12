@@ -10,8 +10,9 @@ const TONE = { none: "text-emerald-300", routine: "text-amber-200", today: "text
 
 export type AreaOption = { id: string; name: string; sided: boolean };
 
-export function ReportForm({ areas, kinds, today, defaultArea = "", canAttach }: {
+export function ReportForm({ areas, kinds, today, defaultArea = "", canAttach, emergency }: {
   areas: AreaOption[]; kinds: { id: string; name: string }[]; today: string; defaultArea?: string; canAttach: boolean;
+  emergency: { title: string; body: string };
 }) {
   const [state, action, pending] = useActionState<BodyNoteState, FormData>(addBodyNoteAction, {});
   const ref = useRef<HTMLFormElement>(null);
@@ -38,7 +39,7 @@ export function ReportForm({ areas, kinds, today, defaultArea = "", canAttach }:
           <Siren className="mt-0.5 h-5 w-5 shrink-0 text-rose-300" aria-hidden />
           <div>
             <p className="font-medium">This sounds like it could be an emergency: {live.redFlags.map((f) => f.label.toLowerCase()).join(", ")}.</p>
-            <p className="mt-0.5">Contact your flight surgeon or emergency services now. Don&apos;t wait to finish this form.{live.redFlags.some((f) => f.id === "self-harm") ? " If you're thinking about harming yourself, reach out now; on Earth in the US, call or text 988." : ""}</p>
+            <p className="mt-0.5">{emergency.title}. {emergency.body} Don&apos;t wait to finish this form.{live.redFlags.some((f) => f.id === "self-harm") ? " If you're thinking about harming yourself, reach out now; on Earth in the US, call or text 988." : ""}</p>
           </div>
         </div>
       )}

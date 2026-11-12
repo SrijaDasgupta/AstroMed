@@ -31,6 +31,14 @@ export const DAILY_SECTIONS: { title: string; numbers?: NumberField[]; scales?: 
     ],
   },
   {
+    title: "Food and weight",
+    numbers: [
+      { id: "kcal", label: "Food energy eaten (estimate)", unit: "kcal", min: 0, max: 8000, step: 50 },
+      { id: "evaHours", label: "Spacewalk (EVA) time", unit: "h", min: 0, max: 12, step: 0.5 },
+      { id: "weightKg", label: "Body weight", unit: "kg", min: 30, max: 250, step: 0.1 },
+    ],
+  },
+  {
     title: "Mood",
     scales: [
       { id: "mood", label: "Mood today", low: "Very low", high: "Very good" },
@@ -75,7 +83,7 @@ export function parseDailyLog(form: FormData): { answers: Answers; notes: string
 }
 
 /** Same rules as the guided checkups, plus symptoms and water. */
-export function evaluateDailyLog(member: CrewMember, a: Answers): { level: Escalation; findings: Finding[] } {
+export function evaluateDailyLog(member: CrewMember, a: Answers, kcalTarget?: number): { level: Escalation; findings: Finding[] } {
   const asCheckup: Checkup = {
     id: DAILY_LOG_ID, title: "Daily log", summary: "", everyDays: 1, steps: [], why: [],
     fields: NUMBERS.map((f) => ({ ...f, kind: "number" as const, optional: true })),
@@ -90,6 +98,12 @@ export function evaluateDailyLog(member: CrewMember, a: Answers): { level: Escal
   if (a.backPain) extra.push({ level: "routine", text: "Back pain. Common while adapting to weightlessness; mention it if it continues." });
   if (a.rash) extra.push({ level: "routine", text: "Rash or skin problem. Report it if it spreads or looks infected." });
   if (a.congestion) extra.push({ level: "none", text: "Blocked nose or sore throat. Take your temperature to check for fever." });
+  if (typeof a.kcal === "number" && kcalTarget) {
+    const need = kcalTarget + 200 * (typeof a.evaHours === "number" ? a.evaHours : 0);
+    const pct = Math.round((a.kcal / need) * 100);
+    if (pct < 75) extra.push({ level: "routine", text: `You ate about ${a.kcal.toLocaleString("en-US")} kcal, ${pct}% of your ~${need.toLocaleString("en-US")} kcal need. Regular shortfalls lead to weight and muscle loss; tell your flight surgeon if it keeps happening (NASA-STD-3001 Vol. 1, p. 37).` });
+    else if (pct < 90) extra.push({ level: "none", text: `You ate about ${a.kcal.toLocaleString("en-US")} kcal, ${pct}% of your ~${need.toLocaleString("en-US")} kcal need. Try to make it up tomorrow.` });
+  }
   if (typeof a.waterL === "number" && a.waterL < 2.5) extra.push({ level: "none", text: `${a.waterL} L of water is below NASA's 2.5 L daily minimum (NASA-STD-3001 Vol. 2, p. 68).` });
   const order = { none: 0, routine: 1, today: 2, now: 3 } as const;
   const findings = [...base.findings, ...extra].sort((x, y) => order[y.level] - order[x.level]);

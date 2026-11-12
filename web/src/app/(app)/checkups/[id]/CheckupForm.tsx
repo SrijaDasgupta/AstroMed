@@ -4,13 +4,13 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { submitCheckup, type CheckupState } from "@/app/actions";
 import { EscalationBadge, ESCALATION_COLOR } from "@/components/EscalationBadge";
-import { ESCALATION_TEXT, type Field } from "@/lib/checkups";
+import type { Field } from "@/lib/checkups";
 
 export function CheckupForm({ checkupId, fields }: { checkupId: string; fields: Field[] }) {
   const [state, action, pending] = useActionState<CheckupState, FormData>(submitCheckup, {});
 
   if (state.result) {
-    const t = ESCALATION_TEXT[state.result.level];
+    const t = state.result.contact;
     return (
       <section aria-live="polite" className="rounded-2xl border p-5" style={{ borderColor: `${ESCALATION_COLOR[state.result.level]}66` }}>
         <EscalationBadge level={state.result.level} />

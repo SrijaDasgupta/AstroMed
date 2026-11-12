@@ -79,6 +79,8 @@ export async function startDemo() {
     maxAge: 60 * 60 * 24 * 7,
     path: "/",
   });
+  // Fill the demo with a sample mission and two weeks of data so every feature has something to show.
+  await (await import("@/lib/demo-seed")).seedDemo();
   redirect("/start");
 }
 
@@ -102,7 +104,7 @@ export async function setEnvironment(formData: FormData) {
 
 export type CheckupState = {
   error?: string;
-  result?: { level: Escalation; findings: Finding[]; saved: boolean; problem?: string };
+  result?: { level: Escalation; findings: Finding[]; saved: boolean; problem?: string; contact: { title: string; body: string } };
 };
 
 export async function submitCheckup(_prev: CheckupState, formData: FormData): Promise<CheckupState> {
@@ -118,7 +120,9 @@ export async function submitCheckup(_prev: CheckupState, formData: FormData): Pr
   const { level, findings } = evaluate(checkup, member, parsed.answers);
   const { problem } = await saveLog(viewer, { crewId: member.id, checkupId: checkup.id, escalation: level, answers: parsed.answers });
   revalidatePath("/", "layout");
-  return { result: { level, findings, saved: !problem, problem } };
+  const { contactText } = await import("@/lib/contact");
+  const { getMissionContext } = await import("@/lib/mission");
+  return { result: { level, findings, saved: !problem, problem, contact: contactText(level, (await getMissionContext()).env) } };
 }
 
 export async function toggleHabit(formData: FormData) {
@@ -215,12 +219,17 @@ export async function submitDailyLog(_prev: CheckupState, formData: FormData): P
   const { DAILY_LOG_ID, evaluateDailyLog, parseDailyLog } = await import("@/lib/daily-log");
   const parsed = parseDailyLog(formData);
   if ("error" in parsed) return { error: parsed.error };
-  const member = getCrewMember((await getProfile(viewer)).crewId)!;
-  const { level, findings } = evaluateDailyLog(member, parsed.answers);
+  const profile = await getProfile(viewer);
+  const member = getCrewMember(profile.crewId)!;
+  const { energyTarget } = await import("@/lib/nutrition");
+  const { localDate } = await import("@/lib/dates");
+  const { level, findings } = evaluateDailyLog(member, parsed.answers, energyTarget(profile.details, Number(localDate().slice(0, 4))).kcal);
   const answers = parsed.notes ? { ...parsed.answers, notes: parsed.notes } : parsed.answers;
   const { problem } = await saveLog(viewer, { crewId: member.id, checkupId: DAILY_LOG_ID, escalation: level, answers: answers as import("@/lib/checkups").Answers });
   revalidatePath("/", "layout");
-  return { result: { level, findings, saved: !problem, problem } };
+  const { contactText } = await import("@/lib/contact");
+  const { getMissionContext } = await import("@/lib/mission");
+  return { result: { level, findings, saved: !problem, problem, contact: contactText(level, (await getMissionContext()).env) } };
 }
 
 export type FormState = { error?: string; ok?: boolean; message?: string };
@@ -459,7 +468,8 @@ export async function addBodyNoteAction(_prev: BodyNoteState, formData: FormData
   const { problem } = await addBodyNote(viewer, note, photo);
   if (problem) return { error: problem };
   const { notes: all } = await listBodyNotes(viewer);
-  const advice = adviceFor({ ...note, id: "new", createdAt: new Date().toISOString() }, all, today);
+  const { getMissionContext } = await import("@/lib/mission");
+  const advice = adviceFor({ ...note, id: "new", createdAt: new Date().toISOString() }, all, today, (await getMissionContext()).env);
   revalidatePath("/", "layout");
   return { ok: true, level: advice.level, headline: advice.headline, title: noteTitle(note), related: advice.related.map((r) => r.name), redFlags: advice.redFlags };
 }

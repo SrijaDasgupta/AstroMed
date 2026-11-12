@@ -8,7 +8,7 @@ import { CATEGORIES, CONDITIONS, conditionCite, HAZARD_CITE, HAZARDS, type Categ
 
 export default async function ProblemsPage() {
   const viewer = await requireViewer();
-  const { today, problem, views, photos, areas, kinds, canAttach } = await loadProblems(viewer);
+  const { today, problem, views, photos, areas, kinds, canAttach, emergency } = await loadProblems(viewer);
   const open = views.filter((v) => !v.resolvedOn);
   const resolved = views.filter((v) => v.resolvedOn);
 
@@ -25,7 +25,7 @@ export default async function ProblemsPage() {
 
       <section className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
         <h2 className="text-lg font-medium">Report a problem</h2>
-        <div className="mt-4"><ReportForm areas={areas} kinds={kinds} today={today} canAttach={canAttach} /></div>
+        <div className="mt-4"><ReportForm areas={areas} kinds={kinds} today={today} canAttach={canAttach} emergency={emergency} /></div>
       </section>
 
       {problem && <p role="alert" className="text-sm text-rose-300">Couldn&apos;t load your problems: {problem}</p>}

@@ -20,7 +20,15 @@ const SETUP_HINT = "The checkup_logs table isn't set up in Supabase yet. Run sup
 
 type DemoEntry = [crew: string, checkup: string, escalation: Escalation, epochSeconds: number, readings?: Record<string, number>];
 // Numeric answers worth keeping in demo mode: chart readings, plus what marks checkups as done.
-const KEEP_KEYS = new Set<string>([...METRICS.map((m) => m.key), "resistiveMin", "aerobicMin", "mood", "stress"]);
+const KEEP_KEYS = new Set<string>([...METRICS.map((m) => m.key), "resistiveMin", "aerobicMin", "mood", "stress", "waterL", "kcal", "evaHours", "weightKg"]);
+/** Browsers drop cookies over 4 KB, so the demo log trims its oldest entries to stay under this. */
+const DEMO_MAX_BYTES = 3800;
+/** Measured as the cookie is actually stored: URL-encoded, which makes JSON about 1.5× longer. */
+export function fitDemoLogs(entries: unknown[]) {
+  let list = entries.slice(-DEMO_MAX);
+  while (list.length > 1 && encodeURIComponent(JSON.stringify(list)).length > DEMO_MAX_BYTES) list = list.slice(1);
+  return list;
+}
 
 async function readDemo(): Promise<DemoEntry[]> {
   try {
@@ -72,7 +80,7 @@ export async function saveLog(viewer: Viewer, log: Omit<CheckupLog, "createdAt">
     // Keep only numeric readings that feed the charts, to stay within the cookie size limit.
     const readings = Object.fromEntries(Object.entries(log.answers ?? {}).filter(([k, v]) => KEEP_KEYS.has(k) && typeof v === "number")) as Record<string, number>;
     entries.push(Object.keys(readings).length ? [log.crewId, log.checkupId, log.escalation, Math.floor(Date.now() / 1000), readings] : [log.crewId, log.checkupId, log.escalation, Math.floor(Date.now() / 1000)]);
-    (await cookies()).set(DEMO_LOGS_COOKIE, JSON.stringify(entries.slice(-DEMO_MAX)), {
+    (await cookies()).set(DEMO_LOGS_COOKIE, JSON.stringify(fitDemoLogs(entries)), {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
@@ -90,6 +98,8 @@ export async function saveLog(viewer: Viewer, log: Omit<CheckupLog, "createdAt">
   });
   return error ? { problem: friendly(error.message) } : {};
 }
+
+export const DEMO_LOGS_COOKIE_NAME = DEMO_LOGS_COOKIE;
 
 export function clearDemoLogsCookieName() {
   return DEMO_LOGS_COOKIE;

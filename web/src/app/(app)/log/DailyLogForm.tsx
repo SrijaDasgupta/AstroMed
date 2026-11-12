@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { submitDailyLog, type CheckupState } from "@/app/actions";
 import { EscalationBadge, ESCALATION_COLOR } from "@/components/EscalationBadge";
-import { ESCALATION_TEXT } from "@/lib/checkups";
 import { DAILY_SECTIONS, SYMPTOMS } from "@/lib/daily-log";
 
 const input = "w-28 rounded-lg border border-white/10 bg-white/5 px-3 py-2 tabular-nums outline-none focus:border-sky-400";
@@ -13,7 +12,7 @@ export function DailyLogForm() {
   const [state, action, pending] = useActionState<CheckupState, FormData>(submitDailyLog, {});
 
   if (state.result) {
-    const t = ESCALATION_TEXT[state.result.level];
+    const t = state.result.contact;
     return (
       <section aria-live="polite" className="rounded-2xl border p-5" style={{ borderColor: `${ESCALATION_COLOR[state.result.level]}66` }}>
         <EscalationBadge level={state.result.level} />

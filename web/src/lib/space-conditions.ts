@@ -157,7 +157,9 @@ export const CONDITIONS: Condition[] = [
   { id: "nutrition", name: "Poor appetite or weight loss", category: "environmental", hazards: ["isolation", "gravity"], areas: ["whole-body", "abdomen"],
     terms: /appetite|not hungry|weight loss|losing weight|lost weight|not eating|food (aversion|fatigue)|menu fatigue|nutrition|deficien/i, level: "routine",
     care: ["Eat regular meals even when not hungry; vary your menu.", "Log your weight so changes are visible."],
-    watch: ["Losing weight week after week", "Tiredness, dizziness or bleeding gums"] },
+    watch: ["Losing weight week after week", "Tiredness, dizziness or bleeding gums"],
+    fact: { text: "NASA requires each crewmember to get 100% of their calculated nutrient and energy needs.", cite: s1(37) },
+    links: [{ text: "Log food and weight", href: "/log" }] },
   { id: "med-reaction", name: "Reaction to a medicine", category: "environmental", hazards: ["distance"], areas: ["whole-body"],
     terms: /side ?effect|reaction to (my |the |a )?(medicine|medication|pill|drug|tablet)|after (i )?took (my |the )?(medicine|medication|pill)/i, level: "today",
     care: ["Don't take more of it until you've spoken with your flight surgeon.", "Note the medicine, the time you took it and what happened."],
@@ -192,7 +194,7 @@ export const CONDITIONS: Condition[] = [
     watch: ["Eye pain, light sensitivity or blurred vision"] },
   { id: "vision-loss", name: "Sudden vision loss or flashes", category: "eyes", hazards: ["gravity", "radiation"], areas: ["eyes"],
     terms: /lost (my )?vision|vision loss|can'?t see (anything|out of)|blind|curtain|flash(es)? of light|new floaters|shower of floaters/i, level: "now",
-    care: ["Stop what you're doing and contact your flight surgeon now."],
+    care: ["Stop what you're doing and get urgent medical help now."],
     watch: [] },
 
   // ---------------- Ears, nose and throat (p. 84) ----------------
@@ -225,7 +227,7 @@ export const CONDITIONS: Condition[] = [
   // ---------------- Heart and circulation (p. 84) ----------------
   { id: "chest-pain", name: "Chest pain or pressure", category: "heart", hazards: ["gravity", "radiation"], areas: ["chest"],
     terms: /chest (pain|pressure|tight|hurts|discomfort)|tight(ness)? in (my )?chest|heart (attack|pain)|angina/i, level: "now",
-    care: ["Stop activity and rest. Contact your flight surgeon or emergency services now."], watch: [] },
+    care: ["Stop activity and rest, and get urgent medical help now: your crew medical officer, flight surgeon or emergency services."], watch: [] },
   { id: "palpitations", name: "Racing or irregular heartbeat", category: "heart", hazards: ["gravity"], areas: ["chest"],
     terms: /palpitat|heart (is )?(racing|pounding|skipping|fluttering|flutter)|irregular (heart|pulse|heartbeat)|skipped beats/i, level: "today",
     care: ["Sit or rest quietly and record your heart rate.", "Note what you were doing and how long it lasted."],
@@ -336,7 +338,7 @@ export const CONDITIONS: Condition[] = [
     links: [{ text: "See your exercise plan", href: "/exercise" }] },
   { id: "compartment", name: "Severe pain in a tight, swollen limb", category: "musculoskeletal", hazards: ["environment"], areas: ["lower-leg", "arm", "thigh"],
     terms: /compartment syndrome|(severe|extreme) pain.{0,30}(tight|swollen|hard) (leg|arm|calf|limb)/i, level: "now",
-    care: ["Loosen anything tight around the limb and contact your flight surgeon now."], watch: [] },
+    care: ["Loosen anything tight around the limb and get urgent medical help now."], watch: [] },
 
   // ---------------- Skin (p. 85) ----------------
   { id: "abrasion", name: "Scrape or cut", category: "skin", hazards: ["environment"], areas: ["skin", "hand", "arm", "knee"],

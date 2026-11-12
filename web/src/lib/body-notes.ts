@@ -3,6 +3,8 @@ import { BODY_PARTS, type Cite } from "@/lib/body";
 import { daysBetween } from "@/lib/dates";
 import { analyzeText, CONDITIONS, conditionCite, HAZARDS, type Condition, type Hazard } from "@/lib/space-conditions";
 import type { StoredAnalysis } from "@/lib/ai-analysis";
+import { contactText } from "@/lib/contact";
+import type { MissionEnvironment } from "@/lib/environments";
 
 /**
  * Where a problem is. Body areas have x/y on the 300 × 640 front-view figure (the figure's left is the
@@ -109,6 +111,8 @@ export type Trend = "new" | "better" | "worse" | "same";
 export type Advice = {
   level: Escalation;
   headline: string;
+  /** How to act at this distance from Earth (crew first on Mars missions). */
+  howTo?: string;
   why: string[];
   selfCare: string[];
   watch: string[];
@@ -171,7 +175,7 @@ export function problemText(n: BodyNote) {
  * Advice for one problem, using its description, every update, the trend in severity and NASA's
  * spaceflight condition list. General safety thresholds; not a diagnosis, and never medicine advice.
  */
-export function adviceFor(note: BodyNote, history: BodyNote[], today: string): Advice {
+export function adviceFor(note: BodyNote, history: BodyNote[], today: string, env?: Pick<MissionEnvironment, "id" | "commDelay">): Advice {
   const why: string[] = [];
   let level: Escalation = "none";
   const series = severitySeries(note);
@@ -249,12 +253,8 @@ export function adviceFor(note: BodyNote, history: BodyNote[], today: string): A
   if (!open) { level = "none"; why.length = 0; why.push("Marked as resolved."); }
 
   const part = BODY_PARTS.find((p) => p.id === areaOf(area)?.part);
-  const headline = {
-    now: "Contact your flight surgeon or emergency services now",
-    today: "Contact your flight surgeon today",
-    routine: "Bring this up at your next check-in",
-    none: open ? "Keep an eye on it" : "Resolved",
-  }[level];
+  const contact = contactText(level, env);
+  const headline = level === "none" ? (open ? "Keep an eye on it" : "Resolved") : contact.title;
 
   const fromPhoto = (ai?.isHealthPhoto ? ai.conditionIds : []).map((id) => CONDITIONS.find((c) => c.id === id)).filter((c): c is Condition => Boolean(c));
   const relatedConditions = [...matches.slice(0, 3).map((m) => m.condition), ...fromPhoto].filter((c, i, all) => all.findIndex((x) => x.id === c.id) === i).slice(0, 4);
@@ -262,6 +262,7 @@ export function adviceFor(note: BodyNote, history: BodyNote[], today: string): A
   return {
     level,
     headline,
+    howTo: level === "none" ? undefined : contact.body,
     why: why.length ? uniq(why) : ["Mild, recent and not getting worse."],
     selfCare: open ? uniq([...(best?.care ?? []), ...SELF_CARE[k]]).slice(0, 5) : [],
     watch: open ? uniq([...(ai?.isHealthPhoto ? ai.warningSigns : []), ...matches.slice(0, 2).flatMap((m) => m.condition.watch)]).slice(0, 6) : [],

@@ -163,9 +163,9 @@ function BmiStrip({ bmi }: { bmi: Bmi }) {
   );
 }
 
-export function BodyMap({ parts, systems, notes, photos, vitals, records, bmi, areas, kinds, today, initial, canUpload }: {
+export function BodyMap({ parts, systems, notes, photos, vitals, records, bmi, areas, kinds, today, initial, canUpload, emergency }: {
   parts: PartView[]; systems: PartView[]; notes: NoteView[]; photos: Record<string, string>; vitals: VitalCard[]; records: RecordItem[]; bmi: Bmi;
-  areas: (AreaOption & { part: string })[]; kinds: Option[]; today: string; initial?: string; canUpload: boolean;
+  areas: (AreaOption & { part: string })[]; kinds: Option[]; today: string; initial?: string; canUpload: boolean; emergency: { title: string; body: string };
 }) {
   const all = [...parts, ...systems];
   const firstNote = notes.find((n) => !n.resolvedOn);
@@ -315,7 +315,7 @@ export function BodyMap({ parts, systems, notes, photos, vitals, records, bmi, a
         <h2 className="text-lg font-medium">Report a problem</h2>
         <p className="mt-1 text-sm text-slate-400">Describe anything you notice in your own words, add a photo if it helps, and get advice. Follow it over time in <Link href="/problems" className="text-sky-300 hover:text-sky-200">Problems &amp; advice</Link>.</p>
         <div className="mt-4">
-          <ReportForm key={selected} areas={areas} kinds={kinds} today={today} canAttach={canUpload} defaultArea={areas.find((a) => a.part === selected)?.id ?? ""} />
+          <ReportForm key={selected} areas={areas} kinds={kinds} today={today} canAttach={canUpload} emergency={emergency} defaultArea={areas.find((a) => a.part === selected)?.id ?? ""} />
         </div>
       </section>
 

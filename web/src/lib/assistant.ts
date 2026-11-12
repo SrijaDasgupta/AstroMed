@@ -5,6 +5,7 @@
  * placed in front of this, using the same data.
  */
 import { analyzeText, type Analysis } from "@/lib/space-conditions";
+import { contactText } from "@/lib/contact";
 import { CHECKUPS, getCheckup } from "@/lib/checkups";
 import type { CheckupLog } from "@/lib/checkup-store";
 import { dueStatus } from "@/lib/checkup-schedule";
@@ -184,7 +185,7 @@ export function answer(rawQuestion: string, ctx: AssistantContext): Answer {
   if (read.redFlags.length) {
     return {
       blocks: [
-        { type: "text", tone: "warning", text: `That sounds like it could be an emergency (${read.redFlags.map((f) => f.label.toLowerCase()).join(", ")}). Contact your flight surgeon or emergency services now; don't wait for AstroMed.${read.redFlags.some((f) => f.id === "self-harm") ? " If you're thinking about harming yourself, please reach out now. On Earth in the US you can call or text 988." : ""}` },
+        { type: "text", tone: "warning", text: `That sounds like it could be an emergency (${read.redFlags.map((f) => f.label.toLowerCase()).join(", ")}). ${contactText("now", ctx.env).title}. ${contactText("now", ctx.env).body}${read.redFlags.some((f) => f.id === "self-harm") ? " If you're thinking about harming yourself, please reach out now. On Earth in the US you can call or text 988." : ""}` },
         { type: "links", links: [{ href: "/problems", label: "Record it in Problems & advice" }] },
       ],
       suggestions: [],
@@ -291,26 +292,21 @@ export function answer(rawQuestion: string, ctx: AssistantContext): Answer {
   }
 
   // Tips about a topic
-  if (read.matches.length && has(q, /\b(advice|should i|what can i do|what do i do|help with|is it normal|my)\b/)) return problemAnswer(read);
+  if (read.matches.length && has(q, /\b(advice|should i|what can i do|what do i do|help with|is it normal|my)\b/)) return problemAnswer(read, ctx);
   if (has(q, /\b(tip|tips|advice|recommend|should i|what can i do)\b/)) {
     return { blocks: [{ type: "text", text: "Here are tips for your mission. Ask about a specific measure, such as \"tips for sleep\", for more targeted ones." }, { type: "tips", tipIds: TIPS.filter((t) => t.habit).slice(0, 3).map((t) => t.id) }, { type: "links", links: [{ href: "/tips", label: "All health tips" }] }], suggestions: SUGGESTIONS.slice(0, 3) };
   }
 
   // A symptom or spaceflight problem described in the person's own words.
-  if (read.matches.length) return problemAnswer(read);
+  if (read.matches.length) return problemAnswer(read, ctx);
 
   return { blocks: [{ type: "text", text: "Sorry, I didn't understand that. I can answer questions about your vitals, checkups, radiation, bone loss and progress." }, ...help().blocks.slice(1)], suggestions: SUGGESTIONS };
 }
 
-const WHEN: Record<string, string> = {
-  now: "Contact your flight surgeon or emergency services now.",
-  today: "Contact your flight surgeon today.",
-  routine: "Bring it up at your next check-in, sooner if it gets worse.",
-  none: "Usually fine to manage yourself; keep an eye on it.",
-};
-
-function problemAnswer(read: Analysis): Answer {
+function problemAnswer(read: Analysis, ctx: AssistantContext): Answer {
   const c = read.matches[0].condition;
+  const contact = contactText(c.level, ctx.env);
+  const WHEN = { [c.level]: c.level === "none" ? "Usually fine to manage yourself; keep an eye on it." : `${contact.title}. ${contact.body}` } as Record<string, string>;
   const others = read.matches.slice(1, 3).map((m) => m.condition.name.toLowerCase());
   return {
     blocks: [
