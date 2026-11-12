@@ -56,6 +56,11 @@ export default async function HazardsPage({ searchParams }: { searchParams: Prom
 
   return (
     <div className="space-y-8">
+      {ctx.none && (
+        <p className="rounded-2xl border border-sky-400/30 bg-sky-400/5 p-4 text-sm text-slate-300">
+          <strong className="text-white">No mission set.</strong> These figures are for staying on Earth. <Link href="/mission" className="text-sky-300 hover:text-sky-200">Add your mission</Link> to see your own radiation and bone-loss projections.
+        </p>
+      )}
       <div>
         <p className="text-xs uppercase tracking-widest text-sky-400">Personalized</p>
         <h1 className="mt-1 text-2xl font-semibold">My exposure to space hazards</h1>

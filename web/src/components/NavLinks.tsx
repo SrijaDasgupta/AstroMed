@@ -2,9 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Calculator, Dumbbell, ClipboardCheck, ClipboardList, FolderOpen, Globe2, HeartPulse, LayoutDashboard, LineChart, MessageCircle, NotebookPen, PersonStanding, Pill, ShieldAlert, User, UserCog } from "lucide-react";
+import { BookOpen, Compass, Calculator, Dumbbell, ClipboardCheck, ClipboardList, FolderOpen, Globe2, HeartPulse, LayoutDashboard, LineChart, MessageCircle, NotebookPen, PersonStanding, Pill, ShieldAlert, User, UserCog } from "lucide-react";
 
 const GROUPS = [
+  {
+    label: "Start here",
+    links: [{ href: "/guide", label: "Getting started", icon: Compass }],
+  },
   {
     label: "General",
     links: [
@@ -37,10 +41,10 @@ const GROUPS = [
 export function NavLinks() {
   const pathname = usePathname() ?? "";
   return (
-    <nav className="flex flex-wrap gap-x-4 gap-y-2 md:flex-col md:gap-5" aria-label="Main">
+    <nav className="flex flex-col gap-5" aria-label="Main">
       {GROUPS.map((g) => (
-        <div key={g.label} className="flex flex-wrap items-center gap-1 md:flex-col md:items-stretch">
-          <p className="hidden px-3 pb-1 text-[11px] font-medium uppercase tracking-widest text-slate-500 md:block">{g.label}</p>
+        <div key={g.label} className="flex flex-col gap-0.5">
+          <p className="px-3 pb-1 text-[11px] font-medium uppercase tracking-widest text-slate-500">{g.label}</p>
           {g.links.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
             return (

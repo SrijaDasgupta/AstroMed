@@ -61,6 +61,7 @@ export async function signOut() {
   }
   const store = await cookies();
   store.delete(DEMO_COOKIE);
+  store.delete(ENV_COOKIE);
   store.delete(clearDemoLogsCookieName());
   DEMO_COOKIES.forEach((c) => store.delete(c));
   store.delete((await import("@/lib/reminder-store")).DEMO_MEDS_COOKIE);
@@ -82,6 +83,11 @@ export async function startDemo() {
 
 export async function setEnvironment(formData: FormData) {
   const id = String(formData.get("environment") ?? "");
+  if (id === "none") {
+    (await cookies()).delete(ENV_COOKIE);
+    revalidatePath("/", "layout");
+    return;
+  }
   if (!ENVIRONMENTS.some((e) => e.id === id)) return;
   (await cookies()).set(ENV_COOKIE, id, {
     httpOnly: true,

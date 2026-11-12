@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowRight, ClipboardList, LineChart } from "lucide-react";
+import { ArrowRight, ClipboardList, Compass, LineChart } from "lucide-react";
+import { setupSteps } from "@/lib/onboarding";
 import { getProfile } from "@/lib/profile-store";
 import { requireViewer } from "@/lib/session";
 
@@ -24,13 +25,25 @@ const AREAS = [
 
 export default async function StartPage() {
   const viewer = await requireViewer();
-  const { displayName } = await getProfile(viewer);
+  const [{ displayName }, steps] = await Promise.all([getProfile(viewer), setupSteps(viewer)]);
+  const done = steps.filter((s) => s.done).length;
+  const next = steps.find((s) => !s.done);
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-semibold">Welcome, {displayName}</h1>
-        <p className="mt-1 text-slate-400">Where would you like to go? You can switch any time from the sidebar.</p>
+        <p className="mt-1 text-slate-400">Where would you like to go? You can switch any time from the menu.</p>
       </div>
+      {next && (
+        <Link href="/guide" className="group flex flex-wrap items-center gap-4 rounded-2xl border border-sky-400/30 bg-sky-400/5 p-5 transition hover:border-sky-400/60">
+          <Compass className="h-7 w-7 shrink-0 text-sky-300" aria-hidden />
+          <div className="min-w-0 flex-1">
+            <p className="font-medium">{done === 0 ? "New here? Start with the getting-started guide" : `Getting started: ${done} of ${steps.length} done`}</p>
+            <p className="text-sm text-slate-400">A few quick steps to set up AstroMed, how to find your way around, and a routine to follow. Next: {next.title.toLowerCase()}.</p>
+          </div>
+          <span className="inline-flex items-center gap-1.5 text-sm font-medium text-sky-300 group-hover:text-sky-200">Open the guide <ArrowRight className="h-4 w-4" aria-hidden /></span>
+        </Link>
+      )}
       <div className="grid gap-5 md:grid-cols-2">
         {AREAS.map(({ href, icon: Icon, title, blurb, items, cta }) => (
           <Link key={title} href={href} className="group flex flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition hover:border-sky-400/50 hover:bg-sky-400/5">

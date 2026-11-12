@@ -54,9 +54,19 @@ export default async function MissionPage() {
           <div className="mt-4"><EnvironmentStats env={ctx.env} /></div>
         </section>
       ) : (
-        <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm text-slate-300">
-          No mission of your own yet. AstroMed is using the <strong className="text-white">{ctx.env.name}</strong> preset and assumes {ctx.day} days so far. Add your mission below for estimates based on your real dates.
-        </p>
+        ctx.none ? (
+          <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm text-slate-300">
+            <strong className="text-white">No mission set.</strong> AstroMed treats you as on Earth: no space radiation, gravity or mission effects are assumed.
+            Add your mission below, or pick a mission type for a quick estimate.
+          </p>
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm text-slate-300">
+            <p>No mission of your own yet. AstroMed is using the <strong className="text-white">{ctx.env.name}</strong> type and assumes {ctx.day} days so far. Add your mission below for estimates based on your real dates.</p>
+            <form action={setEnvironment}>
+              <button type="submit" name="environment" value="none" className="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/5">Clear mission type</button>
+            </form>
+          </div>
+        )
       )}
 
       {missions.length > 0 && (
@@ -89,7 +99,7 @@ export default async function MissionPage() {
         <p className="text-sm text-slate-400">{active ? "Reference figures for each type. Your current mission uses its own type and dates." : "No mission added yet? Pick a type to use as a quick preset."}</p>
         <form action={setEnvironment} className="grid gap-4 sm:grid-cols-2">
           {ENVIRONMENTS.map((env) => {
-            const selected = !active && env.id === ctx.env.id;
+            const selected = !active && !ctx.none && env.id === ctx.env.id;
             return (
               <button key={env.id} type="submit" name="environment" value={env.id} aria-pressed={selected} disabled={Boolean(active)}
                 className={`rounded-2xl border p-5 text-left transition disabled:cursor-default ${selected ? "border-sky-400 bg-sky-400/10" : "border-white/10 bg-white/[0.03] enabled:hover:border-white/25"}`}>

@@ -62,7 +62,7 @@ export default async function SummaryPage({ searchParams }: { searchParams: Prom
           <p className="text-xs uppercase tracking-widest text-sky-400 print:text-black">Personalized</p>
           <h1 className="mt-1 text-2xl font-semibold">My summary</h1>
           <p className="mt-1 text-slate-400">
-            {health.profile.displayName} · {fmtDate(s.from)} – {fmtDate(s.to)} · {ctx.mission ? `${ctx.mission.name}, day ${ctx.day}` : health.env.name}
+            {health.profile.displayName} · {fmtDate(s.from)} – {fmtDate(s.to)} · {ctx.mission ? `${ctx.mission.name}, day ${ctx.day}` : ctx.none ? "No mission set" : health.env.name}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -118,7 +118,7 @@ export default async function SummaryPage({ searchParams }: { searchParams: Prom
             <Row k="Sleep" v={s.physical.sleepNights ? <>{fmt(s.physical.sleepAvg, 1, " h")} <span className="text-xs text-slate-500">{s.physical.shortNights} short</span></> : <span className="text-slate-500">no logs</span>} />
             <Row k="Exercise" v={`${s.physical.exerciseDays} of ${days} days · ${Math.round(s.physical.exerciseMin)} min`} />
             <Row k="Water" v={fmt(s.physical.waterAvg, 1, " L/day")} />
-            <Row k={ctx.mission ? "Radiation this mission" : `Radiation (assumed ${ctx.day} days)`} v={`${s.physical.dose.toFixed(1)} mSv (${s.physical.dosePct.toFixed(1)}%)`} />
+            <Row k={ctx.mission ? "Radiation this mission" : ctx.none ? "Radiation (no mission set)" : `Radiation (assumed ${ctx.day} days)`} v={`${s.physical.dose.toFixed(1)} mSv (${s.physical.dosePct.toFixed(1)}%)`} />
           </dl>
           <Link href="/vitals" className="mt-3 inline-block text-sm text-sky-300 hover:text-sky-200 print:hidden">My vitals →</Link>
         </section>
