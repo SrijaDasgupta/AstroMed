@@ -7,9 +7,9 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { getViewer } from "@/lib/session";
 import { LoginForm } from "./LoginForm";
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string; confirmed?: string }> }) {
   if (await getViewer()) redirect("/start");
-  const { error } = await searchParams;
+  const { error, confirmed } = await searchParams;
 
   return (
     <main className="flex min-h-screen items-center justify-center px-6">
@@ -23,9 +23,14 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
               Sign-in isn&apos;t set up yet. Add the Supabase keys to <code>web/.env.local</code>, or use the demo below.
             </p>
           )}
+          {confirmed && !error && (
+            <p className="mt-3 rounded-lg bg-emerald-400/10 p-3 text-sm text-emerald-200">
+              Your email is confirmed. Sign in with your email and password to continue.
+            </p>
+          )}
           {error === "confirm" && (
             <p className="mt-3 rounded-lg bg-rose-400/10 p-3 text-sm text-rose-300">
-              That confirmation link didn&apos;t work. It may have expired, so try signing in again.
+              That confirmation link has expired or was already used. Try signing in; if your email isn&apos;t confirmed yet, create your account again to get a new link.
             </p>
           )}
           <div className="mt-6"><LoginForm configured={isSupabaseConfigured} /></div>
