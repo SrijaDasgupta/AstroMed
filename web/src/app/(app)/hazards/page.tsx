@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Bone, HeartPulse, Info, Orbit, Radiation, ShieldAlert } from "lucide-react";
 import { ProjectionChart } from "@/components/ProjectionChart";
+import { SpaceRadiation } from "@/components/astromed";
+import { ENVIRONMENTS } from "@/lib/environments";
 import {
   boneSeries, CAREER_LIMIT_MSV, DEFAULT_LENGTH, gravityOf, IMMUNE_SIGNAL_LABELS, LENGTH_OPTIONS, myHazards, radiationSeries,
 } from "@/lib/hazards";
@@ -107,6 +109,11 @@ export default async function HazardsPage({ searchParams }: { searchParams: Prom
           Solar storms and shielding: Radiation report, p. 48; sheltering and ending spacewalks early: p. 58. Daily averages don&apos;t include solar storms.
         </Source>
       </section>
+
+      <SpaceRadiation
+        environments={ENVIRONMENTS.map((e) => ({ id: e.id, name: e.name, msvPerDay: e.radiationMsvPerDay, source: e.radiationSource }))}
+        initialId={ctx.none ? undefined : env.id}
+      />
 
       {/* Bone */}
       <section className="space-y-3">

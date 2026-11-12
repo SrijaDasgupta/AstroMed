@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ClipboardCheck, Radiation } from "lucide-react";
 import { MetricChart } from "@/components/MetricChart";
 import { StatusBadge } from "@/components/StatusBadge";
+import { VitalSigns, type VitalReading } from "@/components/astromed";
 import { TipCard } from "@/components/TipCard";
 import { tipsForAlerts } from "@/lib/tips";
 import { formatValue, METRIC_GROUPS, MISSION_DAYS } from "@/lib/crew";
@@ -35,6 +36,25 @@ export default async function MyVitalsPage() {
     ["Positive mood (PANAS, 10–50, 5 ratings)", `${b.moodPositive ?? "—"} ± ${b.moodPositiveSd ?? "—"}`],
     ["Negative mood (PANAS, 10–50, 5 ratings)", `${b.moodNegative ?? "—"} ± ${b.moodNegativeSd ?? "—"}`],
   ];
+  // Latest reading the person actually recorded, for the animated heartbeat card.
+  const latestOwn = (key: string) => {
+    const m = a.metrics.find((x) => x.def.key === key);
+    if (!m) return null;
+    const i = m.recorded.lastIndexOf(true);
+    if (i < 0) return null;
+    const ago = m.values.length - 1 - i;
+    return { value: m.values[i], def: m.def, when: ago === 0 ? "Today" : ago === 1 ? "Yesterday" : `${ago} days ago` };
+  };
+  const hr = latestOwn("restingHr");
+  const sys = latestOwn("systolic");
+  const dia = latestOwn("diastolic");
+  const temp = latestOwn("temperature");
+  const readings: VitalReading[] = [
+    { label: "Resting heart rate", value: hr ? String(Math.round(hr.value)) : null, unit: "bpm", when: hr?.when },
+    { label: "Blood pressure", value: sys && dia ? `${Math.round(sys.value)}/${Math.round(dia.value)}` : null, unit: "mmHg", when: sys?.when },
+    { label: "Body temperature", value: temp ? temp.value.toFixed(1) : null, unit: "°C", when: temp?.when },
+  ];
+
   const sim = member.simulated;
   const simulatedRows: [string, string][] = [
     ["Blood pressure", `${sim.systolic}/${sim.diastolic} mmHg`],
@@ -63,6 +83,8 @@ export default async function MyVitalsPage() {
           <ClipboardCheck className="h-4 w-4" aria-hidden /> Record vital signs
         </Link>
       </section>
+
+      <VitalSigns readings={readings} heartRateBpm={hr?.value} />
 
       {flagged.length > 0 ? (
         <section className="rounded-2xl border border-amber-300/20 bg-amber-300/5 p-5">

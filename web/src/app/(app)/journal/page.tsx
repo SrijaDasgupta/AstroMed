@@ -1,5 +1,6 @@
 import { ExternalLink, Lock } from "lucide-react";
 import { deleteJournalAction } from "@/app/actions";
+import { Wellness } from "@/components/astromed";
 import { addDays, localDate } from "@/lib/dates";
 import { JOURNAL_TOPICS, MOODS, promptOfDay } from "@/lib/journal";
 import { listEntries } from "@/lib/journal-store";
@@ -67,6 +68,8 @@ export default async function JournalPage() {
           )}
         </div>
       </section>
+
+      <Wellness />
 
       <section className="space-y-3">
         <h2 className="text-lg font-medium">Entries</h2>

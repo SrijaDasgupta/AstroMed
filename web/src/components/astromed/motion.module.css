@@ -1,0 +1,37 @@
+.anatomy { transition: opacity 280ms ease, stroke-width 280ms ease; }
+.hotspot { cursor: pointer; outline: none; }
+.hotspot:focus-visible circle:first-child { stroke: #fff; stroke-width: 1.5; }
+.reveal { animation: reveal 280ms ease both; }
+.sweep { animation: sweep var(--sweep-duration, 3s) linear infinite; }
+.particle { animation: drift var(--flight-duration, 4s) var(--flight-delay, 0s) linear infinite; }
+.paused { animation-play-state: paused; }
+.breath { transition: transform 3s ease, background-color 500ms ease; }
+
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes sweep {
+  from { transform: translateX(0); }
+  to { transform: translateX(360px); }
+}
+@keyframes drift {
+  from { transform: translate(0, 0); }
+  to { transform: translate(410px, -66px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anatomy, .breath { transition-property: none; }
+  .reveal, .particle { animation: none; }
+  .particle { transform: translateX(var(--rest-offset, 0px)); }
+  .sweep { display: none; }
+}
+
+.mood { transform-origin: left; }
+@media (prefers-reduced-motion: no-preference) {
+  .mood { animation: fill 420ms ease-out both; }
+  @keyframes fill {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+}

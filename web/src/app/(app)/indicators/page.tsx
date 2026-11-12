@@ -1,3 +1,4 @@
+import { HumanBody } from "@/components/astromed";
 import Link from "next/link";
 import { CheckCircle2, CircleDashed, Ruler, ShieldCheck, Stethoscope, TriangleAlert } from "lucide-react";
 import { CiteLink } from "@/components/CiteLink";
@@ -43,6 +44,8 @@ export default async function IndicatorsPage() {
         </dl>
         <p className="mt-3 text-xs text-slate-500">The limits below are general clinical thresholds set for this demo, plus your own normal range; a real program&apos;s flight surgeons set their own.</p>
       </section>
+
+      <HumanBody />
 
       <nav aria-label="Indicators" className="flex flex-wrap gap-2">
         {INDICATORS.map((ind) => <a key={ind.id} href={`#${ind.id}`} className="rounded-full border border-white/15 px-3 py-1 text-sm text-slate-300 hover:bg-white/5">{ind.name}</a>)}
