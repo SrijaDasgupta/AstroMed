@@ -495,3 +495,19 @@ export async function bodyNoteItemAction(formData: FormData) {
   else if (op === "delete") await deleteBodyNote(viewer, id);
   revalidatePath("/", "layout");
 }
+
+export async function savePhotoAnalysisAction(target: "note" | "update", id: string, analysis: unknown): Promise<{ error?: string }> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: "Your session has ended. Sign in again." };
+  const { StoredAnalysisSchema } = await import("@/lib/ai-analysis");
+  const parsed = StoredAnalysisSchema.safeParse(analysis);
+  if (!parsed.success || (target !== "note" && target !== "update") || !/^[0-9a-f-]{36}$/i.test(id)) return { error: "That analysis couldn't be saved." };
+  const clip = (xs: string[]) => xs.slice(0, 8).map((x) => x.slice(0, 400));
+  const a = parsed.data;
+  const clean = { ...a, description: a.description.slice(0, 800), urgencyReason: a.urgencyReason.slice(0, 400), observations: clip(a.observations), possibleConditions: clip(a.possibleConditions), warningSigns: clip(a.warningSigns), selfCare: clip(a.selfCare), conditionIds: a.conditionIds.slice(0, 6) };
+  const { savePhotoAnalysis } = await import("@/lib/body-notes-store");
+  const { problem } = await savePhotoAnalysis(viewer, target, id, clean);
+  if (problem) return { error: problem };
+  revalidatePath("/", "layout");
+  return {};
+}

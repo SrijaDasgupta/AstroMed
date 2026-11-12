@@ -25,3 +25,8 @@ body {
   [class*="border-"] { border-color: #ccc !important; }
   a { text-decoration: none; }
 }
+
+/* Phones: 16px text in form fields stops iOS Safari zooming in on focus. */
+@media (max-width: 767px) {
+  input, select, textarea { font-size: 16px !important; }
+}

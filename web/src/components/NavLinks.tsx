@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Compass, Stethoscope, Calculator, Dumbbell, ClipboardCheck, ClipboardList, FolderOpen, Globe2, HeartPulse, LayoutDashboard, LineChart, MessageCircle, NotebookPen, PersonStanding, Pill, ShieldAlert, User, UserCog } from "lucide-react";
+import { BookOpen, Bot, Compass, Stethoscope, Calculator, Dumbbell, ClipboardCheck, ClipboardList, FolderOpen, Globe2, HeartPulse, LayoutDashboard, LineChart, MessageCircle, NotebookPen, PersonStanding, Pill, ShieldAlert, User, UserCog } from "lucide-react";
 
 const GROUPS = [
   {
@@ -35,6 +35,7 @@ const GROUPS = [
       { href: "/assistant", label: "Ask AstroMed", icon: MessageCircle },
       { href: "/records", label: "My records", icon: FolderOpen },
       { href: "/profile", label: "My profile", icon: UserCog },
+      { href: "/ai", label: "AI connection", icon: Bot },
     ],
   },
 ];

@@ -88,7 +88,7 @@ export function ReportForm({ areas, kinds, today, defaultArea = "", canAttach }:
           </span>
         </label>
       </div>
-      <p className="text-xs text-slate-500">Photos are stored privately so you can compare changes and show your flight surgeon. AstroMed doesn&apos;t analyze images.</p>
+      <p className="text-xs text-slate-500">Photos are stored privately so you can compare changes and show your flight surgeon. To have a photo analyzed, connect your own AI on the <a href="/ai" className="text-sky-300 hover:text-sky-200">AI connection</a> page, then press Analyze on the saved problem.</p>
       <div className="flex flex-wrap items-center gap-3">
         <button type="submit" disabled={pending} className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-sky-400 disabled:opacity-60">{pending ? "Saving…" : "Save and get advice"}</button>
         {state.error && <p role="alert" className="text-sm text-rose-300">{state.error}</p>}

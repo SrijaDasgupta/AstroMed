@@ -5,7 +5,8 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { AlertTriangle, ArrowDownRight, ArrowRight, ArrowUpRight, Camera, CheckCircle2, Siren, Sparkles, Stethoscope } from "lucide-react";
 import { addProblemUpdateAction, bodyNoteItemAction, type UpdateState } from "@/app/actions";
 import { CiteLink } from "@/components/CiteLink";
-import type { Advice, BodyNote, Trend } from "@/lib/body-notes";
+import { AnalysisPanel, AnalyzeButton } from "@/components/problems/PhotoAnalysis";
+import { problemText, type Advice, type BodyNote, type Trend } from "@/lib/body-notes";
 import type { Escalation } from "@/lib/checkups";
 
 export type ProblemView = BodyNote & { title: string; part: string; pin?: { x: number; y: number }; advice: Advice };
@@ -135,6 +136,9 @@ export function ProblemCard({ n, photos, canAttach, compact = false }: { n: Prob
         )}
         {!compact && <SeverityChart points={series} />}
       </div>
+      {!compact && n.photoPath && photos[n.photoPath] && (n.photoAnalysis
+        ? <AnalysisPanel a={n.photoAnalysis} />
+        : open && <AnalyzeButton target="note" id={n.id} url={photos[n.photoPath]} context={`${n.title}, ${n.severity}/10. ${problemText(n)}`} />)}
 
       {a.related.length > 0 && (
         <div className="mt-3">
@@ -174,15 +178,21 @@ export function ProblemCard({ n, photos, canAttach, compact = false }: { n: Prob
           <p className="text-xs font-medium uppercase tracking-widest text-slate-500">Timeline</p>
           <ol className="mt-2 space-y-2 border-l border-white/10 pl-4">
             <li className="text-xs text-slate-400"><span className="text-slate-300"><When iso={n.createdAt} /></span> · reported at {n.severity}/10</li>
-            {n.updates!.map((u) => (
+            {n.updates!.map((u, i) => {
+              const earlier = [n.photoPath, ...n.updates!.slice(0, i).map((x) => x.photoPath)].filter((p): p is string => Boolean(p && photos[p])).at(-1);
+              return (
               <li key={u.id} className="text-sm">
                 <p className="text-xs text-slate-400"><span className="text-slate-300"><When iso={u.createdAt} /></span> · {u.severity}/10</p>
                 <div className="mt-1 flex gap-3">
                   <Photo url={u.photoPath ? photos[u.photoPath] : undefined} alt={`Update photo from ${u.createdAt.slice(0, 10)}`} />
                   {u.body && <p className="whitespace-pre-line text-slate-300">{u.body}</p>}
                 </div>
+                {u.photoPath && photos[u.photoPath] && (u.photoAnalysis
+                  ? <AnalysisPanel a={u.photoAnalysis} />
+                  : open && <AnalyzeButton target="update" id={u.id} url={photos[u.photoPath]} earlierUrl={earlier ? photos[earlier] : undefined} context={`${n.title}, now ${u.severity}/10. ${problemText(n)}`} />)}
               </li>
-            ))}
+              );
+            })}
           </ol>
         </div>
       )}

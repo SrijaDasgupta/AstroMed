@@ -86,7 +86,7 @@ export default async function ProblemsPage() {
             );
           })}
         </div>
-        <p className="text-xs text-slate-500">* Expected cases per mission in NASA&apos;s sample Integrated Medical Model output (NASA-STD-3001 Vol. 1, pp. 82–83), not a prediction for you. AstroMed reads your words with keyword matching, not an AI model, so it errs on the side of flagging; it doesn&apos;t diagnose or recommend medicines.</p>
+        <p className="text-xs text-slate-500">* Expected cases per mission in NASA&apos;s sample Integrated Medical Model output (NASA-STD-3001 Vol. 1, pp. 82–83), not a prediction for you. AstroMed reads your words with keyword matching, not an AI model, so it errs on the side of flagging. Photos can be analyzed with your own AI if you connect one. Nothing here diagnoses or recommends medicines.</p>
       </section>
     </div>
   );

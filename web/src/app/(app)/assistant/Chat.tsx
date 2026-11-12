@@ -94,7 +94,7 @@ export function Chat({ starters }: { starters: string[] }) {
         <div ref={endRef} />
       </div>
 
-      <div className="sticky bottom-0 space-y-3 bg-[var(--background)] pb-2 pt-2">
+      <div className="sticky bottom-16 space-y-3 bg-[var(--background)] pb-2 pt-2 md:bottom-0">
         <div className="flex flex-wrap gap-2" aria-label="Suggested questions">
           {chips.map((s) => (
             <button key={s} type="button" onClick={() => ask(s)} disabled={pending} className="rounded-full border border-white/15 px-3 py-1 text-xs text-slate-300 hover:bg-white/5 disabled:opacity-50">{s}</button>

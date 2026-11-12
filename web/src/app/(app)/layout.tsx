@@ -3,6 +3,7 @@ import { LogOut } from "lucide-react";
 import { signOut } from "@/app/actions";
 import { Logo } from "@/components/Logo";
 import { Main } from "@/components/Main";
+import { TabBar } from "@/components/TabBar";
 import { MobileNav } from "@/components/MobileNav";
 import { NavLinks } from "@/components/NavLinks";
 import { ReminderNotifier } from "@/components/ReminderNotifier";
@@ -38,7 +39,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </aside>
 
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-white/10 bg-background/90 px-4 py-3 backdrop-blur print:hidden md:static md:bg-transparent md:px-6 md:backdrop-blur-none">
+        <header className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-white/10 bg-background/90 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur print:hidden md:static md:bg-transparent md:px-6 md:backdrop-blur-none">
           <div className="flex min-w-0 items-center gap-3">
             <MobileNav>
               <Link href="/start" className="block px-3 py-2"><Logo /></Link>
@@ -46,7 +47,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               {signOutForm}
             </MobileNav>
             <Link href="/mission" className="truncate text-sm text-slate-400 hover:text-white">
-              Mission: <span className="font-medium text-slate-100">{ctx.none ? "none set" : ctx.mission?.name ?? env.name}</span>
+              <span className="hidden sm:inline">Mission: </span><span className="font-medium text-slate-100">{ctx.none ? <><span className="sm:hidden">No mission</span><span className="hidden sm:inline">none set</span></> : ctx.mission?.name ?? env.name}</span>
               {ctx.none && <span className="ml-2 text-sky-300">Add one</span>}
               {ctx.mission && <span className="ml-2 text-slate-500">{ctx.startsIn ? `starts in ${ctx.startsIn} d` : `day ${ctx.day}`}</span>}
             </Link>
@@ -57,6 +58,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </header>
         <Main>{children}</Main>
         <ReminderNotifier items={pending} />
+        <TabBar />
       </div>
     </div>
   );

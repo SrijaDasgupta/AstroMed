@@ -47,20 +47,20 @@ export async function listBodyNotes(viewer: Viewer): Promise<{ notes: BodyNote[]
   if (viewer.kind === "demo") return { notes: await readDemo() };
   const supabase = await createClient();
   const [n, u] = await Promise.all([
-    supabase.from("body_notes").select("id, area, side, kind, severity, started_on, notes, photo_path, topics, resolved_on, created_at").order("created_at", { ascending: false }).limit(300),
-    supabase.from("body_note_updates").select("id, note_id, severity, body, photo_path, created_at").order("created_at").limit(2000),
+    supabase.from("body_notes").select("id, area, side, kind, severity, started_on, notes, photo_path, photo_analysis, topics, resolved_on, created_at").order("created_at", { ascending: false }).limit(300),
+    supabase.from("body_note_updates").select("id, note_id, severity, body, photo_path, photo_analysis, created_at").order("created_at").limit(2000),
   ]);
   const updates = new Map<string, NoteUpdate[]>();
   for (const x of u.data ?? []) {
     const list = updates.get(x.note_id) ?? [];
-    list.push({ id: x.id, severity: x.severity, body: x.body ?? undefined, photoPath: x.photo_path ?? undefined, createdAt: x.created_at });
+    list.push({ id: x.id, severity: x.severity, body: x.body ?? undefined, photoPath: x.photo_path ?? undefined, photoAnalysis: x.photo_analysis ?? undefined, createdAt: x.created_at });
     updates.set(x.note_id, list);
   }
   return {
     problem: n.error?.message ?? u.error?.message,
     notes: (n.data ?? []).map((x) => ({
       id: x.id, area: x.area, side: x.side ?? undefined, kind: x.kind, severity: x.severity, startedOn: x.started_on,
-      notes: x.notes ?? undefined, photoPath: x.photo_path ?? undefined, topics: x.topics ?? [], resolvedOn: x.resolved_on ?? undefined,
+      notes: x.notes ?? undefined, photoPath: x.photo_path ?? undefined, photoAnalysis: x.photo_analysis ?? undefined, topics: x.topics ?? [], resolvedOn: x.resolved_on ?? undefined,
       createdAt: x.created_at, updates: updates.get(x.id) ?? [],
     })),
   };
@@ -139,4 +139,16 @@ export async function photoLinks(viewer: Viewer, notes: BodyNote[]): Promise<Rec
   if (!paths.length) return {};
   const { data } = await (await createClient()).storage.from(BUCKET).createSignedUrls(paths, 60 * 60);
   return Object.fromEntries((data ?? []).flatMap((d) => (d.signedUrl && d.path ? [[d.path, d.signedUrl] as const] : [])));
+}
+
+/** Stores a finished AI photo analysis on the problem or update that owns the photo (row-level security limits it to the user's own rows). */
+export async function savePhotoAnalysis(viewer: Viewer, target: "note" | "update", id: string, analysis: unknown): Promise<{ problem?: string }> {
+  if (viewer.kind === "demo") return { problem: "Photo analysis needs an account." };
+  const { error, count } = await (await createClient())
+    .from(target === "note" ? "body_notes" : "body_note_updates")
+    .update({ photo_analysis: analysis }, { count: "exact" })
+    .eq("id", id)
+    .not("photo_path", "is", null);
+  if (error) return { problem: error.message };
+  return count ? {} : { problem: "Photo not found." };
 }

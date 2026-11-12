@@ -1,7 +1,8 @@
 import type { Escalation } from "@/lib/checkups";
 import { BODY_PARTS, type Cite } from "@/lib/body";
 import { daysBetween } from "@/lib/dates";
-import { analyzeText, conditionCite, HAZARDS, type Condition, type Hazard } from "@/lib/space-conditions";
+import { analyzeText, CONDITIONS, conditionCite, HAZARDS, type Condition, type Hazard } from "@/lib/space-conditions";
+import type { StoredAnalysis } from "@/lib/ai-analysis";
 
 /**
  * Where a problem is. Body areas have x/y on the 300 × 640 front-view figure (the figure's left is the
@@ -59,7 +60,7 @@ export const NOTE_KINDS = [
 ] as const;
 export type NoteKind = (typeof NOTE_KINDS)[number]["id"];
 
-export type NoteUpdate = { id: string; severity: number; body?: string; photoPath?: string; createdAt: string };
+export type NoteUpdate = { id: string; severity: number; body?: string; photoPath?: string; photoAnalysis?: StoredAnalysis; createdAt: string };
 
 export type BodyNote = {
   id: string;
@@ -70,6 +71,7 @@ export type BodyNote = {
   startedOn: string;
   notes?: string;
   photoPath?: string;
+  photoAnalysis?: StoredAnalysis;
   topics?: string[];
   resolvedOn?: string;
   createdAt: string;
@@ -88,6 +90,12 @@ export function pinOf(n: Pick<BodyNote, "area" | "side">) {
   const a = areaOf(n.area);
   if (!a || a.x === undefined || a.y === undefined) return undefined;
   return { x: n.side === "left" && a.xLeft !== undefined ? a.xLeft : a.x, y: a.y };
+}
+
+/** The most recent AI photo analysis for this problem, if any. */
+export function latestAnalysis(n: BodyNote): StoredAnalysis | undefined {
+  const all = [n.photoAnalysis, ...(n.updates ?? []).map((u) => u.photoAnalysis)].filter(Boolean) as StoredAnalysis[];
+  return all.sort((a, b) => a.analyzedAt.localeCompare(b.analyzedAt)).at(-1);
 }
 
 /** Severity readings over time: the first report, then each update. */
@@ -209,6 +217,13 @@ export function adviceFor(note: BodyNote, history: BodyNote[], today: string): A
     }
   }
 
+  // The user's own AI looked at a photo: it can raise the urgency, never lower it.
+  const ai = latestAnalysis(note);
+  if (ai && ai.isHealthPhoto) {
+    if (RANK[ai.urgency] > RANK[level]) { level = ai.urgency; why.push(`Photo analysis: ${ai.urgencyReason}`); }
+    if (ai.change === "worse") { level = raise(level, "routine"); why.push("Your latest photo looks worse than the earlier one."); }
+  }
+
   // Ongoing problems: how it's changing.
   let trend: Trend = "new";
   const days = daysBetween(note.startedOn, note.resolvedOn ?? today);
@@ -241,13 +256,15 @@ export function adviceFor(note: BodyNote, history: BodyNote[], today: string): A
     none: open ? "Keep an eye on it" : "Resolved",
   }[level];
 
-  const related = matches.slice(0, 3).map(({ condition: c }) => ({ id: c.id, name: c.name, perMission: c.perMission, cite: conditionCite(c) }));
+  const fromPhoto = (ai?.isHealthPhoto ? ai.conditionIds : []).map((id) => CONDITIONS.find((c) => c.id === id)).filter((c): c is Condition => Boolean(c));
+  const relatedConditions = [...matches.slice(0, 3).map((m) => m.condition), ...fromPhoto].filter((c, i, all) => all.findIndex((x) => x.id === c.id) === i).slice(0, 4);
+  const related = relatedConditions.map((c) => ({ id: c.id, name: c.name, perMission: c.perMission, cite: conditionCite(c) }));
   return {
     level,
     headline,
     why: why.length ? uniq(why) : ["Mild, recent and not getting worse."],
     selfCare: open ? uniq([...(best?.care ?? []), ...SELF_CARE[k]]).slice(0, 5) : [],
-    watch: open ? uniq(matches.slice(0, 2).flatMap((m) => m.condition.watch)).slice(0, 5) : [],
+    watch: open ? uniq([...(ai?.isHealthPhoto ? ai.warningSigns : []), ...matches.slice(0, 2).flatMap((m) => m.condition.watch)]).slice(0, 6) : [],
     links: open ? uniq([...(best?.links ?? []), ...(KIND_LINKS[k] ?? []), ...(part ? [{ text: `Learn about ${part.name.toLowerCase()} in space`, href: `/body?part=${part.id}` }] : [])].map((l) => JSON.stringify(l))).map((l) => JSON.parse(l)).slice(0, 4) : [],
     context: best?.fact ?? part?.effects[0],
     related,
