@@ -18,7 +18,7 @@ export default async function CheckupsPage() {
       <div>
         <p className="text-xs uppercase tracking-widest text-sky-400">General</p>
         <h1 className="mt-1 text-2xl font-semibold">Guided checkups</h1>
-        <p className="mt-1 text-slate-400">Routine checks with step-by-step instructions. Each one tells you whether to contact the flight surgeon.</p>
+        <p className="mt-1 text-slate-400">Routine checks with step-by-step instructions. Each one tells you whether to contact the flight surgeon. New to these measurements? See the <Link href="/indicators" className="text-sky-300 hover:text-sky-200">Health indicators guide</Link>.</p>
       </div>
 
       {problem && <SetupNotice problem={problem} />}

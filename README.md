@@ -23,7 +23,7 @@ Built for the NASA Space Apps Challenge brief *"create a visual tool that helps 
 | Any input: keyboard, clicks, camera | Forms, sliders, free-text problem reports, photos (camera or library), smartwatch CSV import, lab report uploads |
 | When should the crew or flight surgeons get involved? | Every result carries one of four urgency levels, and the wording changes with distance: on a Mars mission (4–24 minute signal delay) the crew medical officer acts first and reports to the ground |
 | Guidance on treatment and improvement | Self-care steps, warning signs, NASA-cited tips, an exercise plan for the mission type, and questions to take to the flight surgeon. No medicine recommendations, by design |
-| Which measurements, and why an exam? | Guided checkups explain each step and why it matters in space, with NASA page citations |
+| Which measurements, why an exam, how hazards affect them, when to get help, how to prevent problems | The **Health indicators guide** answers all five for 12 indicators (blood pressure, heart rate and HRV, blood sugar, temperature, sleep, mood, food and weight, water, vision, exercise and bone, radiation dose, symptoms), each with NASA citations and the astronaut's own latest reading; guided checkups walk through each measurement |
 | A clickable human figure | **My body**: an anatomical figure; tap any part to see what spaceflight does to it and your own data; red pins mark your reported problems |
 | Different environments | Earth analog, low Earth orbit (space station), lunar surface (base or rover), Mars transit (spacecraft), Mars surface (base or rover) |
 | Prompts as part of the routine | Checkups that come due, medicine and routine reminders with notifications, and today's habit missions |
@@ -57,7 +57,7 @@ Absolute alert limits (for example very high blood pressure) are general clinica
 - AstroMed supports self-monitoring. It does not diagnose and never recommends medicines or doses.
 - Emergency phrases (chest pain, trouble breathing, stroke signs, fire or toxic leaks, thoughts of self-harm) always show an immediate "act now" message.
 - Each person's data is visible only to them (database row-level security on every table; private file storage).
-- 44 automated tests cover the safety-critical rules: emergency detection, urgency levels, crew-versus-ground contact, NASA's energy formula, and the self-harm check.
+- 56 automated tests cover the safety-critical rules: emergency detection, urgency levels, crew-versus-ground contact, NASA's energy formula, and the self-harm check, and that every indicator in the guide answers all five questions with NASA sources.
 
 ## Run it yourself
 

@@ -138,3 +138,16 @@ describe("journal self-harm check", () => {
     (t) => expect(needsSupport(t)).toBe(false),
   );
 });
+
+describe("health indicators guide", async () => {
+  const { INDICATORS } = await import("@/lib/indicators");
+  const { SOURCES } = await import("@/lib/tips");
+  it.each(INDICATORS.map((i) => [i.name, i] as const))("%s answers all five questions with NASA sources", (_name, ind) => {
+    expect(ind.measure.steps.length).toBeGreaterThan(0);
+    for (const list of [ind.why, ind.hazards.map((h) => h.effect), ind.prevent]) {
+      expect(list.length).toBeGreaterThan(0);
+      for (const f of list) expect(SOURCES[f.cite.source]).toBeDefined();
+    }
+    expect(ind.when.length).toBeGreaterThan(0);
+  });
+});

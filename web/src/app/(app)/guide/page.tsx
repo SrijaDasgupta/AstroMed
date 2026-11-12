@@ -8,6 +8,7 @@ const PAGES: { area: string; items: [string, string, string][] }[] = [
     area: "General: quick, everyday use",
     items: [
       ["/log", "Daily log", "Enter today's vitals, sleep, exercise, water, mood and symptoms by hand."],
+      ["/indicators", "Health indicators", "How to measure each indicator in space, why it matters, how spaceflight affects it, and when to get help."],
       ["/checkups", "Checkups", "Guided step-by-step checks. Shows which ones are due."],
       ["/tools", "Health tools", "Calculators for radiation, bone loss, sleep and more."],
       ["/tips", "Health tips", "NASA-based habits by topic. Tick them off to earn XP and keep your streak."],
