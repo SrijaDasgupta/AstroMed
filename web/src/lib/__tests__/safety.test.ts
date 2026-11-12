@@ -151,3 +151,33 @@ describe("health indicators guide", async () => {
     expect(ind.when.length).toBeGreaterThan(0);
   });
 });
+
+describe("bring-your-own AI providers", async () => {
+  const { AI_PROVIDERS, parseReply, validBaseUrl, AiError } = await import("@/lib/ai-analysis");
+  const good = {
+    isHealthPhoto: true, quality: "good", description: "A small red patch.", observations: ["2 cm red patch"], possibleConditions: ["skin irritation"],
+    conditionIds: [], warningSigns: [], change: "first-photo", urgency: "routine", urgencyReason: "Mild.", selfCare: ["Keep it clean and dry."],
+  };
+
+  it("offers Claude, ChatGPT, Gemini, Grok and Other", () => {
+    expect(AI_PROVIDERS.map((p) => p.id)).toEqual(["anthropic", "openai", "gemini", "xai", "custom"]);
+  });
+
+  it("only sends keys to https, or http on this computer", () => {
+    expect(validBaseUrl("https://openrouter.ai/api/v1")).toBe(true);
+    expect(validBaseUrl("http://localhost:11434/v1")).toBe(true);
+    expect(validBaseUrl("http://example.com/v1")).toBe(false);
+    expect(validBaseUrl("not a url")).toBe(false);
+  });
+
+  it("accepts a valid JSON reply, even wrapped in other text", () => {
+    expect(parseReply(JSON.stringify(good)).urgency).toBe("routine");
+    expect(parseReply("Here you go:\n```json\n" + JSON.stringify(good) + "\n```").quality).toBe("good");
+  });
+
+  it("rejects replies that are not valid analyses", () => {
+    expect(() => parseReply("I can't help with that.")).toThrow(AiError);
+    expect(() => parseReply(JSON.stringify({ ...good, urgency: "later" }))).toThrow(AiError);
+    expect(() => parseReply(JSON.stringify({ ...good, conditionIds: ["made-up-id"] }))).toThrow(AiError);
+  });
+});
