@@ -35,3 +35,16 @@
     to { transform: scaleX(1); }
   }
 }
+
+.matchGlow { opacity: 0.7; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .doseFill { transition: width 140ms ease-out, background-color 160ms ease-out; }
+  .matchGlow { animation: matchGlow 800ms ease-out both; }
+
+  @keyframes matchGlow {
+    from { opacity: 0.2; }
+    40% { opacity: 1; }
+    to { opacity: 0.7; }
+  }
+}

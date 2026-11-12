@@ -39,7 +39,7 @@ Built for the NASA Space Apps Challenge brief *"create a visual tool that helps 
 - **Distance-aware advice**: who to contact, and how, depends on the mission's signal delay.
 - **Nutrition**: daily food energy target from NASA's own equation (age, sex, weight, height, activity factor 1.25, plus 200 kcal per spacewalk hour), and alerts for shortfalls and weight loss.
 - **Bring your own AI (optional)**: people can connect their own AI account (Claude, ChatGPT, Gemini, Grok, or any OpenAI-compatible service under "Other") to analyze problem photos. The key stays in their browser; photos go straight to the provider they chose, under their account, and every answer is checked against the same format before it's saved. AstroMed works fully without it.
-- **Animated views**: a heartbeat sweep paced at your own resting heart rate (My vitals), radiation particles scaled to each environment's NASA dose rate (My exposure), a body-systems figure linked to the indicators (Health indicators guide), and a breathing exercise with two short games (Journal). All respect reduced-motion settings.
+- **Animated views**: a heartbeat sweep paced at your own resting heart rate (My vitals), radiation particles scaled to each environment's NASA dose rate, a place to compare your own dosimeter reading, and a dose-matching game with a shielded cabin (My exposure), a body-systems figure linked to the indicators (Health indicators guide), and a breathing exercise with two short games (Journal). All respect reduced-motion settings.
 - **Works on phones and offline**: installable to the home screen; pages you've opened work without a connection; daily logs made offline are sent, with their real time, when you reconnect.
 
 ## Evidence and data
