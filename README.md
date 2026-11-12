@@ -8,7 +8,7 @@ Built for the NASA Space Apps Challenge brief *"create a visual tool that helps 
 
 > **Try it:** open the live site and press **Try the demo**. It starts on a sample astronaut, day 59 of the *Ares Transit 1* Mars mission, with two weeks of data, so every feature has something to show. No account needed.
 >
-> Live site: _add your Vercel address here_
+> Live site: **https://astro-med-two.vercel.app**
 
 ---
 
