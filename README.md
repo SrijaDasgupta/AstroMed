@@ -60,7 +60,7 @@ Absolute alert limits (for example very high blood pressure) are general clinica
 - AstroMed supports self-monitoring. It does not diagnose and never recommends medicines or doses.
 - Emergency phrases (chest pain, trouble breathing, stroke signs, fire or toxic leaks, thoughts of self-harm) always show an immediate "act now" message.
 - Each person's data is visible only to them (database row-level security on every table; private file storage).
-- 63 automated tests cover the safety-critical rules: emergency detection, urgency levels, crew-versus-ground contact, NASA's energy formula, and the self-harm check, and that every indicator in the guide answers all five questions with NASA sources.
+- 64 automated tests cover the safety-critical rules: emergency detection, urgency levels, crew-versus-ground contact, NASA's energy formula, and the self-harm check, and that every indicator in the guide answers all five questions with NASA sources.
 
 ## Run it yourself
 

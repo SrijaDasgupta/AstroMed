@@ -4,14 +4,14 @@ import { EVIDENCE, lastWeek, PLANS, planFor, todayAdvice, type Cited } from "@/l
 import { localDate, weekdayOf } from "@/lib/dates";
 import { getMyHealth } from "@/lib/my-health";
 import { requireViewer } from "@/lib/session";
-import { SOURCES } from "@/lib/tips";
+import { pageHref, pageLabel, SOURCES } from "@/lib/tips";
 import { WeekBars } from "./WeekBars";
 
 function Cite({ c }: { c: Cited }) {
   const s = SOURCES[c.source];
   return (
-    <a href={`${s.url}#page=${c.page}`} target="_blank" rel="noopener noreferrer" title={s.title} className="inline-flex items-center gap-0.5 whitespace-nowrap text-xs text-slate-500 underline decoration-white/20 underline-offset-2 hover:text-sky-300">
-      {s.short}, p. {c.page} <ExternalLink className="h-3 w-3" aria-hidden /><span className="sr-only">(opens NASA PDF in a new tab)</span>
+    <a href={pageHref(s, c.page)} target="_blank" rel="noopener noreferrer" title={s.title} className="inline-flex items-center gap-0.5 whitespace-nowrap text-xs text-slate-500 underline decoration-white/20 underline-offset-2 hover:text-sky-300">
+      {pageLabel(s, c.page)} <ExternalLink className="h-3 w-3" aria-hidden /><span className="sr-only">(opens the source in a new tab)</span>
     </a>
   );
 }

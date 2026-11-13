@@ -100,7 +100,7 @@ export default async function JournalPage() {
 
       <p className="text-xs text-slate-500">
         NASA studied journals kept by ISS astronauts to understand how crews adjust; ten topics (work, contact with home, adjusting, crew relations, leisure, equipment, events, scheduling, sleep and food) made up 88% of entries. AstroMed uses them as tags.{" "}
-        <a href={`${src.url}#page=21`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 underline decoration-white/20 underline-offset-2 hover:text-sky-300">{src.short}, p. 21 <ExternalLink className="h-3 w-3" aria-hidden /><span className="sr-only">(opens NASA PDF in a new tab)</span></a>.
+        <a href={`${src.url}#page=21`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 underline decoration-white/20 underline-offset-2 hover:text-sky-300">{src.short}, p. 21 <ExternalLink className="h-3 w-3" aria-hidden /><span className="sr-only">(opens the source in a new tab)</span></a>.
         Journaling supports, and doesn&apos;t replace, care from your flight surgeon or psychologist.
       </p>
     </div>

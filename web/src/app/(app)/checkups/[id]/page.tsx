@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { everyLabel } from "@/lib/checkup-schedule";
 import { getCheckup } from "@/lib/checkups";
-import { SOURCES } from "@/lib/tips";
+import { pageHref, pageLabel, SOURCES } from "@/lib/tips";
 import { CheckupForm } from "./CheckupForm";
 
 export default async function CheckupPage({ params }: { params: Promise<{ id: string }> }) {
@@ -43,8 +43,8 @@ export default async function CheckupPage({ params }: { params: Promise<{ id: st
           {checkup.why.map((w, i) => (
             <li key={i}>
               {w.text}{" "}
-              <a href={`${SOURCES[w.source].url}#page=${w.page}`} target="_blank" rel="noopener noreferrer" title={SOURCES[w.source].title} className="inline-flex items-center gap-1 text-xs text-slate-500 underline decoration-white/20 underline-offset-2 hover:text-sky-300">
-                {SOURCES[w.source].short}, p. {w.page} <ExternalLink className="h-3 w-3" aria-hidden /><span className="sr-only">(opens NASA PDF in a new tab)</span>
+              <a href={pageHref(SOURCES[w.source], w.page)} target="_blank" rel="noopener noreferrer" title={SOURCES[w.source].title} className="inline-flex items-center gap-1 text-xs text-slate-500 underline decoration-white/20 underline-offset-2 hover:text-sky-300">
+                {pageLabel(SOURCES[w.source], w.page)} <ExternalLink className="h-3 w-3" aria-hidden /><span className="sr-only">(opens the source in a new tab)</span>
               </a>
             </li>
           ))}

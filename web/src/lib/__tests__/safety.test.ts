@@ -197,6 +197,22 @@ describe("NASA hazards and risks", async () => {
     }
   });
 
+  it("gives a NASA-sourced tip for each risk that was only partly covered", async () => {
+    const { TIPS, TOPICS } = await import("@/lib/tips");
+    for (const id of ["protect-immunity", "clean-shared-spaces", "prebreathe", "landing-restraints", "know-your-cmo"]) {
+      const tip = TIPS.find((t) => t.id === id);
+      expect(tip, id).toBeDefined();
+      expect(TOPICS.some((t) => t.id === tip!.topic)).toBe(true);
+      expect(["std1", "std2"]).toContain(tip!.source);
+      expect(tip!.page).toBeGreaterThan(0);
+    }
+    for (const r of SPACE_RISKS) for (const l of r.inApp) {
+      const anchor = l.href.split("#")[1];
+      if (l.href.startsWith("/tips") && anchor) expect(TIPS.some((t) => t.id === anchor)).toBe(true);
+    }
+    expect(new Set(TIPS.map((t) => t.id)).size).toBe(TIPS.length);
+  });
+
   it("links all 5 hazards to NASA", () => {
     for (const h of Object.keys(HAZARDS)) expect(HAZARD_PAGES[h as keyof typeof HAZARD_PAGES]).toMatch(/^https:\/\/www\.nasa\.gov\/hrp\/hazard-/);
   });

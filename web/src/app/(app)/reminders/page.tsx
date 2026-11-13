@@ -3,7 +3,7 @@ import { reminderItemAction } from "@/app/actions";
 import { NotificationToggle } from "@/components/ReminderNotifier";
 import { loadSchedule, todaySchedule, type Medication, type Reminder } from "@/lib/reminder-store";
 import { requireViewer } from "@/lib/session";
-import { SOURCES, type SourceId } from "@/lib/tips";
+import { pageHref, pageLabel, SOURCES, type SourceId } from "@/lib/tips";
 import { MedicationForm, ReminderForm } from "./forms";
 import { Schedule } from "./Schedule";
 
@@ -107,8 +107,8 @@ export default async function RemindersPage() {
           {FACTS.map((f) => (
             <li key={f.text}>
               {f.text}{" "}
-              <a href={`${SOURCES[f.source].url}#page=${f.page}`} target="_blank" rel="noopener noreferrer" title={SOURCES[f.source].title} className="inline-flex items-center gap-0.5 whitespace-nowrap text-xs text-slate-500 underline decoration-white/20 underline-offset-2 hover:text-sky-300">
-                {SOURCES[f.source].short}, p. {f.page} <ExternalLink className="h-3 w-3" aria-hidden /><span className="sr-only">(opens NASA PDF in a new tab)</span>
+              <a href={pageHref(SOURCES[f.source], f.page)} target="_blank" rel="noopener noreferrer" title={SOURCES[f.source].title} className="inline-flex items-center gap-0.5 whitespace-nowrap text-xs text-slate-500 underline decoration-white/20 underline-offset-2 hover:text-sky-300">
+                {pageLabel(SOURCES[f.source], f.page)} <ExternalLink className="h-3 w-3" aria-hidden /><span className="sr-only">(opens the source in a new tab)</span>
               </a>
             </li>
           ))}

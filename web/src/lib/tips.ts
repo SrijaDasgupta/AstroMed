@@ -73,6 +73,8 @@ export type Topic =
   | "Gravity changes and landing"
   | "Mind, team and support"
   | "Radiation"
+  | "Infection and hygiene"
+  | "Spacewalks and pressure"
   | "Medicine";
 
 export const TOPICS: { id: Topic; slug: string; blurb: string }[] = [
@@ -83,6 +85,8 @@ export const TOPICS: { id: Topic; slug: string; blurb: string }[] = [
   { id: "Gravity changes and landing", slug: "landing", blurb: "Getting through the switch back to gravity." },
   { id: "Mind, team and support", slug: "mind", blurb: "Mood, stress, crew relations, and getting help." },
   { id: "Radiation", slug: "radiation", blurb: "Tracking dose and protecting yourself from solar storms." },
+  { id: "Infection and hygiene", slug: "infection", blurb: "Lowering the chance of infection when immunity and microbes change in flight." },
+  { id: "Spacewalks and pressure", slug: "eva", blurb: "Avoiding the bends and other pressure problems around spacewalks." },
   { id: "Medicine", slug: "medicine", blurb: "Planning the medical kit for long missions." },
 ];
 
@@ -345,6 +349,55 @@ export const TIPS: Tip[] = [
     source: "pharma", page: 3,
     metrics: [], environments: MARS,
   },
+  {
+    id: "protect-immunity",
+    topic: "Infection and hygiene",
+    title: "Protect your immune system before and during flight",
+    action: "Follow your flight medicine team's vaccination plan and the pre-launch health stabilization period, which limits contact with sick people before launch. In flight, eat your full rations: nutrition supports immune function.",
+    habit: "Eat all of today's planned meals.",
+    evidence: "NASA's preventive care includes vaccinations recommended by the flight medicine team, a pre-mission health stabilization program to reduce infections before launch, and monitoring nutrition to support immune function.",
+    source: "std1", page: 19,
+    metrics: [], environments: SPACE,
+  },
+  {
+    id: "clean-shared-spaces",
+    topic: "Infection and hygiene",
+    title: "Keep hygiene and food areas clean to control microbes",
+    action: "Clean and sanitize hygiene and food equipment as scheduled, contain food spills straight away, and keep your personal hygiene items to yourself.",
+    habit: "Wipe down your hygiene area and gear.",
+    evidence: "Cleaning and sanitizing hygiene equipment controls odor and microbial growth; containing food spills keeps the spacecraft and food system from being contaminated.",
+    source: "std2", page: 122,
+    metrics: [], environments: SPACE,
+  },
+  {
+    id: "prebreathe",
+    topic: "Spacewalks and pressure",
+    title: "Never shorten the prebreathe before a spacewalk",
+    action: "Complete the full oxygen prebreathe and pressure protocol before every spacewalk. Report joint pain, itching, tingling or rash after any pressure change straight away.",
+    evidence: "NASA prevents pressure-related illness, such as decompression sickness, by using the appropriate prebreathe and equipment protocols.",
+    source: "std1", page: 20,
+    metrics: [], environments: SPACE,
+  },
+  {
+    id: "landing-restraints",
+    topic: "Gravity changes and landing",
+    title: "Snug restraints and a well-fitted helmet for launch and landing",
+    action: "Before launch, reentry and landing, tighten your seat restraints and check that your helmet fits closely. Stow loose items.",
+    habit: "Check your seat restraint and helmet fit at the next suit check.",
+    evidence: "During the STS-107 reentry, seat-belt reels that failed and helmets that didn't fit closely contributed to flail and head injuries, so vehicles must limit injury from dynamic loads.",
+    source: "std2", page: 83,
+    metrics: [], environments: SPACE,
+  },
+  {
+    id: "know-your-cmo",
+    topic: "Mind, team and support",
+    title: "Know your crew medical officers and the medical kit",
+    action: "Know which two crewmates are crew medical officers, where the medical kit and procedures are kept, and practise the first aid you were trained in. Far from Earth, the crew handles problems first.",
+    habit: "Find the medical kit and one procedure you'd need in an emergency.",
+    evidence: "Programs must train at least two crew members per vehicle as crew medical officers so a backup is always available, and crew medical training covers first aid, CPR, the medical kit, decompression sickness, CO₂ and toxic exposures.",
+    source: "std1", page: 48,
+    metrics: [], environments: SPACE,
+  },
 ];
 
 export function tipsForEnvironment(env: EnvironmentId) {
@@ -375,5 +428,11 @@ export function tipsForAlerts(flagged: { key: MetricKey; deviation: number }[], 
 }
 
 export function sourceLink(tip: Tip) {
-  return `${SOURCES[tip.source].url}#page=${tip.page}`;
+  return pageHref(SOURCES[tip.source], tip.page);
 }
+
+type AnySource = (typeof SOURCES)[SourceId];
+/** Link to a source: PDFs open at the page, web pages as they are. */
+export const pageHref = (src: AnySource, page: number) => ("web" in src ? src.url : `${src.url}#page=${page}`);
+/** "Short name, p. 12" for PDFs, just the short name for web pages. */
+export const pageLabel = (src: AnySource, page: number) => ("web" in src ? src.short : `${src.short}, p. ${page}`);

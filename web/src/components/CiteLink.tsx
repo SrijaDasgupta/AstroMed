@@ -10,7 +10,7 @@ export function CiteLink({ c }: { c: Cite }) {
     <a href={web ? src.url : `${src.url}#page=${c.page}`} target="_blank" rel="noopener noreferrer" title={src.title} className="inline-flex items-center gap-0.5 whitespace-nowrap text-xs text-slate-500 underline decoration-white/20 underline-offset-2 hover:text-sky-300">
       {web ? src.short : `${src.short}, p. ${c.page}`}
       <ExternalLink className="h-3 w-3" aria-hidden />
-      <span className="sr-only">{web ? "(opens the web page in a new tab)" : "(opens NASA PDF in a new tab)"}</span>
+      <span className="sr-only">{web ? "(opens the web page in a new tab)" : "(opens the source in a new tab)"}</span>
     </a>
   );
 }

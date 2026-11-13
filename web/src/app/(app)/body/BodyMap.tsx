@@ -9,7 +9,7 @@ import type { Escalation } from "@/lib/checkups";
 import { Level, ProblemCard, type ProblemView } from "@/components/problems/ProblemCard";
 import { currentSeverity } from "@/lib/body-notes";
 import { ReportForm, type AreaOption } from "@/components/problems/ReportForm";
-import { SOURCES, TIPS } from "@/lib/tips";
+import { pageHref, pageLabel, SOURCES, TIPS } from "@/lib/tips";
 import { AnatomyDefs, AnatomyFigure, Floor } from "./Anatomy";
 
 export type PartStatus = "good" | "warning" | "critical" | "none";
@@ -57,10 +57,10 @@ function StatusIcon({ s }: { s: PartStatus }) {
 function CiteLink({ c }: { c: Cite }) {
   const src = SOURCES[c.source];
   return (
-    <a href={`${src.url}#page=${c.page}`} target="_blank" rel="noopener noreferrer" title={src.title} className="inline-flex items-center gap-0.5 whitespace-nowrap text-xs text-slate-500 underline decoration-white/20 underline-offset-2 hover:text-sky-300">
-      {src.short}, p. {c.page}
+    <a href={pageHref(src, c.page)} target="_blank" rel="noopener noreferrer" title={src.title} className="inline-flex items-center gap-0.5 whitespace-nowrap text-xs text-slate-500 underline decoration-white/20 underline-offset-2 hover:text-sky-300">
+      {pageLabel(src, c.page)}
       <ExternalLink className="h-3 w-3" aria-hidden />
-      <span className="sr-only">(opens NASA PDF in a new tab)</span>
+      <span className="sr-only">(opens the source in a new tab)</span>
     </a>
   );
 }
