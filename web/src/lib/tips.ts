@@ -43,6 +43,24 @@ export const SOURCES = {
     title: "Pharmaceutical Care, OCHMO-MTB-012 Rev B, NASA-STD-3001 Medical Technical Brief (2026)",
     url: "https://www.nasa.gov/wp-content/uploads/2026/01/ochmo-mtb-012-pharmaceutical-care.pdf",
   },
+  hypoxia: {
+    short: "NASA: Risk of Hypoxia",
+    title: "Risk of Hypoxia, NASA Human Research Program",
+    url: "https://www.nasa.gov/reference/risk-of-hypoxia/",
+    web: true,
+  },
+  hrpRisks: {
+    short: "NASA: Risks of Human Spaceflight",
+    title: "Risks of Human Spaceflight, NASA Human Research Program",
+    url: "https://www.nasa.gov/hrp/risks/",
+    web: true,
+  },
+  csaRadiation: {
+    short: "CSA: Monitoring radiation for astronaut health",
+    title: "Monitoring radiation for astronaut health, Canadian Space Agency (2026)",
+    url: "https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp",
+    web: true,
+  },
 } as const;
 
 export type SourceId = keyof typeof SOURCES;

@@ -181,3 +181,28 @@ describe("bring-your-own AI providers", async () => {
     expect(() => parseReply(JSON.stringify({ ...good, conditionIds: ["made-up-id"] }))).toThrow(AiError);
   });
 });
+
+describe("NASA hazards and risks", async () => {
+  const { SPACE_RISKS, HAZARD_PAGES, RISK_GROUPS } = await import("@/lib/space-risks");
+  const { HAZARDS, CONDITIONS, analyzeText, conditionCite } = await import("@/lib/space-conditions");
+
+  it("covers NASA's 17 HRP risks, each with a NASA link and somewhere in AstroMed", () => {
+    expect(SPACE_RISKS).toHaveLength(17);
+    expect(new Set(SPACE_RISKS.map((r) => r.id)).size).toBe(17);
+    for (const r of SPACE_RISKS) {
+      expect(r.url).toMatch(/^https:\/\/www\.nasa\.gov\/reference\//);
+      expect(r.inApp.length).toBeGreaterThan(0);
+      for (const l of r.inApp) expect(l.href.startsWith("/")).toBe(true);
+      expect(RISK_GROUPS.some((g) => g.id === r.group)).toBe(true);
+    }
+  });
+
+  it("links all 5 hazards to NASA", () => {
+    for (const h of Object.keys(HAZARDS)) expect(HAZARD_PAGES[h as keyof typeof HAZARD_PAGES]).toMatch(/^https:\/\/www\.nasa\.gov\/hrp\/hazard-/);
+  });
+
+  it("recognizes low oxygen and cites NASA's hypoxia page", () => {
+    expect(analyzeText("feel like altitude sickness, headache since the cabin pressure drop, maybe low oxygen").matches[0]?.condition.id).toBe("hypoxia");
+    expect(conditionCite(CONDITIONS.find((c) => c.id === "hypoxia")!).source).toBe("hypoxia");
+  });
+});

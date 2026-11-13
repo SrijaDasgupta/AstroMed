@@ -62,6 +62,8 @@ export type Condition = {
   fact?: { text: string; cite: Cite };
   /** Page of Table E.2-2 that lists it, when it differs from its category's page. */
   page?: number;
+  /** For conditions not in Table E.2-2: where they come from instead. */
+  source?: Cite;
   links?: { text: string; href: string }[];
 };
 
@@ -121,6 +123,12 @@ export const CONDITIONS: Condition[] = [
     care: ["Report it straight away; treatment is time-sensitive.", "Note when it started relative to the pressure change."],
     watch: ["Numbness, weakness or confusion", "Chest pain or trouble breathing"],
     fact: { text: "Programs must keep the chance of decompression sickness below 4%, with 95% confidence.", cite: s2(53) } },
+  // Not in Table E.2-2; added from NASA HRP's hypoxia risk page (future deep-space cabins at lower pressure).
+  { id: "hypoxia", name: "Low oxygen (hypoxia)", category: "environmental", hazards: ["environment"], areas: ["environment", "head", "whole-body"], source: { source: "hypoxia", page: 0 },
+    terms: /hypoxi|low (on )?oxygen|oxygen (is |was |level )?(low|dropp)|altitude sickness|(air|cabin|suit) (feels|is) thin|O2 (alarm|warning|low)/i, level: "today",
+    care: ["Tell your crew and check the cabin or suit oxygen and pressure readings.", "Stop strenuous work and rest until it passes.", "Note when it started and any recent pressure change, such as before a spacewalk."],
+    watch: ["Confusion, fainting or slurred speech", "Blue lips or trouble breathing", "Symptoms in more than one crew member at once"],
+    fact: { text: "Deep-space cabins may be kept at lower pressure to cut spacewalk preparation; mild hypoxia, similar to altitude sickness, can cause confusion, headaches, vision problems and trouble sleeping.", cite: { source: "hypoxia", page: 0 } } },
   { id: "nosebleed", name: "Nosebleed", category: "environmental", hazards: ["gravity", "environment"], areas: ["nose-throat"],
     terms: /nose ?bleed|epistaxis|bleeding (from|out of) (my )?nose|nose (is )?bleeding/i, level: "none",
     care: ["Lean forward and pinch the soft part of your nose for 10 to 15 minutes.", "Catch the blood so droplets don't float around the cabin."],
@@ -489,5 +497,5 @@ export function analyzeText(text: string, area?: string): Analysis {
 const RANK: Record<Escalation, number> = { none: 0, routine: 1, today: 2, now: 3 };
 
 export function conditionCite(c: Condition): Cite {
-  return s1(c.page ?? CATEGORIES[c.category].page);
+  return c.source ?? s1(c.page ?? CATEGORIES[c.category].page);
 }

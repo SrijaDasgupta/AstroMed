@@ -17,7 +17,7 @@ Built for the NASA Space Apps Challenge brief *"create a visual tool that helps 
 | The brief asks | AstroMed |
 |---|---|
 | A visual tool to assess your own health | Dashboard, **My vitals** charts against your own normal range, and **My summary** of physical, mental and routine health |
-| The five hazards of spaceflight | About 80 NASA-listed conditions grouped under radiation, isolation and confinement, distance from Earth, altered gravity, and hostile closed environments |
+| The five hazards of spaceflight | About 80 NASA-listed conditions grouped under radiation, isolation and confinement, distance from Earth, altered gravity, and hostile closed environments; a **Spaceflight risks** page maps NASA HRP's 5 hazards and 17 risks to NASA's pages and to where AstroMed tracks each one |
 | Blood pressure, heart rate, blood sugar, temperature, sleep, mood | All six in the **Daily log** and guided **Checkups** (blood sugar in mg/dL), plus heart rate variability, stress, water, food energy, weight and exercise |
 | Bone loss, cardiovascular events, immune changes, nutrition, behavioral health | Bone-loss and radiation projections, cardiovascular alerts, immune warning signs, NASA's energy formula with food and weight tracking, mood, stress and a private journal |
 | Any input: keyboard, clicks, camera | Forms, sliders, free-text problem reports, photos (camera or library), smartwatch CSV import, lab report uploads |
@@ -44,11 +44,13 @@ Built for the NASA Space Apps Challenge brief *"create a visual tool that helps 
 
 ## Evidence and data
 
-All guidance cites a page in a NASA document (links open the PDF at that page):
+All guidance cites its source: a page in a NASA document (links open the PDF at that page) or a NASA or CSA web page:
 
 - NASA-STD-3001 Vol. 1 Rev C (crew health) and Vol. 2 Rev F (human factors, habitability, environment), including Table E.2-2, the list of high-likelihood and high-consequence medical conditions for spaceflight
 - Human Research Program evidence reports: sleep, cardiovascular, behavioral health, bone fracture, radiation carcinogenesis
 - NASA Office of the Chief Health and Medical Officer technical brief on ISS pharmaceutical care
+- NASA Human Research Program web pages: [5 Hazards of Human Spaceflight](https://www.nasa.gov/hrp/hazards/), [Risks of Human Spaceflight](https://www.nasa.gov/hrp/risks/) (including the hypoxia risk page, the source for AstroMed's low-oxygen condition) and [Ongoing HRP Research](https://www.nasa.gov/hrp/ongoing-hrp-research/)
+- Canadian Space Agency: [Monitoring radiation for astronaut health](https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp) (neutrons are about 30% of ISS radiation) and [Why do we conduct science experiments in space?](https://www.asc-csa.gc.ca/eng/iss/science/why-do-we-conduct-science-experiments-in-space.asp)
 - Personal baselines start from the MMASH dataset (Rossi et al., 2020, PhysioNet, ODC-BY) until an astronaut has 7 days of their own readings
 
 Absolute alert limits (for example very high blood pressure) are general clinical thresholds chosen for this demo and labeled as such; a real program's flight surgeons would set their own.
@@ -58,7 +60,7 @@ Absolute alert limits (for example very high blood pressure) are general clinica
 - AstroMed supports self-monitoring. It does not diagnose and never recommends medicines or doses.
 - Emergency phrases (chest pain, trouble breathing, stroke signs, fire or toxic leaks, thoughts of self-harm) always show an immediate "act now" message.
 - Each person's data is visible only to them (database row-level security on every table; private file storage).
-- 60 automated tests cover the safety-critical rules: emergency detection, urgency levels, crew-versus-ground contact, NASA's energy formula, and the self-harm check, and that every indicator in the guide answers all five questions with NASA sources.
+- 63 automated tests cover the safety-critical rules: emergency detection, urgency levels, crew-versus-ground contact, NASA's energy formula, and the self-harm check, and that every indicator in the guide answers all five questions with NASA sources.
 
 ## Run it yourself
 

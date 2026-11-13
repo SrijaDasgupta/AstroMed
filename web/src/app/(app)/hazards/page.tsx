@@ -106,7 +106,8 @@ export default async function HazardsPage({ searchParams }: { searchParams: Prom
         )}
         <Source>
           Daily dose: {env.radiationSource} Career limit: NASA-STD-3001 Vol. 1, p. 40. A full Mars mission is estimated at about 1,413 mSv (Radiation report, p. 54).
-          Solar storms and shielding: Radiation report, p. 48; sheltering and ending spacewalks early: p. 58. Daily averages don&apos;t include solar storms.
+          Solar storms and shielding: Radiation report, p. 48; sheltering and ending spacewalks early: p. 58. Daily averages don&apos;t include solar storms. Neutrons make up about 30% of the radiation on the ISS, and the Canadian Space Agency is developing CANS to measure them continuously:{" "}
+          <a href="https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp" target="_blank" rel="noopener noreferrer" className="underline decoration-white/20 underline-offset-2 hover:text-sky-300">CSA, 2026</a>.
         </Source>
       </section>
 

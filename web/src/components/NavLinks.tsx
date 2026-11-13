@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Bot, Compass, Gauge, Stethoscope, Calculator, Dumbbell, ClipboardCheck, ClipboardList, FolderOpen, Globe2, HeartPulse, LayoutDashboard, LineChart, MessageCircle, NotebookPen, PersonStanding, Pill, ShieldAlert, User, UserCog } from "lucide-react";
+import { AlertTriangle, BookOpen, Bot, Compass, Gauge, Stethoscope, Calculator, Dumbbell, ClipboardCheck, ClipboardList, FolderOpen, Globe2, HeartPulse, LayoutDashboard, LineChart, MessageCircle, NotebookPen, PersonStanding, Pill, ShieldAlert, User, UserCog } from "lucide-react";
 
 const GROUPS = [
   {
@@ -15,6 +15,7 @@ const GROUPS = [
       { href: "/log", label: "Daily log", icon: ClipboardList },
       { href: "/checkups", label: "Checkups", icon: ClipboardCheck },
       { href: "/indicators", label: "Health indicators", icon: Gauge },
+      { href: "/risks", label: "Spaceflight risks", icon: AlertTriangle },
       { href: "/tools", label: "Health tools", icon: Calculator },
       { href: "/tips", label: "Health tips", icon: BookOpen },
       { href: "/mission", label: "Mission", icon: Globe2 },
