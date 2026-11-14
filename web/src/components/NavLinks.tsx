@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AlertTriangle, BookOpen, ScanText, Bot, Compass, Gauge, Stethoscope, Calculator, Dumbbell, ClipboardCheck, ClipboardList, FolderOpen, Globe2, HeartPulse, LayoutDashboard, LineChart, MessageCircle, NotebookPen, PersonStanding, Pill, ShieldAlert, User, UserCog } from "lucide-react";
+import { AlertTriangle, BookOpen, Info, ScanText, Bot, Compass, Gauge, Stethoscope, Calculator, Dumbbell, ClipboardCheck, ClipboardList, FolderOpen, Globe2, HeartPulse, LayoutDashboard, LineChart, MessageCircle, NotebookPen, PersonStanding, Pill, ShieldAlert, User, UserCog } from "lucide-react";
 
 const GROUPS = [
   {
     label: "Start here",
-    links: [{ href: "/guide", label: "Getting started", icon: Compass }],
+    links: [{ href: "/guide", label: "Getting started", icon: Compass }, { href: "/about", label: "About and sources", icon: Info }],
   },
   {
     label: "General",

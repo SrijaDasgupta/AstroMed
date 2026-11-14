@@ -1,21 +1,17 @@
-# AstroMed: 2-minute demo video script
+# AstroMed: 30-second demo video script
 
-**Setup:** open the live site on a laptop (and a phone for the last shot). Press **Try the demo**. Record at 1280×800 or larger. Speak slowly; each beat is about 15 seconds.
+Space Apps rule: the video must be **30 seconds or less** (longer videos aren't eligible for Global Judging). It must be in English, or have English subtitles. Don't show anyone under 18.
 
-| Time | Show | Say |
+**Setup:** open https://astro-med-two.vercel.app on a laptop and press **Try the demo**. Record at 1280×800 or larger. Cut between shots; don't wait for pages to load on camera.
+
+| Time | Show | Say (about 75 words in total) |
 |---|---|---|
-| 0:00 | Landing page | "Astronauts heading to Mars will be up to 24 minutes from help. AstroMed lets them check their own health and know exactly what to do." |
-| 0:10 | Press **Try the demo**, then the **Mission** page | "Meet our astronaut: day 59 of a Mars transit. AstroMed knows the mission, so it knows the radiation, the gravity and the signal delay. On Mars, the crew medical officer acts first." |
-| 0:25 | **Daily log**: enter blood pressure 150/92 and 1,800 kcal, save | "Every day: vitals, sleep, exercise, food and mood in under a minute. Blood pressure is above this astronaut's own normal, and they ate 59% of their NASA-calculated energy need. AstroMed says: tell your crew medical officer, and report to the flight surgeon today." |
-| 0:45 | **My vitals** chart, hover a point | "Each vital is charted against the astronaut's own normal range, colored green, amber or red, never color alone." |
-| 0:55 | **Problems & advice**: type "my fingertips are numb and two nails are lifting after the spacewalk" | "Problems can be described in plain words. As you type, AstroMed matches NASA's list of spaceflight conditions: spacesuit glove injury, numbness. Emergency words like chest pain get an instant warning." |
-| 1:10 | Open the glove-injury card: urgency, self-care, warning signs, NASA citation, timeline | "It explains why, what to do meanwhile, when to get help sooner, and cites the NASA page. Add updates and photos, and it tracks whether it's getting better or worse." |
-| 1:25 | **My body**: tap the hand pin, then a system dot | "The body map shows what spaceflight does to each part, the astronaut's own data, and pins for their problems." |
-| 1:35 | **My summary** | "My summary brings physical health, mental health and routine together: ranked suggestions, and questions to take to the flight surgeon." |
-| 1:45 | **My space**: rank and streak; then the phone with the bottom tab bar | "Habits earn XP and streaks. It works on a phone, installs to the home screen, and keeps working offline." |
-| 1:55 | Logo | "AstroMed: health self-assessment for the hazards of deep space. Built on NASA's crew health standards." |
+| 0:00 | Title slide (/slides) | "I'm Srija Dasgupta, team AstroMed." |
+| 0:02 | Slide 2, the five hazards | "On the way to Mars, help is up to 24 minutes away, so astronauts must check their own health." |
+| 0:05 | Mission home (the spacecraft on its route) | "AstroMed: health self-assessment for deep space." |
+| 0:10 | Daily log, then the "Contact today" result | "Log vitals in a minute. AstroMed compares them with your own normal and tells you what to do, and who to contact, for your distance from Earth." |
+| 0:17 | Checkups: reaction test, cabin CO₂ alert, Amsler grid | "Space-specific checks, all built on NASA's crew health standards and research." |
+| 0:22 | My vitals, then the phone | "From the ISS to the surface of Mars, astronauts can catch problems early, wherever they are." |
+| 0:28 | Live site address | "astro-med-two.vercel.app" |
 
-**Tips**
-- Keep the cursor still while talking; zoom in on the urgency message.
-- If something loads slowly, cut the wait in editing.
-- End with the live site address on screen.
+Upload to YouTube (Unlisted is fine) or Google Drive with "Anyone with the link" access, then test the link in a private window.

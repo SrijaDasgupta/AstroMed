@@ -1,4 +1,6 @@
-# AstroMed: slide outline (6 slides)
+# AstroMed: slide outline
+
+The submitted 7-slide demo deck is live at https://astro-med-two.vercel.app/slides (source: web/src/app/slides/page.tsx; print it to PDF in landscape for one slide per page). This outline is the talking-point version.
 
 ## 1. The problem
 - Missions are getting longer and farther: Artemis to the Moon, then Mars.

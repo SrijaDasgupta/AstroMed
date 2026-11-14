@@ -12,6 +12,16 @@ Built for the NASA Space Apps Challenge brief *"create a visual tool that helps 
 
 ---
 
+
+## Space Apps submission
+- Live app: https://astro-med-two.vercel.app (press **Try the demo**, no account needed)
+- Demo slides (7): https://astro-med-two.vercel.app/slides
+- Data, sources and AI use: https://astro-med-two.vercel.app/about
+- Paste-ready project page text: [docs/SUBMISSION.md](docs/SUBMISSION.md); 30-second video script: [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md)
+
+## Use of AI
+The idea, the choice of NASA sources and all product decisions are the team's own. Code, text and data files were written with the help of an AI coding assistant (Claude, by Anthropic) and reviewed and tested by the team. No AI-generated images, video or audio are used; all graphics are drawn in code. This is also stated on the /about page and in the site metadata. Inside the app, advice comes from fixed NASA-cited rules, not AI.
+
 ## How AstroMed answers the challenge
 
 | The brief asks | AstroMed |

@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   title: "AstroMed",
   description: "Personal health monitoring for astronauts on missions beyond Earth.",
   appleWebApp: { capable: true, title: "AstroMed", statusBarStyle: "black-translucent" },
+  // Space Apps rules: acknowledge AI-assisted code in metadata as well as in text (see /about).
+  other: { "ai-assistance": "Code and text written with the help of an AI coding assistant (Claude, by Anthropic) and reviewed by the team. No AI-generated images, video or audio." },
 };
 
 export const viewport: Viewport = {
