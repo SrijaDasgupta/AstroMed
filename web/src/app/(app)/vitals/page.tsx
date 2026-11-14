@@ -2,7 +2,8 @@ import Link from "next/link";
 import { ClipboardCheck, Radiation } from "lucide-react";
 import { MetricChart } from "@/components/MetricChart";
 import { StatusBadge } from "@/components/StatusBadge";
-import { VitalSigns, type VitalReading } from "@/components/astromed";
+import { SleepOrbitCard, VitalSigns, type VitalReading } from "@/components/astromed";
+import { listSleep } from "@/lib/sleep-store";
 import { TipCard } from "@/components/TipCard";
 import { tipsForAlerts } from "@/lib/tips";
 import { formatValue, METRIC_GROUPS, MISSION_DAYS } from "@/lib/crew";
@@ -17,7 +18,7 @@ function explain(deviation: number, worseWhen: "higher" | "lower") {
 
 export default async function MyVitalsPage() {
   const viewer = await requireViewer();
-  const [{ env, member, sample, assessment: a, recordedDays, baselineSources }, ctx] = await Promise.all([getMyHealth(viewer), getMissionContext()]);
+  const [{ env, member, sample, assessment: a, recordedDays, baselineSources }, ctx, sleep] = await Promise.all([getMyHealth(viewer), getMissionContext(), listSleep(viewer)]);
   const flagged = a.metrics.filter((m) => m.status !== "good");
   const b = sample.baseline;
   void member;
@@ -115,6 +116,9 @@ export default async function MyVitalsPage() {
           </div>
         </section>
       )}
+
+      <SleepOrbitCard records={sleep.records} />
+      {sleep.problem && <p className="rounded-xl bg-amber-300/10 p-3 text-sm text-amber-100">Couldn&apos;t load your sleep sessions: {sleep.problem}</p>}
 
       {METRIC_GROUPS.map((group) => (
         <section key={group}>

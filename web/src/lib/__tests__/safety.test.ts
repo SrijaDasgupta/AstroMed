@@ -222,3 +222,19 @@ describe("NASA hazards and risks", async () => {
     expect(conditionCite(CONDITIONS.find((c) => c.id === "hypoxia")!).source).toBe("hypoxia");
   });
 });
+
+describe("sleep orbit sessions", async () => {
+  const { checkSleep } = await import("@/lib/sleep-store");
+  const id = "123e4567-e89b-42d3-a456-426614174000";
+  const h = (n: number) => new Date(Date.UTC(2026, 10, 10, n)).toISOString();
+  it("accepts a normal night and a nap", () => {
+    expect(checkSleep({ id, kind: "sleep", startedAt: h(-1), endedAt: h(6) })).toBeNull();
+    expect(checkSleep({ id, kind: "nap", startedAt: h(13), endedAt: h(14) })).toBeNull();
+  });
+  it("rejects bad sessions", () => {
+    expect(checkSleep({ id, kind: "sleep", startedAt: h(6), endedAt: h(5) })).not.toBeNull();
+    expect(checkSleep({ id, kind: "sleep", startedAt: h(0), endedAt: h(30) })).not.toBeNull();
+    expect(checkSleep({ id: "x", kind: "sleep", startedAt: h(0), endedAt: h(6) })).not.toBeNull();
+    expect(checkSleep({ id, kind: "coma", startedAt: h(0), endedAt: h(6) })).not.toBeNull();
+  });
+});

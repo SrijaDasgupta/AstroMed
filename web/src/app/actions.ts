@@ -68,6 +68,7 @@ export async function signOut() {
   store.delete((await import("@/lib/missions-store")).DEMO_MISSIONS_COOKIE);
   store.delete((await import("@/lib/journal-store")).DEMO_JOURNAL_COOKIE);
   store.delete((await import("@/lib/body-notes-store")).DEMO_BODY_COOKIE);
+  store.delete((await import("@/lib/sleep-store")).DEMO_SLEEP_COOKIE);
   redirect("/");
 }
 
@@ -520,4 +521,19 @@ export async function savePhotoAnalysisAction(target: "note" | "update", id: str
   if (problem) return { error: problem };
   revalidatePath("/", "layout");
   return {};
+}
+
+/** Saves a sleep or nap session from the Sleep orbit. Throws on failure so the card can offer a retry. */
+export async function saveSleepSessionAction(record: { id: string; kind: "sleep" | "nap"; startedAt: string; endedAt: string }): Promise<void> {
+  const viewer = await getViewer();
+  if (!viewer) throw new Error("Your session has ended. Sign in again.");
+  const { checkSleep, saveSleep } = await import("@/lib/sleep-store");
+  const problem = checkSleep(record ?? {});
+  if (problem) throw new Error(problem);
+  const saved = await saveSleep(viewer, {
+    id: record.id, kind: record.kind, source: "manual",
+    startedAt: new Date(record.startedAt).toISOString(), endedAt: new Date(record.endedAt).toISOString(),
+  });
+  if (saved.problem) throw new Error(saved.problem);
+  revalidatePath("/vitals");
 }

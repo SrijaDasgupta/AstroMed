@@ -10,6 +10,7 @@ import { DEMO_BODY_COOKIE } from "@/lib/body-notes-store";
 import { DEMO_LOGS_COOKIE_NAME, fitDemoLogs } from "@/lib/checkup-store";
 import { CREW, METRICS, type MetricKey } from "@/lib/crew";
 import { DAILY_LOG_ID, evaluateDailyLog } from "@/lib/daily-log";
+import type { SleepRecord } from "@/components/astromed/sleep-records";
 import { addDays, localDate, middayOf } from "@/lib/dates";
 import { ENV_COOKIE } from "@/lib/environments";
 import { DEMO_JOURNAL_COOKIE, type JournalEntry } from "@/lib/journal-store";
@@ -88,6 +89,23 @@ export async function seedDemo() {
   }
   logs.push([member.id, "vision", "none", Math.floor(at(addDays(today, -5), 9).getTime() / 1000)]);
   store.set(DEMO_LOGS_COOKIE_NAME, JSON.stringify(fitDemoLogs(logs)), options);
+
+  // Sleep orbit: the last week's nights with start and wake times (UTC), matching the logged hours, plus a nap after the spacewalk.
+  const sleepHours = new Map<number, number>();
+  for (const l of logs) {
+    const row = l as [string, string, string, number, Record<string, number>?];
+    if (row[4]?.sleepHours) sleepHours.set(Math.round((Date.now() / 1000 - row[3]) / 86400), row[4].sleepHours);
+  }
+  const wakeUtc = (n: number) => { const d = new Date(); d.setUTCHours(6, 30, 0, 0); return d.getTime() - n * 86_400_000; };
+  const session = (kind: SleepRecord["kind"], start: number, end: number): SleepRecord =>
+    ({ id: crypto.randomUUID(), kind, source: "manual", startedAt: new Date(start).toISOString(), endedAt: new Date(end).toISOString() });
+  const sleep: SleepRecord[] = [6, 5, 4, 3, 2, 1, 0].filter((n) => sleepHours.has(n)).map((n) => {
+    const end = wakeUtc(n) - Math.round(rand() * 4) * 5 * 60_000;
+    return session("sleep", end - sleepHours.get(n)! * 3_600_000, end);
+  });
+  const napStart = wakeUtc(1) + 7.5 * 3_600_000;
+  sleep.push(session("nap", napStart, napStart + 40 * 60_000));
+  await (await import("@/lib/sleep-store")).writeDemoSleep(sleep.filter((r) => Date.parse(r.endedAt) <= Date.now()));
 
   // Ongoing problems: an adaptation backache that's improving, and a fresh spacewalk glove injury.
   const notes: BodyNote[] = [

@@ -48,3 +48,8 @@
     to { opacity: 0.7; }
   }
 }
+
+@media (prefers-reduced-motion: no-preference) {
+  .sleepRing { transition: opacity 220ms ease; }
+  .sleepStage { animation: fill 360ms ease-out both; transform-origin: left; }
+}
