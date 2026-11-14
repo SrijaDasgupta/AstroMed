@@ -22,7 +22,7 @@ export default async function CheckupsPage() {
       </div>
 
       {problem && <SetupNotice problem={problem} />}
-      <p className="text-sm text-slate-300">{due === 0 ? "All your checkups are done for now." : `${due} checkup${due > 1 ? "s" : ""} due.`} Vital signs and sleep readings are added to My vitals.</p>
+      <p className="text-sm text-slate-300">{due === 0 ? "All your checkups are done for now." : `${due} checkup${due > 1 ? "s" : ""} due.`} Vital signs, oxygen and sleep readings are added to My vitals; reaction-time, cabin air and vision results show under Space checks.</p>
 
       <section>
         <h2 className="sr-only">Your checkups</h2>
@@ -36,6 +36,7 @@ export default async function CheckupsPage() {
                     <div>
                       <h3 className="font-semibold">{c.title}</h3>
                       <p className="text-sm text-slate-400">{c.summary}</p>
+                      {c.hazard && <p className="mt-1 text-xs text-sky-300/80">NASA hazard: {c.hazard}</p>}
                     </div>
                     {s.due ? (
                       <span className="shrink-0 rounded-full bg-sky-400 px-2 py-0.5 text-xs font-medium text-slate-950">Due</span>

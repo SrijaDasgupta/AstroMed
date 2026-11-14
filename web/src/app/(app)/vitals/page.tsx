@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { ClipboardCheck, Radiation } from "lucide-react";
+import { ClipboardCheck, Eye, Radiation, Timer, Wind } from "lucide-react";
+import { EscalationBadge } from "@/components/EscalationBadge";
+import { ago } from "@/lib/checkup-schedule";
 import { MetricChart } from "@/components/MetricChart";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SleepOrbitCard, VitalSigns, type VitalReading } from "@/components/astromed";
@@ -18,7 +20,7 @@ function explain(deviation: number, worseWhen: "higher" | "lower") {
 
 export default async function MyVitalsPage() {
   const viewer = await requireViewer();
-  const [{ env, member, sample, assessment: a, recordedDays, baselineSources }, ctx, sleep] = await Promise.all([getMyHealth(viewer), getMissionContext(), listSleep(viewer)]);
+  const [{ env, member, sample, assessment: a, recordedDays, baselineSources, logs }, ctx, sleep] = await Promise.all([getMyHealth(viewer), getMissionContext(), listSleep(viewer)]);
   const flagged = a.metrics.filter((m) => m.status !== "good");
   const b = sample.baseline;
   void member;
@@ -50,10 +52,28 @@ export default async function MyVitalsPage() {
   const sys = latestOwn("systolic");
   const dia = latestOwn("diastolic");
   const temp = latestOwn("temperature");
+  const spo2 = latestOwn("spo2");
   const readings: VitalReading[] = [
     { label: "Resting heart rate", value: hr ? String(Math.round(hr.value)) : null, unit: "bpm", when: hr?.when },
     { label: "Blood pressure", value: sys && dia ? `${Math.round(sys.value)}/${Math.round(dia.value)}` : null, unit: "mmHg", when: sys?.when },
     { label: "Body temperature", value: temp ? temp.value.toFixed(1) : null, unit: "°C", when: temp?.when },
+    { label: "Oxygen saturation", value: spo2 ? String(Math.round(spo2.value)) : null, unit: "%", when: spo2?.when },
+  ];
+
+  // Latest space-specific checks: alertness, cabin air and vision.
+  const lastOf = (id: string) => logs.find((l) => l.checkupId === id);
+  const reaction = lastOf("reaction"), cabin = lastOf("cabin"), vision = lastOf("vision");
+  const n = (l: typeof cabin, k: string) => (typeof l?.answers?.[k] === "number" ? (l.answers[k] as number) : undefined);
+  const cabinParts = cabin ? [
+    n(cabin, "co2Mmhg") !== undefined && `CO₂ ${n(cabin, "co2Mmhg")} mmHg`,
+    n(cabin, "cabinTempC") !== undefined && `${n(cabin, "cabinTempC")} °C`,
+    n(cabin, "humidityPct") !== undefined && `${n(cabin, "humidityPct")}% humidity`,
+    n(cabin, "noiseDba") !== undefined && `${n(cabin, "noiseDba")} dBA`,
+  ].filter(Boolean).join(" · ") : "";
+  const spaceChecks = [
+    { id: "reaction", icon: Timer, title: "Alertness", log: reaction, text: reaction ? `Median ${n(reaction, "rtMedianMs") ?? "—"} ms, ${n(reaction, "rtLapses") ?? 0} lapses` : "3-minute reaction-time test" },
+    { id: "cabin", icon: Wind, title: "Cabin air and noise", log: cabin, text: cabin ? cabinParts || "Saved" : "CO₂, temperature, humidity, noise" },
+    { id: "vision", icon: Eye, title: "Vision (SANS)", log: vision, text: vision ? (vision.escalation === "none" ? "No changes reported" : "Changes reported") : "Amsler grid and near-vision card" },
   ];
 
   const sim = member.simulated;
@@ -61,6 +81,7 @@ export default async function MyVitalsPage() {
     ["Blood pressure", `${sim.systolic}/${sim.diastolic} mmHg`],
     ["Fasting blood glucose", `${sim.glucose} mg/dL`],
     ["Body temperature", `${sim.temperature.toFixed(1)} °C`],
+    ["Oxygen saturation", `${sim.spo2}%`],
   ];
 
   return (
@@ -116,6 +137,24 @@ export default async function MyVitalsPage() {
           </div>
         </section>
       )}
+
+      <section>
+        <h2 className="mb-3 font-medium">Space checks</h2>
+        <ul className="grid gap-4 md:grid-cols-3">
+          {spaceChecks.map((c) => (
+            <li key={c.id}>
+              <Link href={`/checkups/${c.id}`} className="block h-full rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition hover:border-white/25">
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="flex items-center gap-2 text-sm font-medium"><c.icon className="h-4 w-4 text-sky-300" aria-hidden /> {c.title}</h3>
+                  {c.log && <EscalationBadge level={c.log.escalation} />}
+                </div>
+                <p className="mt-2 text-sm text-slate-200">{c.text}</p>
+                <p className="mt-1 text-xs text-slate-500">{c.log ? `Last done ${ago(c.log.createdAt)}` : "Not done yet · Start"}</p>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <SleepOrbitCard records={sleep.records} />
       {sleep.problem && <p className="rounded-xl bg-amber-300/10 p-3 text-sm text-amber-100">Couldn&apos;t load your sleep sessions: {sleep.problem}</p>}

@@ -120,7 +120,13 @@ export async function submitCheckup(_prev: CheckupState, formData: FormData): Pr
   const parsed = parseAnswers(checkup, formData);
   if ("error" in parsed) return { error: parsed.error };
 
-  const { level, findings } = evaluate(checkup, member, parsed.answers);
+  // The reaction test is compared with the person's own earlier results.
+  let priorReaction: number[] | undefined;
+  if (checkup.id === "reaction") {
+    const { loadLogs } = await import("@/lib/checkup-store");
+    priorReaction = (await loadLogs(viewer)).logs.filter((l) => l.checkupId === "reaction" && typeof l.answers?.rtMedianMs === "number").map((l) => l.answers!.rtMedianMs as number);
+  }
+  const { level, findings } = evaluate(checkup, member, parsed.answers, { priorReaction });
   const { problem } = await saveLog(viewer, { crewId: member.id, checkupId: checkup.id, escalation: level, answers: parsed.answers });
   revalidatePath("/", "layout");
   const { contactText } = await import("@/lib/contact");

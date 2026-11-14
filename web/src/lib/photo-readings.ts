@@ -7,14 +7,14 @@
 import type { Measurement } from "@/lib/records-store";
 
 /** The measures a photo can fill, in AstroMed's units. */
-export type PhotoAnswers = Partial<Record<"systolic" | "diastolic" | "restingHr" | "temperature" | "glucose" | "weightKg", number>>;
+export type PhotoAnswers = Partial<Record<"systolic" | "diastolic" | "restingHr" | "temperature" | "spo2" | "glucose" | "weightKg", number>>;
 
 export type MappedReading = { label: string; shown: string; key: keyof PhotoAnswers | "bloodPressure"; value: string; converted?: string };
 
 export const PHOTO_LOG_ID = "photo";
 
 const RANGES: Record<keyof PhotoAnswers, [number, number]> = {
-  systolic: [60, 260], diastolic: [30, 160], restingHr: [25, 220], temperature: [33, 43], glucose: [20, 600], weightKg: [25, 250],
+  systolic: [60, 260], diastolic: [30, 160], restingHr: [25, 220], temperature: [33, 43], spo2: [50, 100], glucose: [20, 600], weightKg: [25, 250],
 };
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -29,6 +29,7 @@ function kind(label: string): keyof PhotoAnswers | "bloodPressure" | undefined {
   if (/^(dia|diastolic|bpdiastolic|diastolicbloodpressure)$/.test(l)) return "diastolic";
   if (/^(pulse|pulserate|hr|heartrate|restingheartrate|restinghr|rhr|pr)$/.test(l)) return "restingHr";
   if (/^(temp|temperature|bodytemp|bodytemperature)$/.test(l)) return "temperature";
+  if (/^(spo2|sp02|o2sat|o2saturation|oxygensaturation|oxygen|bloodoxygen|sao2|spo2percent)$/.test(l)) return "spo2";
   if (/^(glucose|bloodglucose|bloodsugar|glu|fastingglucose)$/.test(l)) return "glucose";
   if (/^(weight|bodyweight|mass|wt)$/.test(l)) return "weightKg";
   return undefined;
@@ -65,7 +66,7 @@ export function mapPhotoReadings(measurements: readonly Measurement[]): { answer
     if (k === "weightKg" && /^(lb|lbs|pound)/.test(unit)) { v = v * 0.45359237; converted = "lb to kg"; }
     if (!inRange(k, v)) continue;
     answers[k] = round(k, v);
-    const unitOut = { systolic: "mmHg", diastolic: "mmHg", restingHr: "bpm", temperature: "°C", glucose: "mg/dL", weightKg: "kg" }[k];
+    const unitOut = { systolic: "mmHg", diastolic: "mmHg", restingHr: "bpm", temperature: "°C", spo2: "%", glucose: "mg/dL", weightKg: "kg" }[k];
     used.push({ label: m.label, shown, key: k, value: `${answers[k]} ${unitOut}`, converted });
   }
   return { answers, used };
@@ -74,5 +75,5 @@ export function mapPhotoReadings(measurements: readonly Measurement[]): { answer
 /** Plain names for the measures, for messages. */
 export const PHOTO_MEASURE_NAMES: Record<MappedReading["key"], string> = {
   bloodPressure: "blood pressure", systolic: "systolic pressure", diastolic: "diastolic pressure", restingHr: "heart rate",
-  temperature: "temperature", glucose: "blood sugar", weightKg: "weight",
+  temperature: "temperature", spo2: "oxygen saturation", glucose: "blood sugar", weightKg: "weight",
 };

@@ -47,6 +47,7 @@ const METRIC_WORDS: { keys: MetricKey[]; words: RegExp }[] = [
   { keys: ["hrv"], words: /\b(hrv|variability)\b/ },
   { keys: ["restingHr"], words: /\b(heart ?rate|pulse|hr|bpm|heartbeat|heart)\b/ },
   { keys: ["glucose"], words: /\b(glucose|blood sugar|sugar)\b/ },
+  { keys: ["spo2"], words: /\b(spo2|oxygen|saturation|oximeter|o2)\b/ },
   { keys: ["temperature"], words: /\b(temperature|temp|fever)\b/ },
   { keys: ["sleepEfficiency"], words: /\b(sleep efficiency|efficiency)\b/ },
   { keys: ["sleepHours"], words: /\b(sleep|slept|sleeping|rest)\b/ },
@@ -96,6 +97,7 @@ const SPOKEN: Partial<Record<MetricKey, string>> = {
   diastolic: "diastolic blood pressure",
   glucose: "fasting blood glucose",
   hrv: "heart rate variability",
+  spo2: "oxygen saturation",
 };
 const spoken = (m: MetricAssessment) => SPOKEN[m.def.key] ?? m.def.label.toLowerCase();
 
@@ -271,7 +273,7 @@ export function answer(rawQuestion: string, ctx: AssistantContext): Answer {
       blocks.push(chartOf(m));
     }
     blocks.push(...tipsFor(found.keys, ctx));
-    blocks.push({ type: "links", links: [{ href: "/vitals", label: "Open My vitals" }, ...(found.keys.some((k) => ["restingHr", "systolic", "diastolic", "glucose", "temperature"].includes(k)) ? [{ href: "/checkups/vitals", label: "Record vital signs" }] : found.keys.includes("sleepHours") ? [{ href: "/checkups/sleep", label: "Log sleep" }] : [])] });
+    blocks.push({ type: "links", links: [{ href: "/vitals", label: "Open My vitals" }, ...(found.keys.some((k) => ["restingHr", "systolic", "diastolic", "glucose", "temperature", "spo2"].includes(k)) ? [{ href: "/checkups/vitals", label: "Record vital signs" }] : found.keys.includes("sleepHours") ? [{ href: "/checkups/sleep", label: "Log sleep" }] : [])] });
     const other = SUGGESTIONS.filter((s) => !found.words.test(s.toLowerCase())).slice(0, 3);
     return { blocks, suggestions: [`${found.keys.includes("sleepHours") ? "How did I sleep" : "What was it"} yesterday?`.replace("What was it", `What was my ${spoken(metric(found.keys[0]))}`), ...other] };
   }

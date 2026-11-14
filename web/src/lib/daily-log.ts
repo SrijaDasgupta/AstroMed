@@ -14,6 +14,7 @@ export const DAILY_SECTIONS: { title: string; numbers?: NumberField[]; scales?: 
       { id: "systolic", label: "Blood pressure, systolic", unit: "mmHg", min: 60, max: 260, step: 1, metric: "systolic" },
       { id: "diastolic", label: "Blood pressure, diastolic", unit: "mmHg", min: 30, max: 160, step: 1, metric: "diastolic" },
       { id: "temperature", label: "Temperature", unit: "°C", min: 33, max: 43, step: 0.1, metric: "temperature" },
+      { id: "spo2", label: "Oxygen saturation (SpO₂)", unit: "%", min: 50, max: 100, step: 1, metric: "spo2" },
       { id: "glucose", label: "Blood glucose, fasting", unit: "mg/dL", min: 20, max: 600, step: 1, metric: "glucose" },
     ],
   },

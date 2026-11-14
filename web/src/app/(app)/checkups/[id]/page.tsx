@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import { everyLabel } from "@/lib/checkup-schedule";
+import { ago, everyLabel } from "@/lib/checkup-schedule";
+import { loadLogs } from "@/lib/checkup-store";
+import { requireViewer } from "@/lib/session";
 import { getCheckup } from "@/lib/checkups";
 import { pageHref, pageLabel, SOURCES } from "@/lib/tips";
 import { CheckupForm } from "./CheckupForm";
@@ -9,6 +11,12 @@ import { CheckupForm } from "./CheckupForm";
 export default async function CheckupPage({ params }: { params: Promise<{ id: string }> }) {
   const checkup = getCheckup((await params).id);
   if (!checkup) notFound();
+  const viewer = await requireViewer();
+  // Earlier results for checks whose history isn't charted elsewhere.
+  const history = checkup.id === "reaction" || checkup.id === "cabin"
+    ? (await loadLogs(viewer)).logs.filter((l) => l.checkupId === checkup.id && l.answers).slice(0, 8)
+    : [];
+  const numberFields = checkup.fields.filter((f) => f.kind === "number");
 
   return (
     <div className="space-y-6">
@@ -17,7 +25,7 @@ export default async function CheckupPage({ params }: { params: Promise<{ id: st
       </Link>
       <div>
         <h1 className="text-2xl font-semibold">{checkup.title}</h1>
-        <p className="mt-1 text-slate-400">{everyLabel(checkup.everyDays)}</p>
+        <p className="mt-1 text-slate-400">{everyLabel(checkup.everyDays)}{checkup.hazard && <> · NASA hazard: {checkup.hazard}</>}</p>
       </div>
 
       <section>
@@ -34,8 +42,32 @@ export default async function CheckupPage({ params }: { params: Promise<{ id: st
 
       <section>
         <h2 className="mb-3 font-medium">Record</h2>
-        <CheckupForm checkupId={checkup.id} fields={checkup.fields} />
+        <CheckupForm checkupId={checkup.id} fields={checkup.fields} widget={checkup.widget} />
       </section>
+
+      {history.length > 0 && (
+        <section>
+          <h2 className="font-medium">Your recent results</h2>
+          <div className="mt-3 overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.03]">
+            <table className="w-full text-sm">
+              <thead className="text-left text-xs text-slate-400">
+                <tr>
+                  <th className="px-4 py-2 font-normal">When</th>
+                  {numberFields.map((f) => <th key={f.id} className="px-4 py-2 font-normal">{f.label}{f.kind === "number" && f.unit ? ` (${f.unit})` : ""}</th>)}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {history.map((l) => (
+                  <tr key={l.createdAt}>
+                    <td className="whitespace-nowrap px-4 py-2 text-slate-400">{ago(l.createdAt)}</td>
+                    {numberFields.map((f) => <td key={f.id} className="px-4 py-2 tabular-nums text-slate-100">{typeof l.answers?.[f.id] === "number" ? String(l.answers[f.id]) : "—"}</td>)}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       <section className="text-sm">
         <h2 className="font-medium">Why this check</h2>
@@ -50,7 +82,11 @@ export default async function CheckupPage({ params }: { params: Promise<{ id: st
           ))}
         </ul>
         <p className="mt-3 text-xs text-slate-500">
-          Readings are compared with your own normal range and with general clinical limits (for example, fever from 38 °C, high blood pressure from 140/90). These limits are AstroMed demo settings, not NASA values; a real flight surgeon team sets its own. Not medical advice.
+          {checkup.id === "cabin"
+            ? "Cabin readings are compared with the NASA-STD-3001 limits above. Real missions also set their own operating limits. Not medical advice."
+            : checkup.id === "reaction"
+              ? "Each result is compared with your own earlier tests. Slower than usual is a prompt to look at sleep, workload and cabin air, not a diagnosis. Not medical advice."
+              : "Readings are compared with your own normal range and with general clinical limits (for example, fever from 38 °C, high blood pressure from 140/90, oxygen saturation below 94%). These limits are AstroMed demo settings, not NASA values; a real flight surgeon team sets its own. Not medical advice."}
         </p>
       </section>
     </div>

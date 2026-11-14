@@ -294,7 +294,61 @@ describe("photo readings feed My vitals", async () => {
   });
 
   it("leaves out readings it can't trust", () => {
-    const { answers } = mapPhotoReadings([m("Blood pressure", "82/128", "mmHg"), m("Pulse", "640", "bpm"), m("Glucose", "<70", "mg/dL"), m("SpO2", "98", "%"), m("Cholesterol", "180", "mg/dL")]);
+    const { answers } = mapPhotoReadings([m("Blood pressure", "82/128", "mmHg"), m("Pulse", "640", "bpm"), m("Glucose", "<70", "mg/dL"), m("SpO2", "41", "%"), m("Cholesterol", "180", "mg/dL")]);
     expect(answers).toEqual({});
+  });
+});
+
+describe("space health checks", async () => {
+  const { evaluate, getCheckup, parseAnswers } = await import("@/lib/checkups");
+  const { reactionFindings, summarize, nextDelay } = await import("@/lib/reaction");
+  const { mapPhotoReadings } = await import("@/lib/photo-readings");
+  const member = CREW[0];
+  const run = (id: string, a: Record<string, number | boolean>, prior?: number[]) => evaluate(getCheckup(id)!, member, a, { priorReaction: prior });
+
+  it("treats low oxygen saturation as urgent", () => {
+    expect(run("vitals", { spo2: 88 }).level).toBe("now");
+    expect(run("vitals", { spo2: 92 }).level).toBe("today");
+    expect(run("vitals", { spo2: 98 }).level).toBe("none");
+    expect(evaluateDailyLog(member, { spo2: 89 }).level).toBe("now");
+  });
+
+  it("checks cabin air against NASA-STD-3001 limits", () => {
+    expect(run("cabin", { co2Mmhg: 3.5 }).level).toBe("today");
+    expect(run("cabin", { co2Mmhg: 2.0, cabinTempC: 22, humidityPct: 45, noiseDba: 60 }).level).toBe("none");
+    expect(run("cabin", { cabinTempC: 29 }).level).toBe("routine");
+    expect(run("cabin", { humidityPct: 15 }).level).toBe("routine");
+    expect(run("cabin", { noiseDba: 88 }).level).toBe("today");
+  });
+
+  it("needs at least one cabin reading", () => {
+    const form = new FormData();
+    expect(parseAnswers(getCheckup("cabin")!, form)).toHaveProperty("error");
+    form.set("co2Mmhg", "2.4");
+    expect(parseAnswers(getCheckup("cabin")!, form)).toEqual({ answers: { co2Mmhg: 2.4 } });
+  });
+
+  it("flags distortion on the Amsler grid in either eye", () => {
+    const r = run("vision", { amslerLeft: false, amslerRight: true, blurred: false, oneEye: false, headache: false });
+    expect(r.level).toBe("today");
+    expect(r.findings[0].text).toMatch(/right eye/);
+  });
+
+  it("scores the 3-minute reaction test like PVT-B", () => {
+    const s = summarize([250, 260, 270, 400, 360, 240], 2)!;
+    expect(s).toMatchObject({ rtMedianMs: 265, rtLapses: 2, rtFalseStarts: 2, rtTrials: 6 });
+    expect(summarize([], 3)).toBeUndefined();
+    for (let i = 0; i < 50; i++) { const d = nextDelay(); expect(d).toBeGreaterThanOrEqual(1000); expect(d).toBeLessThan(4000); }
+  });
+
+  it("compares reaction time with the person's own usual, never as an emergency", () => {
+    expect(reactionFindings({ rtMedianMs: 320, rtLapses: 1 }, [250, 255, 260]).some((f) => f.level === "routine")).toBe(true);
+    expect(reactionFindings({ rtMedianMs: 255, rtLapses: 1 }, [250, 255, 260]).every((f) => f.level === "none")).toBe(true);
+    expect(reactionFindings({ rtMedianMs: 300, rtLapses: 1 }, [250]).every((f) => f.level === "none")).toBe(true);
+    expect(run("reaction", { rtMedianMs: 700, rtLapses: 20, rtFalseStarts: 9, rtTrials: 40 }, [250, 260, 270]).level).toBe("routine");
+  });
+
+  it("reads oxygen saturation from a photo", () => {
+    expect(mapPhotoReadings([{ label: "SpO2", value: "96", unit: "%" }]).answers).toEqual({ spo2: 96 });
   });
 });

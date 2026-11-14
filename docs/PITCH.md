@@ -9,7 +9,7 @@
 A visual health self-assessment tool that tells an astronaut what their readings mean in their environment, and what to do, how soon, and with whom.
 
 ## 3. How it works (one astronaut's day)
-1. Log vitals, sleep, exercise, food and mood (under a minute), or do a guided checkup.
+1. Log vitals, sleep, exercise, food and mood (under a minute), or do a guided checkup: including a 3-minute reaction-time test, a cabin air and noise check against NASA limits, and an Amsler grid vision check.
 2. See each indicator against your own normal range, color coded with icon and label.
 3. Report any problem in plain words, with a photo; AstroMed matches NASA's condition list and flags emergencies instantly.
 4. Get the right action for your distance: self-care, next check-in, flight surgeon today, or act now with your crew.
@@ -25,7 +25,7 @@ A visual health self-assessment tool that tells an astronaut what their readings
 ## 5. Designed for astronauts
 - Clickable anatomical body map; interactive charts; gamification (XP, ranks, streaks).
 - Works on phones and offline; installs to the home screen.
-- Safety first: no diagnosis, no medicine recommendations, emergency phrases always escalate, 73 automated safety tests.
+- Safety first: no diagnosis, no medicine recommendations, emergency phrases always escalate, 80 automated safety tests.
 - Private by design: each person sees only their own data; optional bring-your-own AI keeps the key on the device.
 
 ## 6. What's next

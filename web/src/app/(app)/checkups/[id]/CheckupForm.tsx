@@ -1,13 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useCallback, useState } from "react";
+import { AmslerGrid } from "@/components/checks/AmslerGrid";
+import { ReactionTest } from "@/components/checks/ReactionTest";
+import type { ReactionResult } from "@/lib/reaction";
 import { submitCheckup, type CheckupState } from "@/app/actions";
 import { EscalationBadge, ESCALATION_COLOR } from "@/components/EscalationBadge";
-import type { Field } from "@/lib/checkups";
+import type { Checkup, Field } from "@/lib/checkups";
 
-export function CheckupForm({ checkupId, fields }: { checkupId: string; fields: Field[] }) {
+export function CheckupForm({ checkupId, fields, widget }: { checkupId: string; fields: Field[]; widget?: Checkup["widget"] }) {
   const [state, action, pending] = useActionState<CheckupState, FormData>(submitCheckup, {});
+  const [test, setTest] = useState<ReactionResult>();
+  const onDone = useCallback((r: ReactionResult) => setTest(r), []);
+  const onReset = useCallback(() => setTest(undefined), []);
+  const needsTest = fields.some((f) => f.kind === "number" && f.filledByTest);
 
   if (state.result) {
     const t = state.result.contact;
@@ -28,7 +35,7 @@ export function CheckupForm({ checkupId, fields }: { checkupId: string; fields: 
         {state.result.problem ? (
           <p className="mt-4 text-sm text-amber-200">Not saved: {state.result.problem}</p>
         ) : (
-          <p className="mt-4 text-sm text-slate-400">Saved. Your readings now appear in My vitals.</p>
+          <p className="mt-4 text-sm text-slate-400">{fields.some((f) => f.kind === "number" && f.metric) ? "Saved. Your readings now appear in My vitals." : "Saved. Your results appear on this checkup and in My vitals."}</p>
         )}
         <div className="mt-5 flex flex-wrap gap-3">
           <Link href="/checkups" className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-sky-400">Back to checkups</Link>
@@ -39,11 +46,21 @@ export function CheckupForm({ checkupId, fields }: { checkupId: string; fields: 
   }
 
   return (
+    <div className="space-y-4">
+    {widget === "reaction" && <ReactionTest onDone={onDone} onReset={onReset} />}
+    {widget === "amsler" && <AmslerGrid />}
     <form action={action} className="space-y-5 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
       <input type="hidden" name="checkupId" value={checkupId} />
       {fields.map((f) => (
         <fieldset key={f.id}>
-          {f.kind === "number" ? (
+          {f.kind === "number" && f.filledByTest ? (
+            <label className="flex items-center justify-between gap-3 text-sm">
+              <span className="text-slate-300">{f.label}</span>
+              <input name={f.id} readOnly required tabIndex={-1} value={test ? String(test[f.id as keyof ReactionResult]) : ""} placeholder="—"
+                className="w-24 rounded-lg border border-white/10 bg-transparent px-3 py-1.5 text-right tabular-nums text-slate-100 outline-none" />
+              <span className="w-6 text-slate-400">{f.unit}</span>
+            </label>
+          ) : f.kind === "number" ? (
             <label className="block">
               <span className="text-sm text-slate-200">{f.label}</span>
               <span className="mt-1 flex items-center gap-2">
@@ -59,6 +76,7 @@ export function CheckupForm({ checkupId, fields }: { checkupId: string; fields: 
                 />
                 <span className="text-sm text-slate-400">{f.unit}</span>
               </span>
+              {f.hint && <span className="mt-1 block text-xs text-slate-500">{f.hint}</span>}
             </label>
           ) : (
             <>
@@ -80,9 +98,11 @@ export function CheckupForm({ checkupId, fields }: { checkupId: string; fields: 
         </fieldset>
       ))}
       {state.error && <p role="alert" className="text-sm text-rose-400">{state.error}</p>}
-      <button type="submit" disabled={pending} className="rounded-lg bg-sky-500 px-4 py-2.5 text-sm font-medium text-slate-950 hover:bg-sky-400 disabled:opacity-50">
+      {needsTest && !test && <p className="text-sm text-slate-400">Do the test above first. It fills in these results.</p>}
+      <button type="submit" disabled={pending || (needsTest && !test)} className="rounded-lg bg-sky-500 px-4 py-2.5 text-sm font-medium text-slate-950 hover:bg-sky-400 disabled:opacity-50">
         {pending ? "Checking…" : "Save and check"}
       </button>
     </form>
+    </div>
   );
 }

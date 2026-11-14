@@ -21,7 +21,7 @@ const SETUP_HINT = "The checkup_logs table isn't set up in Supabase yet. Run sup
 
 type DemoEntry = [crew: string, checkup: string, escalation: Escalation, epochSeconds: number, readings?: Record<string, number>];
 // Numeric answers worth keeping in demo mode: chart readings, plus what marks checkups as done.
-const KEEP_KEYS = new Set<string>([...METRICS.map((m) => m.key), "resistiveMin", "aerobicMin", "mood", "stress", "waterL", "kcal", "evaHours", "weightKg"]);
+const KEEP_KEYS = new Set<string>([...METRICS.map((m) => m.key), "resistiveMin", "aerobicMin", "mood", "stress", "waterL", "kcal", "evaHours", "weightKg", "rtMedianMs", "rtLapses", "rtFalseStarts", "rtTrials", "co2Mmhg", "cabinTempC", "humidityPct", "noiseDba"]);
 /** Browsers drop cookies over 4 KB, so the demo log trims its oldest entries to stay under this. */
 const DEMO_MAX_BYTES = 3800;
 /** Measured as the cookie is actually stored: URL-encoded, which makes JSON about 1.5× longer. */

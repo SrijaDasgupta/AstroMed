@@ -10,6 +10,7 @@ export const BASELINE_FIELDS: { key: MetricKey; label: string; unit: string; min
   { key: "diastolic", label: "Blood pressure, diastolic", unit: "mmHg", min: 40, max: 120, step: 1 },
   { key: "glucose", label: "Fasting blood glucose", unit: "mg/dL", min: 50, max: 200, step: 1 },
   { key: "temperature", label: "Body temperature", unit: "°C", min: 35, max: 38, step: 0.1 },
+  { key: "spo2", label: "Oxygen saturation", unit: "%", min: 90, max: 100, step: 1 },
   { key: "sleepHours", label: "Sleep", unit: "h", min: 3, max: 12, step: 0.25 },
 ];
 
@@ -59,6 +60,7 @@ export function personalize(member: CrewMember, entered: EnteredBaseline, logs: 
       diastolic: values.diastolic ?? member.simulated.diastolic,
       glucose: values.glucose ?? member.simulated.glucose,
       temperature: values.temperature ?? member.simulated.temperature,
+      spo2: values.spo2 ?? member.simulated.spo2,
     },
   };
   return { me, sources, readingDays };

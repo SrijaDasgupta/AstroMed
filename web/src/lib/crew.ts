@@ -5,7 +5,7 @@ import type { EnvironmentId, MissionEnvironment } from "@/lib/environments";
 export type Baseline = (typeof baselineFile.participants)[number];
 
 /** Vitals MMASH did not record. Generated once per person within normal healthy-adult ranges. */
-export type SimulatedBaseline = { systolic: number; diastolic: number; glucose: number; temperature: number };
+export type SimulatedBaseline = { systolic: number; diastolic: number; glucose: number; temperature: number; spo2: number };
 
 export type CrewMember = {
   id: string;
@@ -37,6 +37,7 @@ export const CREW: CrewMember[] = ROSTER.map((r) => {
     diastolic: between(66, 80, 0),
     glucose: between(80, 95, 0),
     temperature: between(36.4, 36.9, 1),
+    spo2: between(96, 99, 0),
   };
   return { ...r, baseline, simulated };
 });
@@ -53,12 +54,12 @@ export function getCrewMember(id: string) {
 
 export type MetricKey =
   | "restingHr" | "hrv" | "systolic" | "diastolic"
-  | "glucose" | "temperature"
+  | "glucose" | "temperature" | "spo2"
   | "sleepHours" | "sleepEfficiency"
   | "moodPositive" | "moodNegative";
 
-export type MetricGroup = "Heart and circulation" | "Metabolism and temperature" | "Sleep" | "Mood";
-export const METRIC_GROUPS: MetricGroup[] = ["Heart and circulation", "Metabolism and temperature", "Sleep", "Mood"];
+export type MetricGroup = "Heart and circulation" | "Breathing and oxygen" | "Metabolism and temperature" | "Sleep" | "Mood";
+export const METRIC_GROUPS: MetricGroup[] = ["Heart and circulation", "Breathing and oxygen", "Metabolism and temperature", "Sleep", "Mood"];
 
 export type MetricDef = {
   key: MetricKey;
@@ -83,6 +84,7 @@ export const METRICS: MetricDef[] = [
   { key: "hrv", label: "Heart rate variability", unit: "ms", decimals: 0, group: "Heart and circulation", baselineKind: "measured", worseWhen: "lower", baseline: (m) => m.baseline.hrvRmssdMs ?? 50, dailySd: (x) => x * 0.12 },
   { key: "systolic", label: "Blood pressure, systolic", unit: "mmHg", decimals: 0, group: "Heart and circulation", baselineKind: "simulated", worseWhen: "higher", baseline: (m) => m.simulated.systolic, dailySd: () => 6 },
   { key: "diastolic", label: "Blood pressure, diastolic", unit: "mmHg", decimals: 0, group: "Heart and circulation", baselineKind: "simulated", worseWhen: "higher", baseline: (m) => m.simulated.diastolic, dailySd: () => 5 },
+  { key: "spo2", label: "Oxygen saturation (SpO₂)", unit: "%", decimals: 0, group: "Breathing and oxygen", baselineKind: "simulated", worseWhen: "lower", baseline: (m) => m.simulated.spo2, dailySd: () => 1 },
   { key: "glucose", label: "Blood glucose (fasting)", unit: "mg/dL", decimals: 0, group: "Metabolism and temperature", baselineKind: "simulated", worseWhen: "higher", baseline: (m) => m.simulated.glucose, dailySd: () => 6 },
   { key: "temperature", label: "Body temperature", unit: "°C", decimals: 1, group: "Metabolism and temperature", baselineKind: "simulated", worseWhen: "higher", baseline: (m) => m.simulated.temperature, dailySd: () => 0.2 },
   { key: "sleepHours", label: "Sleep", unit: "h", decimals: 1, group: "Sleep", baselineKind: "measured", worseWhen: "lower", baseline: (m) => m.baseline.sleepHours ?? 6, dailySd: () => 0.5 },
@@ -114,14 +116,15 @@ type Effect = Partial<Record<MetricKey, number>>;
  * Average shift once adapted to each environment, in each metric's own units (HRV in %).
  * Directions follow the NASA evidence where it exists: blood pressure lower in flight
  * (Cardiovascular report p. 23), glucose unchanged (p. 40), temperature regulation impaired
- * over long flights (p. 84), about 6 h sleep in space (Sleep report p. 11). Sizes are illustrative.
+ * over long flights (p. 84), about 6 h sleep in space (Sleep report p. 11). Oxygen saturation a
+ * little lower in the reduced-pressure air planned for lunar and Mars habitats. Sizes are illustrative.
  */
 const ENV_EFFECT: Record<EnvironmentId, { adapted: Effect; perDay: Effect }> = {
   "earth-analog": { adapted: { hrv: -3, sleepHours: -0.2, sleepEfficiency: -1, moodPositive: -1, moodNegative: 0.5 }, perDay: {} },
   leo: { adapted: { restingHr: -1, hrv: -5, systolic: -5, diastolic: -3, sleepHours: -0.5, sleepEfficiency: -2 }, perDay: { temperature: 0.006 } },
-  "lunar-surface": { adapted: { restingHr: 2, hrv: -8, systolic: -2, diastolic: -1, temperature: 0.1, sleepHours: -0.6, sleepEfficiency: -3, moodNegative: 0.5 }, perDay: {} },
+  "lunar-surface": { adapted: { spo2: -1, restingHr: 2, hrv: -8, systolic: -2, diastolic: -1, temperature: 0.1, sleepHours: -0.6, sleepEfficiency: -3, moodNegative: 0.5 }, perDay: {} },
   "mars-transit": { adapted: { hrv: -5, systolic: -5, diastolic: -3, sleepHours: -0.5, sleepEfficiency: -2 }, perDay: { hrv: -0.15, temperature: 0.006, moodPositive: -0.05 } },
-  "mars-surface": { adapted: { restingHr: 2, hrv: -6, systolic: -2, diastolic: -1, temperature: 0.1, sleepHours: -0.4, sleepEfficiency: -2, moodPositive: -1 }, perDay: {} },
+  "mars-surface": { adapted: { spo2: -1, restingHr: 2, hrv: -6, systolic: -2, diastolic: -1, temperature: 0.1, sleepHours: -0.4, sleepEfficiency: -2, moodPositive: -1 }, perDay: {} },
 };
 
 /** Scripted health events so the demo shows how alerts look. */
@@ -155,12 +158,17 @@ export type DaySeries = Record<MetricKey, number[]>;
 
 const LIMITS: Partial<Record<MetricKey, [number, number]>> = {
   sleepEfficiency: [0, 100],
+  spo2: [80, 100],
   moodPositive: [10, 50],
   moodNegative: [10, 50],
 };
 
+const ORIGINAL = new Set<MetricKey>(["restingHr", "hrv", "systolic", "diastolic", "glucose", "temperature", "sleepHours", "sleepEfficiency", "moodPositive", "moodNegative"]);
+
 export function simulate(member: CrewMember, env: MissionEnvironment, withEvents = true): DaySeries {
   const rand = seededRandom(`${member.id}:${env.id}`);
+  // Measures added later draw from their own stream, so the original measures' sample data stays the same.
+  const extraRand = seededRandom(`${member.id}:${env.id}:extra`);
   const { adapted, perDay } = ENV_EFFECT[env.id];
   const event = withEvents ? EVENTS[member.id] : undefined;
   const out = Object.fromEntries(METRICS.map((d) => [d.key, [] as number[]])) as DaySeries;
@@ -173,7 +181,7 @@ export function simulate(member: CrewMember, env: MissionEnvironment, withEvents
       const base = def.baseline(member);
       const shift = (adapted[k] ?? 0) * adapt + (perDay[k] ?? 0) * day + (ev[k] ?? 0);
       let v = k === "hrv" ? base * (1 + shift / 100) : base + shift;
-      v += gaussian(rand) * def.dailySd(base, member) * 0.6;
+      v += gaussian(ORIGINAL.has(k) ? rand : extraRand) * def.dailySd(base, member) * 0.6;
       const [lo, hi] = LIMITS[k] ?? [0, Infinity];
       out[k].push(Math.min(hi, Math.max(lo, v)));
     }

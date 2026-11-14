@@ -61,7 +61,7 @@ export function buildSummary(i: Input) {
   const questions: Question[] = [];
 
   // ---------------- Physical ----------------
-  const VITALS: MetricKey[] = ["restingHr", "systolic", "diastolic", "temperature", "glucose"];
+  const VITALS: MetricKey[] = ["restingHr", "systolic", "diastolic", "temperature", "spo2", "glucose"];
   const vitals = VITALS.map((k) => {
     const m = metric(k);
     const own = daily(i.logs, k, from, today);

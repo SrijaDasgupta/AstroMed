@@ -10,12 +10,13 @@ const COLUMNS: Col[] = [
   { key: "systolic", names: ["systolic", "sys", "bpsystolic", "systolicbloodpressure", "bloodpressuresystolic", "systolicmmhg"] },
   { key: "diastolic", names: ["diastolic", "dia", "bpdiastolic", "diastolicbloodpressure", "bloodpressurediastolic", "diastolicmmhg"] },
   { key: "temperature", names: ["temperature", "temp", "bodytemperature", "bodytemp", "temperaturec", "temperaturef"] },
+  { key: "spo2", names: ["spo2", "oxygensaturation", "bloodoxygen", "bloodoxygensaturation", "o2saturation", "o2sat", "sao2", "spo2percent", "oxygen"] },
   { key: "glucose", names: ["glucose", "bloodglucose", "bloodsugar", "glucosemgdl", "glucosemmoll"] },
   { key: "sleepHours", names: ["sleephours", "sleep", "sleepduration", "totalsleep", "asleep", "hoursslept", "sleeptime", "sleepminutes", "minutesasleep", "totalsleepminutes"] },
 ];
 const DATE_NAMES = ["date", "day", "datetime", "timestamp", "startdate", "start", "time", "datelocal", "calendardate", "datum", "fecha", "data", "jour"];
 const RANGES: Record<MetricKey, [number, number]> = {
-  restingHr: [25, 220], systolic: [60, 260], diastolic: [30, 160], temperature: [33, 43], glucose: [20, 600], sleepHours: [0, 16],
+  restingHr: [25, 220], systolic: [60, 260], diastolic: [30, 160], temperature: [33, 43], glucose: [20, 600], sleepHours: [0, 16], spo2: [50, 100],
   hrv: [0, 0], sleepEfficiency: [0, 0], moodPositive: [0, 0], moodNegative: [0, 0],
 };
 
@@ -90,7 +91,7 @@ export function readImport(text: string, maxDays = 3650): ImportResult {
     cols.push({ key: c.key, idx, unit });
     matched.push({ key: c.key, column: rows[0][idx] });
   }
-  if (cols.length === 0) return { ...empty, error: "Couldn't find any columns AstroMed can use (heart rate, blood pressure, temperature, glucose or sleep)." };
+  if (cols.length === 0) return { ...empty, error: "Couldn't find any columns AstroMed can use (heart rate, blood pressure, temperature, oxygen saturation, glucose or sleep)." };
 
   const byDate: Record<string, Partial<Record<MetricKey, number[]>>> = {};
   let skipped = 0;

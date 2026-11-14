@@ -41,7 +41,7 @@ export function VitalSigns({ readings, heartRateBpm }: { readings: readonly Vita
         <path d={`M0 60${pulse.repeat(BEATS)}`} fill="none" stroke="#38bdf8" strokeWidth="1.7" />
         <path d="M0 0V114" stroke="#bae6fd" strokeWidth="2" style={{ "--sweep-duration": `${seconds.toFixed(2)}s` } as CSSProperties} className={`${styles.sweep} ${paused ? styles.paused : ""}`} />
       </svg>
-      <dl className="mt-4 grid gap-2 sm:grid-cols-3">
+      <dl className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
         {readings.map(({ label, value, unit, when }) => (
           <div key={label} className={inset}>
             <dt className="text-sm text-slate-300">{label}</dt>

@@ -18,7 +18,8 @@ Built for the NASA Space Apps Challenge brief *"create a visual tool that helps 
 |---|---|
 | A visual tool to assess your own health | Dashboard, **My vitals** charts against your own normal range, and **My summary** of physical, mental and routine health |
 | The five hazards of spaceflight | About 80 NASA-listed conditions grouped under radiation, isolation and confinement, distance from Earth, altered gravity, and hostile closed environments; a **Spaceflight risks** page maps NASA HRP's 5 hazards and 17 risks to NASA's pages and to where AstroMed tracks each one |
-| Blood pressure, heart rate, blood sugar, temperature, sleep, mood | All six in the **Daily log** and guided **Checkups** (blood sugar in mg/dL), plus heart rate variability, stress, water, food energy, weight and exercise |
+| Blood pressure, heart rate, blood sugar, temperature, sleep, mood | All six in the **Daily log** and guided **Checkups** (blood sugar in mg/dL), plus oxygen saturation (SpO₂), heart rate variability, stress, water, food energy, weight and exercise |
+| Proactive checks for the space environment | **Space checks**: a 3-minute reaction-time test (NASA's PVT-B) for alertness, compared with your own usual speed; a **cabin air and noise** log checked against NASA-STD-3001 limits (CO₂ ≤ 3 mmHg, 18–27 °C, 25–75% humidity, 85 dBA); a weekly **Amsler grid** vision check for SANS; and oxygen saturation with low-oxygen alerts |
 | Bone loss, cardiovascular events, immune changes, nutrition, behavioral health | Bone-loss and radiation projections, cardiovascular alerts, immune warning signs, NASA's energy formula with food and weight tracking, mood, stress and a private journal |
 | Any input: keyboard, clicks, camera | Forms, sliders, free-text problem reports, photos (camera or library), **Photo import** (reads any health photo on the device, no AI or key: device screens, lab reports, dosimeters and sleep trackers, pulling out readings such as blood pressure, which can be added straight to My vitals and its alerts), smartwatch CSV import, lab report uploads |
 | When should the crew or flight surgeons get involved? | Every result carries one of four urgency levels, and the wording changes with distance: on a Mars mission (4–24 minute signal delay) the crew medical officer acts first and reports to the ground |
@@ -60,7 +61,7 @@ Absolute alert limits (for example very high blood pressure) are general clinica
 - AstroMed supports self-monitoring. It does not diagnose and never recommends medicines or doses.
 - Emergency phrases (chest pain, trouble breathing, stroke signs, fire or toxic leaks, thoughts of self-harm) always show an immediate "act now" message.
 - Each person's data is visible only to them (database row-level security on every table; private file storage).
-- 73 automated tests cover the safety-critical rules: emergency detection, urgency levels, crew-versus-ground contact, NASA's energy formula, and the self-harm check, and that every indicator in the guide answers all five questions with NASA sources.
+- 80 automated tests cover the safety-critical rules: emergency detection, urgency levels, crew-versus-ground contact, NASA's energy formula, and the self-harm check, and that every indicator in the guide answers all five questions with NASA sources.
 
 ## Run it yourself
 
