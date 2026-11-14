@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { isSupabaseConfigured } from "@/lib/env";
 import { ENV_COOKIE, ENVIRONMENTS } from "@/lib/environments";
-import { DEMO_COOKIE, getViewer } from "@/lib/session";
+import { DEMO_COOKIE, getViewer, type Viewer } from "@/lib/session";
 import { evaluate, getCheckup, parseAnswers, type Escalation, type Finding } from "@/lib/checkups";
 import { getCrewMember } from "@/lib/crew";
 import { clearDemoLogsCookieName, saveLog } from "@/lib/checkup-store";
@@ -557,7 +557,7 @@ export async function saveRadiationReadingAction(reading: { id: string; name: st
  * Saves what the astronaut confirmed from a photo: a radiation reading, a sleep session, or a health
  * record (the photo itself plus the reviewed text, in My records). Throws on failure so the card can retry.
  */
-export async function savePhotoImportAction(formData: FormData): Promise<{ href: string } | { error: string }> {
+export async function savePhotoImportAction(formData: FormData): Promise<{ href: string; note?: string } | { error: string }> {
   // Errors are returned, not thrown, so the reason (such as an overlapping sleep) reaches the person.
   try {
     return await savePhotoImport(formData);
@@ -566,7 +566,7 @@ export async function savePhotoImportAction(formData: FormData): Promise<{ href:
   }
 }
 
-async function savePhotoImport(formData: FormData): Promise<{ href: string }> {
+async function savePhotoImport(formData: FormData): Promise<{ href: string; note?: string }> {
   const viewer = await getViewer();
   if (!viewer) throw new Error("Your session has ended. Sign in again.");
   const category = String(formData.get("category") ?? "");
@@ -622,7 +622,41 @@ async function savePhotoImport(formData: FormData): Promise<{ href: string }> {
       if (problem) throw new Error(problem);
     }
     revalidatePath("/records");
-    return { href: "/records" };
+    const note = formData.get("addToVitals") === "1" ? await logPhotoReadings(viewer, id, measurements, observedOn) : undefined;
+    return { href: "/records", ...(note ? { note } : {}) };
   }
   throw new Error("Choose a record type.");
+}
+
+/**
+ * Adds readings from a photo import to that day's log, so they feed My vitals, trends and alerts,
+ * and checks them with the same rules as the daily log. Returns a short note for the person.
+ */
+async function logPhotoReadings(viewer: Viewer, importId: string, measurements: { label: string; value: string; unit: string }[], observedOn?: string): Promise<string | undefined> {
+  const { mapPhotoReadings, PHOTO_LOG_ID, PHOTO_MEASURE_NAMES } = await import("@/lib/photo-readings");
+  const { answers, used } = mapPhotoReadings(measurements);
+  if (used.length === 0) return undefined;
+  const { evaluateDailyLog } = await import("@/lib/daily-log");
+  const { localDate, middayOf } = await import("@/lib/dates");
+  const today = localDate();
+  if (observedOn && observedOn > today) throw new Error("The observation date is in the future.");
+  // A retried save carries the same import id, so don't add the readings twice.
+  const { loadLogs } = await import("@/lib/checkup-store");
+  if ((await loadLogs(viewer)).logs.some((l) => l.checkupId === PHOTO_LOG_ID && l.answers?.importId === importId)) return undefined;
+  const profile = await getProfile(viewer);
+  const member = getCrewMember(profile.crewId)!;
+  const { level, findings } = evaluateDailyLog(member, answers);
+  const { problem } = await saveLog(viewer, {
+    crewId: member.id, checkupId: PHOTO_LOG_ID, escalation: level,
+    answers: { ...answers, importId } as import("@/lib/checkups").Answers,
+    createdAt: (observedOn && observedOn !== today ? middayOf(observedOn) : new Date()).toISOString(),
+  });
+  if (problem) return `The record was saved, but the readings couldn't be added to My vitals: ${problem}`;
+  revalidatePath("/", "layout");
+  const names = [...new Set(used.map((u) => PHOTO_MEASURE_NAMES[u.key]))].join(", ");
+  if (level === "none") return `Added ${names} to My vitals.`;
+  const { contactText } = await import("@/lib/contact");
+  const { getMissionContext } = await import("@/lib/mission");
+  const worst = findings.find((f) => f.level === level) ?? findings[0];
+  return `Added ${names} to My vitals. ${worst ? `${worst.text} ` : ""}${contactText(level, (await getMissionContext()).env).title}`;
 }

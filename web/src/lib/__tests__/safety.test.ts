@@ -277,3 +277,24 @@ describe("photo import", async () => {
     expect(checkRadiation({ id, name: "", doseMsv: 1, hours: 1, source: "photo-import" })).not.toBeNull();
   });
 });
+
+describe("photo readings feed My vitals", async () => {
+  const { mapPhotoReadings } = await import("@/lib/photo-readings");
+  const m = (label: string, value: string, unit: string) => ({ label, value, unit });
+
+  it("maps blood pressure, pulse, temperature, glucose and weight to AstroMed's measures", () => {
+    const { answers } = mapPhotoReadings([m("Blood pressure", "128/82", "mmHg"), m("Pulse", "64", "bpm"), m("Temperature", "36.9", "°C"), m("Glucose", "92", "mg/dL"), m("Weight", "74.6", "kg")]);
+    expect(answers).toEqual({ systolic: 128, diastolic: 82, restingHr: 64, temperature: 36.9, glucose: 92, weightKg: 74.6 });
+  });
+
+  it("converts °F, mmol/L and lb", () => {
+    const { answers, used } = mapPhotoReadings([m("Temp", "98.6", "°F"), m("Blood sugar", "5.2", "mmol/L"), m("Weight", "165", "lb")]);
+    expect(answers).toEqual({ temperature: 37, glucose: 94, weightKg: 74.8 });
+    expect(used.every((u) => u.converted)).toBe(true);
+  });
+
+  it("leaves out readings it can't trust", () => {
+    const { answers } = mapPhotoReadings([m("Blood pressure", "82/128", "mmHg"), m("Pulse", "640", "bpm"), m("Glucose", "<70", "mg/dL"), m("SpO2", "98", "%"), m("Cholesterol", "180", "mg/dL")]);
+    expect(answers).toEqual({});
+  });
+});

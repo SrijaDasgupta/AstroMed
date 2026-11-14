@@ -21,10 +21,11 @@ export function PhotoImportCard({ demo }: { demo: boolean }) {
   return (
     <PhotoImport
       healthNote={demo ? "In the demo, the text and readings are kept in this browser; the photo itself is only stored with an account." : "The photo is kept with the text and readings."}
-      saveRecord={async (entry, image) => {
+      saveRecord={async (entry, image, { addToVitals }) => {
         const form = new FormData();
         form.set("category", entry.category);
         form.set("record", JSON.stringify(entry.record));
+        if (addToVitals) form.set("addToVitals", "1");
         if (entry.category === "health" && !demo) form.set("image", await shrink(image));
         const result = await savePhotoImportAction(form);
         if ("error" in result) throw Object.assign(new Error(result.error), { userMessage: result.error });

@@ -35,7 +35,7 @@ export type Badge = { id: string; name: string; description: string; earned: boo
 
 export function progress(logs: CheckupLog[], actions: TipAction[], missionIds: string[], today = localDate(), journalDates: string[] = []) {
   // Imported readings are history, not activity: they earn no XP and don't build streaks.
-  logs = logs.filter((l) => l.checkupId !== "import");
+  logs = logs.filter((l) => l.checkupId !== "import" && l.checkupId !== "photo");
   const journalDays = new Set(journalDates);
   const activeDays = new Set<string>([...actions.map((a) => a.doneOn), ...logs.map((l) => localDate(new Date(l.createdAt))), ...journalDays]);
 

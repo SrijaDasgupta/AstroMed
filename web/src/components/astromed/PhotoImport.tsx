@@ -5,11 +5,12 @@ import { buildPhotoRecord, extractPhotoDetails, type ImportCategory, type PhotoD
 import { formatRadiation } from './radiation-readings';
 import { formatSleepDuration } from './sleep-records';
 import { button, field, inset, ModuleCard } from './ui';
+import { mapPhotoReadings } from '@/lib/photo-readings';
 
 export type PhotoImportProps = {
   analyzeImage?: (image: File, signal: AbortSignal) => Promise<string>;
   /** Receives the confirmed record and the original photo. */
-  saveRecord: (entry: PhotoRecord, image: File) => Promise<{ href?: string } | void>;
+  saveRecord: (entry: PhotoRecord, image: File, options: { addToVitals: boolean }) => Promise<{ href?: string; note?: string } | void>;
   /** Shown under the health option, e.g. that the demo doesn't keep the photo. */
   healthNote?: string;
 };
@@ -24,6 +25,7 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 
 export function PhotoImport({ saveRecord, analyzeImage, healthNote }: PhotoImportProps) {
   const imageFile = useRef<File | null>(null);
+  const [addToVitals, setAddToVitals] = useState(true);
   const [preview, setPreview] = useState('');
   const [text, setText] = useState('');
   const [category, setCategory] = useState<ImportCategory>('health');
@@ -111,11 +113,11 @@ export function PhotoImport({ saveRecord, analyzeImage, healthNote }: PhotoImpor
     setMessage('');
     try {
       if (!imageFile.current) throw new Error('No photo');
-      const response = await saveRecord(result.entry, imageFile.current);
+      const response = await saveRecord(result.entry, imageFile.current, { addToVitals });
       const href = response?.href;
       const internalHref = href?.startsWith('/') && !href.startsWith('//') && !/[\\\s]/.test(href) ? href : undefined;
       setSaved({ href: internalHref });
-      setMessage(`Added to ${labels[category]}.`);
+      setMessage(`Added to ${labels[category]}.${response?.note ? ` ${response.note}` : ''}`);
     } catch (error) {
       const reason = (error as { userMessage?: unknown })?.userMessage;
       setMessage(typeof reason === 'string' ? `Not saved: ${reason}` : 'The save could not be confirmed. Retry with the same details.');
@@ -191,6 +193,19 @@ export function PhotoImport({ saveRecord, analyzeImage, healthNote }: PhotoImpor
                   </ul>
                 </div>
               )}
+              {'entry' in candidate && candidate.entry.category === 'health' && (() => {
+                const vitals = mapPhotoReadings(candidate.entry.record.measurements).used;
+                if (!vitals.length) return null;
+                return (
+                  <label className="flex items-start gap-2 rounded-lg border border-emerald-400/30 bg-emerald-400/5 p-3 text-sm">
+                    <input type="checkbox" className="mt-1 accent-emerald-400" checked={addToVitals} onChange={(event) => setAddToVitals(event.target.checked)} />
+                    <span>
+                      Also add to My vitals{draft.observedOn ? ` for ${draft.observedOn}` : ' for today'}, so they count in your trends and alerts:
+                      <span className="mt-1 block text-xs text-slate-300">{vitals.map((v) => `${v.value}${v.converted ? ` (${v.converted})` : ''}`).join(' · ')}</span>
+                    </span>
+                  </label>
+                );
+              })()}
               {'entry' in candidate && candidate.entry.category !== 'health' && <p className="rounded-lg bg-sky-400/10 p-3 text-sm text-sky-200">
                 {candidate.entry.category === 'radiation'
                   ? `${formatRadiation(candidate.entry.record.cumulativeDoseMsv)} mSv cumulative · ${formatRadiation(candidate.entry.record.cumulativeDoseMsv / candidate.entry.record.durationHours)} mSv/h average`

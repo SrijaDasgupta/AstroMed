@@ -67,7 +67,7 @@ export default async function CheckupsPage() {
             {recent.map((l) => (
               <li key={l.createdAt + l.checkupId} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
                 <span>
-                  <span className="font-medium">{l.checkupId === "daily" ? "Daily log" : l.checkupId === "import" ? "Imported readings" : getCheckup(l.checkupId)?.title ?? l.checkupId}</span>
+                  <span className="font-medium">{l.checkupId === "daily" ? "Daily log" : l.checkupId === "import" ? "Imported readings" : l.checkupId === "photo" ? "Readings from a photo" : getCheckup(l.checkupId)?.title ?? l.checkupId}</span>
                   <span className="ml-2 text-slate-500">{ago(l.createdAt)}</span>
                 </span>
                 <EscalationBadge level={l.escalation} />
