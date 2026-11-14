@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState, useCallback, useState } from "react";
 import { AmslerGrid } from "@/components/checks/AmslerGrid";
 import { ReactionTest } from "@/components/checks/ReactionTest";
+import { StandTimer } from "@/components/checks/StandTimer";
 import type { ReactionResult } from "@/lib/reaction";
 import { submitCheckup, type CheckupState } from "@/app/actions";
 import { EscalationBadge, ESCALATION_COLOR } from "@/components/EscalationBadge";
@@ -49,6 +50,7 @@ export function CheckupForm({ checkupId, fields, widget }: { checkupId: string; 
     <div className="space-y-4">
     {widget === "reaction" && <ReactionTest onDone={onDone} onReset={onReset} />}
     {widget === "amsler" && <AmslerGrid />}
+    {widget === "timer" && <StandTimer />}
     <form action={action} className="space-y-5 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
       <input type="hidden" name="checkupId" value={checkupId} />
       {fields.map((f) => (

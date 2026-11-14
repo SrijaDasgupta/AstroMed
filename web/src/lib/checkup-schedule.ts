@@ -8,6 +8,15 @@ export type DueStatus = { due: boolean; last?: CheckupLog; nextDue?: Date };
 
 /** A check is due again once 90% of its interval has passed, so a daily check done yesterday morning is due this morning. */
 export function dueStatus(checkup: Checkup, logs: CheckupLog[], now = new Date()): DueStatus {
+  if (checkup.when === "as-needed") return { due: false, last: logs.find((l) => l.checkupId === checkup.id) };
+  if (checkup.when === "after-eva") {
+    // Due after a logged spacewalk (within 3 days) that hasn't had a check since.
+    const last = logs.find((l) => l.checkupId === checkup.id);
+    const eva = logs.find((l) => typeof l.answers?.evaHours === "number" && (l.answers.evaHours as number) > 0);
+    const evaAt = eva ? new Date(eva.createdAt).getTime() : 0;
+    const due = !!eva && now.getTime() - evaAt < 3 * DAY && (!last || new Date(last.createdAt).getTime() < evaAt);
+    return { due, last };
+  }
   // A daily log entry with the right readings also counts as doing the checkup.
   const last = logs.find((l) => l.checkupId === checkup.id || (l.checkupId === DAILY_LOG_ID && dailyLogCovers(checkup.id, l.answers)));
   if (!last) return { due: true };
@@ -31,6 +40,10 @@ export function ago(iso: string, now = new Date()) {
 export function until(date: Date, now = new Date()) {
   const h = Math.max(1, Math.round((date.getTime() - now.getTime()) / 3600000));
   return h < 24 ? `in ${h} h` : `in ${Math.round(h / 24)} d`;
+}
+
+export function scheduleLabel(c: Checkup) {
+  return c.when === "after-eva" ? "After each spacewalk" : c.when === "as-needed" ? "After a gravity change" : everyLabel(c.everyDays);
 }
 
 export function everyLabel(days: number) {

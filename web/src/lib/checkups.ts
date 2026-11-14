@@ -1,4 +1,5 @@
 import { getMetric, normalRange, type CrewMember, type MetricKey } from "@/lib/crew";
+import { afterEvaFindings, balanceFindings, immuneFindings } from "@/lib/space-checks";
 import { reactionFindings } from "@/lib/reaction";
 import type { SourceId } from "@/lib/tips";
 
@@ -18,7 +19,9 @@ export type Checkup = {
   /** Why this check exists, with the NASA page it comes from. */
   why: { text: string; source: SourceId; page: number }[];
   /** An interactive tool shown with the steps: the reaction-time test fills the form, the Amsler grid is a visual aid. */
-  widget?: "reaction" | "amsler";
+  widget?: "reaction" | "amsler" | "timer";
+  /** Checks that aren't on a fixed schedule: after a spacewalk, or when needed (after a gravity change). */
+  when?: "after-eva" | "as-needed";
   /** Every field is optional, but at least one must be filled. */
   atLeastOne?: boolean;
   /** Short label for where this check sits among NASA's five hazards. */
@@ -189,6 +192,95 @@ export const CHECKUPS: Checkup[] = [
       { text: "Sound above 85 dBA is hazardous, and noise exposure above about 70 dBA over 24 hours increases the risk of hearing loss.", source: "std2", page: 94 },
     ],
   },
+  {
+    id: "balance",
+    title: "Balance and stand-up test",
+    summary: "After a gravity change: balance, and heart rate and blood pressure lying down vs. standing.",
+    everyDays: 1,
+    when: "as-needed",
+    widget: "timer",
+    hazard: "Altered gravity",
+    atLeastOne: true,
+    steps: [
+      "Do this after any gravity change: landing on the Moon or Mars, return to Earth, or a long rover drive. Do it daily for the first week, then whenever you feel unsteady. In weightlessness, skip it.",
+      "Have a crewmate nearby and stand next to something you can hold, in case you lose balance.",
+      "Lie down quietly for 5 minutes. Take your heart rate and, if you can, blood pressure.",
+      "Stand up and stay still for 3 minutes (use the stand timer below). Take your heart rate and blood pressure again. Sit or lie down at once if you feel faint.",
+      "Balance: stand on one leg, eyes open, arms by your sides. Use the stopwatch and record your best of 3 tries (stop at 30 s).",
+      "Then stand heel-to-toe (one foot right in front of the other), close your eyes, and time how long you can hold it (stop at 30 s).",
+    ],
+    fields: [
+      { id: "hrLying", label: "Heart rate lying down", kind: "number", unit: "bpm", min: 25, max: 220, step: 1, optional: true },
+      { id: "hrStanding", label: "Heart rate after 3 minutes standing", kind: "number", unit: "bpm", min: 25, max: 220, step: 1, optional: true },
+      { id: "sysLying", label: "Systolic blood pressure lying down (optional)", kind: "number", unit: "mmHg", min: 60, max: 260, step: 1, optional: true },
+      { id: "sysStanding", label: "Systolic blood pressure standing (optional)", kind: "number", unit: "mmHg", min: 40, max: 260, step: 1, optional: true },
+      { id: "singleLegSec", label: "One leg, eyes open (best of 3)", kind: "number", unit: "s", min: 0, max: 60, step: 1, optional: true },
+      { id: "tandemSec", label: "Heel-to-toe, eyes closed", kind: "number", unit: "s", min: 0, max: 60, step: 1, optional: true },
+      { id: "dizzyStanding", label: "Did you feel dizzy, light-headed or see grey when standing?", kind: "yesno" },
+      { id: "fainted", label: "Did you faint or nearly faint?", kind: "yesno" },
+      { id: "vertigo", label: "Room spinning, motion sickness, or trouble judging movement?", kind: "yesno" },
+    ],
+    why: [
+      { text: "NASA requires sensorimotor function (balance, walking, eye-hand coordination) to be assessed during and after gravity changes, such as landing, capsule egress and surface spacewalks.", source: "std1", page: 34 },
+      { text: "NASA's preventive care includes measures for orthostatic intolerance (dizziness or fainting on standing) and balance problems during gravity changes.", source: "std1", page: 20 },
+    ],
+  },
+  {
+    id: "after-eva",
+    title: "After-spacewalk check",
+    summary: "Signs of decompression sickness, and hand or suit injuries, after each spacewalk.",
+    everyDays: 1,
+    when: "after-eva",
+    hazard: "Hostile closed environment",
+    steps: [
+      "Do this within an hour of taking the suit off, and again if anything changes in the next 24 hours.",
+      "Check your joints (shoulders, elbows, knees, wrists) for deep, aching pain, and your skin for itching, blotches or a marbled look.",
+      "Check your hands: fingertips, nails (lifting, bruising) and knuckles. Look for rubbing or pressure marks from the suit.",
+      "Any symptom of decompression sickness: tell your crew straight away. Treatment works best when it starts quickly.",
+    ],
+    fields: [
+      { id: "dcsJoint", label: "Deep, aching pain in a joint?", kind: "yesno" },
+      { id: "dcsSkin", label: "Itchy, blotchy or marbled skin?", kind: "yesno" },
+      { id: "dcsNeuro", label: "Numbness, tingling, weakness, or trouble walking?", kind: "yesno" },
+      { id: "dcsChokes", label: "Chest pain, a dry cough, or shortness of breath?", kind: "yesno" },
+      { id: "dcsBrain", label: "Confusion, a bad headache, or vision changes?", kind: "yesno" },
+      { id: "handInjury", label: "Finger or nail pain, a lifting nail, or numb fingertips?", kind: "yesno" },
+      { id: "suitRub", label: "Rubbing, bruising or pressure sores from the suit?", kind: "yesno" },
+      { id: "evaTired", label: "How tired are you?", kind: "scale", low: "Not at all", high: "Exhausted" },
+    ],
+    why: [
+      { text: "Decompression sickness can cause joint pain, chest symptoms (the chokes), vision changes, paralysis and confusion; NASA requires a program to keep its risk below 4%.", source: "std2", page: 53 },
+      { text: "Rapid treatment is needed: the sooner the crewmember is back at cabin pressure, the better the outcome.", source: "std2", page: 54 },
+      { text: "NASA prevents pressure-related illness with prebreathe and equipment protocols.", source: "std1", page: 20 },
+    ],
+  },
+  {
+    id: "immune",
+    title: "Immune and infection check",
+    summary: "A weekly look for signs of infection and reawakened viruses, and a hygiene reminder.",
+    everyDays: 7,
+    hazard: "Hostile closed environment",
+    steps: [
+      "Think about the past week.",
+      "Look at your lips and mouth, your skin (including your back and sides, with a mirror or a crewmate), and any cuts or scrapes.",
+      "Answer each question. If you have a fever or feel unwell, also record your temperature in Vital signs.",
+    ],
+    fields: [
+      { id: "imColdSore", label: "Cold sores, mouth ulcers or blisters?", kind: "yesno" },
+      { id: "imShingles", label: "A painful rash or blisters in a band on one side of the body?", kind: "yesno" },
+      { id: "imRash", label: "Any other rash, or red, itchy skin?", kind: "yesno" },
+      { id: "imWound", label: "A cut or scrape that is slow to heal, or red, warm or oozing?", kind: "yesno" },
+      { id: "imCold", label: "Cold, cough, sore throat or blocked nose?", kind: "yesno" },
+      { id: "imGut", label: "Diarrhoea, vomiting or stomach upset lasting more than a day?", kind: "yesno" },
+      { id: "imUrine", label: "Burning or pain when passing urine?", kind: "yesno" },
+      { id: "imCleaned", label: "Did you do this week's cleaning of hygiene and food areas?", kind: "yesno" },
+    ],
+    why: [
+      { text: "NASA's preventive care includes optimising and periodically monitoring immune function.", source: "std1", page: 20 },
+      { text: "Stress in spaceflight has been linked to dormant viruses reactivating, such as cold sores and shingles.", source: "behavioral", page: 31 },
+      { text: "Cleaning and sanitising hygiene equipment controls microbial growth on the spacecraft.", source: "std2", page: 122 },
+    ],
+  },
 ];
 
 export function getCheckup(id: string) {
@@ -303,6 +395,9 @@ export function evaluate(checkup: Checkup, member: CrewMember, a: Answers, conte
   if (yes("headache")) f.push({ level: "routine", text: "New or frequent headaches." });
 
   if (checkup.id === "reaction") f.push(...reactionFindings(a, context?.priorReaction ?? []));
+  if (checkup.id === "balance") f.push(...balanceFindings(a));
+  if (checkup.id === "after-eva") f.push(...afterEvaFindings(a));
+  if (checkup.id === "immune") f.push(...immuneFindings(a));
 
   const level = f.reduce<Escalation>((l, x) => (ESCALATION_RANK[x.level] > ESCALATION_RANK[l] ? x.level : l), "none");
   f.sort((x, y) => ESCALATION_RANK[y.level] - ESCALATION_RANK[x.level]);

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ClipboardCheck, Eye, Radiation, Timer, Wind } from "lucide-react";
+import { Activity, ClipboardCheck, Eye, Radiation, Rocket, ShieldPlus, Timer, Wind } from "lucide-react";
 import { EscalationBadge } from "@/components/EscalationBadge";
 import { ago } from "@/lib/checkup-schedule";
 import { MetricChart } from "@/components/MetricChart";
@@ -63,6 +63,8 @@ export default async function MyVitalsPage() {
   // Latest space-specific checks: alertness, cabin air and vision.
   const lastOf = (id: string) => logs.find((l) => l.checkupId === id);
   const reaction = lastOf("reaction"), cabin = lastOf("cabin"), vision = lastOf("vision");
+  const balance = lastOf("balance"), afterEva = lastOf("after-eva"), immune = lastOf("immune");
+  const status = (l: typeof cabin) => (l!.escalation === "none" ? "Nothing to report" : "Something to follow up");
   const n = (l: typeof cabin, k: string) => (typeof l?.answers?.[k] === "number" ? (l.answers[k] as number) : undefined);
   const cabinParts = cabin ? [
     n(cabin, "co2Mmhg") !== undefined && `CO₂ ${n(cabin, "co2Mmhg")} mmHg`,
@@ -74,6 +76,9 @@ export default async function MyVitalsPage() {
     { id: "reaction", icon: Timer, title: "Alertness", log: reaction, text: reaction ? `Median ${n(reaction, "rtMedianMs") ?? "—"} ms, ${n(reaction, "rtLapses") ?? 0} lapses` : "3-minute reaction-time test" },
     { id: "cabin", icon: Wind, title: "Cabin air and noise", log: cabin, text: cabin ? cabinParts || "Saved" : "CO₂, temperature, humidity, noise" },
     { id: "vision", icon: Eye, title: "Vision (SANS)", log: vision, text: vision ? (vision.escalation === "none" ? "No changes reported" : "Changes reported") : "Amsler grid and near-vision card" },
+    { id: "balance", icon: Activity, title: "Balance and standing", log: balance, text: balance ? [n(balance, "hrLying") !== undefined && n(balance, "hrStanding") !== undefined && `Heart rate +${n(balance, "hrStanding")! - n(balance, "hrLying")!} bpm standing`, n(balance, "singleLegSec") !== undefined && `one leg ${n(balance, "singleLegSec")} s`].filter(Boolean).join(" · ") || status(balance) : "After a gravity change" },
+    { id: "after-eva", icon: Rocket, title: "After a spacewalk", log: afterEva, text: afterEva ? status(afterEva) : "Bends, hand and suit injuries" },
+    { id: "immune", icon: ShieldPlus, title: "Immune and infection", log: immune, text: immune ? status(immune) : "Weekly infection and virus check" },
   ];
 
   const sim = member.simulated;

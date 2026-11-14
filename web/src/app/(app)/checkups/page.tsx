@@ -3,7 +3,7 @@ import { ChevronRight, ClipboardCheck } from "lucide-react";
 import { EscalationBadge } from "@/components/EscalationBadge";
 import { SetupNotice } from "@/components/SetupNotice";
 import { loadLogs } from "@/lib/checkup-store";
-import { ago, dueCount, dueStatus, everyLabel, until } from "@/lib/checkup-schedule";
+import { ago, dueCount, dueStatus, scheduleLabel, until } from "@/lib/checkup-schedule";
 import { CHECKUPS, getCheckup } from "@/lib/checkups";
 import { requireViewer } from "@/lib/session";
 
@@ -41,11 +41,11 @@ export default async function CheckupsPage() {
                     {s.due ? (
                       <span className="shrink-0 rounded-full bg-sky-400 px-2 py-0.5 text-xs font-medium text-slate-950">Due</span>
                     ) : (
-                      <span className="shrink-0 rounded-full bg-white/5 px-2 py-0.5 text-xs text-slate-300">Done</span>
+                      <span className="shrink-0 rounded-full bg-white/5 px-2 py-0.5 text-xs text-slate-300">{c.when && !s.last ? "When needed" : "Done"}</span>
                     )}
                   </div>
                   <p className="mt-3 text-xs text-slate-500">
-                    {everyLabel(c.everyDays)}
+                    {scheduleLabel(c)}
                     {s.last && ` · last done ${ago(s.last.createdAt)}`}
                     {!s.due && s.nextDue && ` · next ${until(s.nextDue)}`}
                   </p>

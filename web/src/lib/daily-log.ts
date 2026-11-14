@@ -114,6 +114,7 @@ export function evaluateDailyLog(member: CrewMember, a: Answers, kcalTarget?: nu
     if (pct < 75) extra.push({ level: "routine", text: `You ate about ${a.kcal.toLocaleString("en-US")} kcal, ${pct}% of your ~${need.toLocaleString("en-US")} kcal need. Regular shortfalls lead to weight and muscle loss; tell your flight surgeon if it keeps happening (NASA-STD-3001 Vol. 1, p. 37).` });
     else if (pct < 90) extra.push({ level: "none", text: `You ate about ${a.kcal.toLocaleString("en-US")} kcal, ${pct}% of your ~${need.toLocaleString("en-US")} kcal need. Try to make it up tomorrow.` });
   }
+  if (typeof a.evaHours === "number" && a.evaHours > 0) extra.push({ level: "none", text: "After a spacewalk, do the After-spacewalk check for signs of decompression sickness and hand or suit injuries." });
   if (typeof a.waterL === "number" && a.waterL < 2.5) extra.push({ level: "none", text: `${a.waterL} L of water is below NASA's 2.5 L daily minimum (NASA-STD-3001 Vol. 2, p. 68).` });
   const order = { none: 0, routine: 1, today: 2, now: 3 } as const;
   const findings = [...base.findings, ...extra].sort((x, y) => order[y.level] - order[x.level]);

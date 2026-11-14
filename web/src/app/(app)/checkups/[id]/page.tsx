@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import { ago, everyLabel } from "@/lib/checkup-schedule";
+import { ago, scheduleLabel } from "@/lib/checkup-schedule";
 import { loadLogs } from "@/lib/checkup-store";
 import { requireViewer } from "@/lib/session";
 import { getCheckup } from "@/lib/checkups";
@@ -13,7 +13,7 @@ export default async function CheckupPage({ params }: { params: Promise<{ id: st
   if (!checkup) notFound();
   const viewer = await requireViewer();
   // Earlier results for checks whose history isn't charted elsewhere.
-  const history = checkup.id === "reaction" || checkup.id === "cabin"
+  const history = checkup.id === "reaction" || checkup.id === "cabin" || checkup.id === "balance"
     ? (await loadLogs(viewer)).logs.filter((l) => l.checkupId === checkup.id && l.answers).slice(0, 8)
     : [];
   const numberFields = checkup.fields.filter((f) => f.kind === "number");
@@ -25,7 +25,7 @@ export default async function CheckupPage({ params }: { params: Promise<{ id: st
       </Link>
       <div>
         <h1 className="text-2xl font-semibold">{checkup.title}</h1>
-        <p className="mt-1 text-slate-400">{everyLabel(checkup.everyDays)}{checkup.hazard && <> · NASA hazard: {checkup.hazard}</>}</p>
+        <p className="mt-1 text-slate-400">{scheduleLabel(checkup)}{checkup.hazard && <> · NASA hazard: {checkup.hazard}</>}</p>
       </div>
 
       <section>

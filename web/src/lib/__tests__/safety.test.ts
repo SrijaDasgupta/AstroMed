@@ -352,3 +352,51 @@ describe("space health checks", async () => {
     expect(mapPhotoReadings([{ label: "SpO2", value: "96", unit: "%" }]).answers).toEqual({ spo2: 96 });
   });
 });
+
+describe("balance, after-spacewalk and immune checks", async () => {
+  const { evaluate, getCheckup } = await import("@/lib/checkups");
+  const { dueStatus } = await import("@/lib/checkup-schedule");
+  const { SPACE_RISKS } = await import("@/lib/space-risks");
+  const member = CREW[0];
+  const run = (id: string, a: Record<string, number | boolean>) => evaluate(getCheckup(id)!, member, a);
+  const noBalance = { dizzyStanding: false, fainted: false, vertigo: false };
+  const noEva = { dcsJoint: false, dcsSkin: false, dcsNeuro: false, dcsChokes: false, dcsBrain: false, handInjury: false, suitRub: false, evaTired: 3 };
+  const noImmune = { imColdSore: false, imShingles: false, imRash: false, imWound: false, imCold: false, imGut: false, imUrine: false, imCleaned: true };
+
+  it("spots orthostatic intolerance and poor balance after a gravity change", () => {
+    expect(run("balance", { ...noBalance, hrLying: 62, hrStanding: 96 }).level).toBe("today");
+    expect(run("balance", { ...noBalance, sysLying: 120, sysStanding: 96 }).level).toBe("today");
+    expect(run("balance", { ...noBalance, fainted: true }).level).toBe("today");
+    expect(run("balance", { ...noBalance, singleLegSec: 6 }).level).toBe("routine");
+    expect(run("balance", { ...noBalance, hrLying: 62, hrStanding: 78, singleLegSec: 30, tandemSec: 25 }).level).toBe("none");
+  });
+
+  it("treats any decompression sickness sign after a spacewalk as urgent", () => {
+    expect(run("after-eva", { ...noEva, dcsJoint: true }).level).toBe("now");
+    expect(run("after-eva", { ...noEva, dcsChokes: true }).level).toBe("now");
+    expect(run("after-eva", { ...noEva, handInjury: true }).level).toBe("routine");
+    expect(run("after-eva", noEva).level).toBe("none");
+  });
+
+  it("flags shingles, infected wounds and urinary infection the same day", () => {
+    for (const k of ["imShingles", "imWound", "imUrine"]) expect(run("immune", { ...noImmune, [k]: true }).level).toBe("today");
+    expect(run("immune", { ...noImmune, imColdSore: true }).level).toBe("routine");
+    expect(run("immune", noImmune).level).toBe("none");
+  });
+
+  it("makes the after-spacewalk check due only after a logged spacewalk", () => {
+    const c = getCheckup("after-eva")!;
+    const now = new Date("2026-11-14T12:00:00Z");
+    const eva = { crewId: "vega", checkupId: "daily", escalation: "none" as const, createdAt: "2026-11-14T08:00:00Z", answers: { evaHours: 6 } };
+    expect(dueStatus(c, [], now).due).toBe(false);
+    expect(dueStatus(c, [eva], now).due).toBe(true);
+    const done = { crewId: "vega", checkupId: "after-eva", escalation: "none" as const, createdAt: "2026-11-14T10:00:00Z" };
+    expect(dueStatus(c, [done, eva], now).due).toBe(false);
+    expect(dueStatus(getCheckup("balance")!, [], now).due).toBe(false);
+  });
+
+  it("links every one of these NASA risks to a check", () => {
+    const want: Record<string, string> = { immune: "/checkups/immune", sensorimotor: "/checkups/balance", hypoxia: "/checkups/vitals", microbes: "/checkups/immune", decompression: "/checkups/after-eva", eva: "/checkups/after-eva", fitness: "/checkups/balance", sans: "/checkups/vision" };
+    for (const [id, href] of Object.entries(want)) expect(SPACE_RISKS.find((r) => r.id === id)!.inApp.map((l) => l.href)).toContain(href);
+  });
+});
