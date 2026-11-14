@@ -245,8 +245,8 @@ describe("photo import", async () => {
   const id = "123e4567-e89b-42d3-a456-426614174000";
 
   it("reads a dosimeter total, not the dose rate", () => {
-    const { category, draft } = extractPhotoDetails("Dosimeter\nEnvironment: EVA 3\nDose rate: 0.05 mSv/h\nTotal: 320 µSv\nDuration: 6.5 h");
-    expect(category).toBe("radiation");
+    const { suggestedLog, draft } = extractPhotoDetails("Dosimeter\nEnvironment: EVA 3\nDose rate: 0.05 mSv/h\nTotal: 320 µSv\nDuration: 6.5 h");
+    expect(suggestedLog).toBe("radiation");
     expect(draft.dose).toBe("320");
     expect(draft.unit).toBe("µSv");
     expect(draft.hours).toBe("6.5");
@@ -255,14 +255,19 @@ describe("photo import", async () => {
   });
 
   it("reads a sleep tracker's bedtime and wake time", () => {
-    const { category, draft } = extractPhotoDetails("Sleep\nBedtime: 2026-11-12 22:40+00:00\nWake time: 2026-11-13 06:10+00:00");
-    expect(category).toBe("sleep");
+    const { suggestedLog, draft } = extractPhotoDetails("Sleep\nBedtime: 2026-11-12 22:40+00:00\nWake time: 2026-11-13 06:10+00:00");
+    expect(suggestedLog).toBe("sleep");
     const built = buildPhotoRecord("sleep", draft, id);
     expect("entry" in built && built.entry.category === "sleep" && built.entry.record.endedAt).toBe("2026-11-13T06:10:00.000Z");
   });
 
-  it("treats a blood pressure screen as a health record", () => {
-    expect(extractPhotoDetails("Blood pressure 128/82 mmHg\nPulse 64").category).toBe("health");
+  it("pulls readings out of any health photo", async () => {
+    const { extractHealthMeasurements } = await import("@/components/astromed/photo-import-data");
+    expect(extractPhotoDetails("Blood pressure: 128/82 mmHg\nPulse: 64 bpm").suggestedLog).toBeUndefined();
+    const m = extractHealthMeasurements("Blood pressure: 128/82 mmHg\nPulse: 64 bpm\nGlucose: 5.2 mmol/L\nTemperature: 36.9 °C\nNotes: feeling fine");
+    expect(m.map((x) => `${x.label}=${x.value} ${x.unit}`)).toEqual(["Blood pressure=128/82 mmHg", "Pulse=64 bpm", "Glucose=5.2 mmol/L", "Temperature=36.9 °C"]);
+    const built = buildPhotoRecord("health", { ...extractPhotoDetails("Weight: 74.6 kg").draft }, id);
+    expect("entry" in built && built.entry.category === "health" && built.entry.record.measurements[0]?.value).toBe("74.6");
   });
 
   it("checks saved radiation readings", () => {

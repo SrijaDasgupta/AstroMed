@@ -10,8 +10,8 @@ export type PhotoImportProps = {
   analyzeImage?: (image: File, signal: AbortSignal) => Promise<string>;
   /** Receives the confirmed record and the original photo. */
   saveRecord: (entry: PhotoRecord, image: File) => Promise<{ href?: string } | void>;
-  /** False when health records can't be saved (demo mode): that option is then disabled. */
-  canSaveHealth?: boolean;
+  /** Shown under the health option, e.g. that the demo doesn't keep the photo. */
+  healthNote?: string;
 };
 
 const acceptedImages = ['image/jpeg', 'image/png', 'image/webp'];
@@ -22,11 +22,12 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   return <label className="block min-w-0 text-sm">{label}{children}</label>;
 }
 
-export function PhotoImport({ saveRecord, analyzeImage, canSaveHealth = true }: PhotoImportProps) {
+export function PhotoImport({ saveRecord, analyzeImage, healthNote }: PhotoImportProps) {
   const imageFile = useRef<File | null>(null);
   const [preview, setPreview] = useState('');
   const [text, setText] = useState('');
-  const [category, setCategory] = useState<ImportCategory | ''>('');
+  const [category, setCategory] = useState<ImportCategory>('health');
+  const [suggestedLog, setSuggestedLog] = useState<'radiation' | 'sleep'>();
   const [draft, setDraft] = useState(() => extractPhotoDetails('').draft);
   const [reading, setReading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -36,7 +37,7 @@ export function PhotoImport({ saveRecord, analyzeImage, canSaveHealth = true }: 
   const previewUrl = useRef('');
   const pending = useRef<{ fingerprint: string; id: string } | null>(null);
   const submitting = useRef(false);
-  const candidate = category ? buildPhotoRecord(category, draft, '') : null;
+  const candidate = buildPhotoRecord(category, draft, '');
   const inputClass = `mt-1 min-w-0 ${field}`;
 
   useEffect(() => () => {
@@ -66,7 +67,8 @@ export function PhotoImport({ saveRecord, analyzeImage, canSaveHealth = true }: 
     previewUrl.current = URL.createObjectURL(image);
     setPreview(previewUrl.current);
     setText('');
-    setCategory(canSaveHealth ? 'health' : '');
+    setCategory('health');
+    setSuggestedLog(undefined);
     setDraft(extractPhotoDetails('').draft);
     setSaved(undefined);
     pending.current = null;
@@ -80,8 +82,8 @@ export function PhotoImport({ saveRecord, analyzeImage, canSaveHealth = true }: 
       const inferred = extractPhotoDetails(recognized);
       setText(recognized);
       setDraft(inferred.draft);
-      setCategory(inferred.category === 'health' && !canSaveHealth ? '' : inferred.category);
-      setMessage(recognized ? 'Check the extracted details against the photo before saving.' : 'No readable text found. Choose a record type and enter the details from the image.');
+      setSuggestedLog(inferred.suggestedLog);
+      setMessage(recognized ? 'Check the extracted details against the photo before saving.' : 'No readable text found. You can enter the observations you see in the image.');
     } catch {
       if (activeRead.current === controller) setMessage('Could not read the image. Try another photo or enter the details below.');
     } finally {
@@ -95,7 +97,7 @@ export function PhotoImport({ saveRecord, analyzeImage, canSaveHealth = true }: 
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!category || reading || submitting.current || saved) return;
+    if (reading || submitting.current || saved) return;
     const fingerprint = JSON.stringify([category, draft]);
     const id = pending.current?.fingerprint === fingerprint ? pending.current.id : crypto.randomUUID();
     const result = buildPhotoRecord(category, draft, id);
@@ -124,7 +126,7 @@ export function PhotoImport({ saveRecord, analyzeImage, canSaveHealth = true }: 
   }
 
   return (
-    <ModuleCard title="Read a photo" intro="Take or choose a photo of a device screen, dosimeter, sleep tracker or lab report. AstroMed reads the text on this device, with no AI and no key, then you check it before saving.">
+    <ModuleCard title="Read a photo" intro="Take or choose a photo of any health screen or document: a blood pressure monitor, thermometer, scale, lab report, dosimeter or sleep tracker. AstroMed reads the text on this device, with no AI and no key, then you check it before saving.">
       <Field label="Photo (JPEG, PNG or WebP, up to 15 MB)">
         <input type="file" accept={acceptedImages.join(',')} disabled={saving} className={inputClass} onChange={upload} />
       </Field>
@@ -142,17 +144,20 @@ export function PhotoImport({ saveRecord, analyzeImage, canSaveHealth = true }: 
           <form className={`min-w-0 ${inset}`} onSubmit={save}>
             <h3 className="mb-3 font-semibold">Review reading</h3>
             <fieldset disabled={reading || saving || !!saved} className="min-w-0 space-y-3">
-              <Field label="Record type">
-                <select className={inputClass} required value={category} onChange={(event) => {
-                  setCategory(event.target.value as ImportCategory | '');
+              <Field label="Save to">
+                <select className={inputClass} value={category} onChange={(event) => {
+                  setCategory(event.target.value as ImportCategory);
                   setMessage('');
                 }}>
-                  <option value="">Choose record type</option>
-                  <option value="health" disabled={!canSaveHealth}>Health record, kept with the photo in My records{canSaveHealth ? '' : ' (needs an account)'}</option>
+                  <option value="health">Health record in My records</option>
                   <option value="radiation">Radiation reading for My exposure</option>
                   <option value="sleep">Sleep or nap for the Sleep orbit</option>
                 </select>
               </Field>
+              {suggestedLog && category === 'health' && (
+                <p className="text-xs text-slate-400">This looks like a {suggestedLog === 'radiation' ? 'dosimeter reading' : 'sleep record'}: you can also choose {labels[suggestedLog]} above.</p>
+              )}
+              {category === 'health' && healthNote && <p className="text-xs text-slate-400">{healthNote}</p>}
               {category === 'health' && <>
                 <Field label="Record title"><input className={inputClass} required maxLength={120} value={draft.title} onChange={(event) => edit('title', event.target.value)} /></Field>
                 <Field label="Observation date (optional)"><input className={inputClass} type="date" value={draft.observedOn} onChange={(event) => edit('observedOn', event.target.value)} /></Field>
@@ -176,14 +181,24 @@ export function PhotoImport({ saveRecord, analyzeImage, canSaveHealth = true }: 
                 <Field label="Wake time"><input className={inputClass} required type="datetime-local" value={draft.end} onChange={(event) => edit('end', event.target.value)} /></Field>
                 <Field label="UTC offset for both times"><input className={inputClass} required placeholder="+00:00" value={draft.offset} onChange={(event) => edit('offset', event.target.value)} /></Field>
               </>}
-              {candidate && 'entry' in candidate && candidate.entry.category !== 'health' && <p className="rounded-lg bg-sky-400/10 p-3 text-sm text-sky-200">
+              {'entry' in candidate && candidate.entry.category === 'health' && candidate.entry.record.measurements.length > 0 && (
+                <div className="rounded-lg bg-sky-400/10 p-3 text-sm">
+                  <p className="font-medium text-sky-200">Readings found</p>
+                  <ul className="mt-1 max-h-40 space-y-1 overflow-auto">
+                    {candidate.entry.record.measurements.map(({ label, value, unit }, index) => (
+                      <li key={index}>{label} · {value} {unit}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {'entry' in candidate && candidate.entry.category !== 'health' && <p className="rounded-lg bg-sky-400/10 p-3 text-sm text-sky-200">
                 {candidate.entry.category === 'radiation'
                   ? `${formatRadiation(candidate.entry.record.cumulativeDoseMsv)} mSv cumulative · ${formatRadiation(candidate.entry.record.cumulativeDoseMsv / candidate.entry.record.durationHours)} mSv/h average`
                   : `${formatSleepDuration(Date.parse(candidate.entry.record.endedAt) - Date.parse(candidate.entry.record.startedAt))} between start and wake time`}
               </p>}
-              {category && <button className={button} type="submit">{saving ? 'Saving…' : `Add to ${labels[category]}`}</button>}
+              <button className={button} type="submit">{saving ? 'Saving…' : `Add to ${labels[category]}`}</button>
             </fieldset>
-            {saved?.href && <a className="mt-3 inline-block text-sm text-sky-200 underline" href={saved.href}>Open {category ? labels[category] : 'the saved entry'}</a>}
+            {saved?.href && <a className="mt-3 inline-block text-sm text-sky-200 underline" href={saved.href}>Open {labels[category]}</a>}
           </form>
         </div>
       )}

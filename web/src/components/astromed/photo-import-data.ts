@@ -3,11 +3,18 @@ import { type SleepRecord } from './sleep-records';
 
 export type ImportCategory = 'health' | 'radiation' | 'sleep';
 
+export type HealthPhotoMeasurement = {
+  label: string;
+  value: string;
+  unit: string;
+};
+
 export type HealthPhotoRecord = {
   id: string;
   source: 'photo-import';
   title: string;
   findings: string;
+  measurements: HealthPhotoMeasurement[];
   observedOn?: string;
 };
 export type PhotoRecord =
@@ -32,7 +39,18 @@ const datePattern = '(\\d{4}-\\d{2}-\\d{2})[ T](\\d{2}:\\d{2})(?::00)?';
 const offsetPattern = '(?:Z|[+-]\\d{2}:\\d{2})';
 const stamp = (label: string) => new RegExp(`^(?:${label})(?:[ \\t]*:[ \\t]*|[ \\t]+)${datePattern}(${offsetPattern})?[ \\t]*$`, 'gim');
 
-export function extractPhotoDetails(text: string): { category: ImportCategory | ''; draft: PhotoDraft } {
+// Preserve the displayed value and unit. A generic reading isn't a diagnosis.
+const readingLine = /^([\p{L}][\p{L}\d ()%'₂._-]{0,79})[ \t]*:[ \t]*([<>≤≥]?[ \t]*[+−-]?(?:\d+(?:[.,]\d+)?|[.,]\d+)(?:[ \t]*\/[ \t]*\d+(?:[.,]\d+)?)?)[ \t]*([\p{L}µ°%][\p{L}\dµ°%/²³.^-]{0,19})[ \t]*$/gmu;
+
+export function extractHealthMeasurements(findings: string): HealthPhotoMeasurement[] {
+  return Array.from(findings.matchAll(readingLine), (match) => ({
+    label: match[1]?.trim() ?? '',
+    value: match[2]?.trim() ?? '',
+    unit: match[3] ?? '',
+  }));
+}
+
+export function extractPhotoDetails(text: string): { suggestedLog?: 'radiation' | 'sleep'; draft: PhotoDraft } {
   const normalized = text.replace(/[μ]/g, 'µ').replace(/\r/g, '');
   const doseText = normalized.replace(/^.*\b(?:dose rate|average rate)\b.*$/gim, '');
   const doses = [...doseText.matchAll(/(?<![\w.,+−-])(\d+(?:\.\d+)?)\s*(msv|[µu]sv|sv)\b(?![ \t]*(?:\/|per\b))/gi)];
@@ -49,7 +67,7 @@ export function extractPhotoDetails(text: string): { category: ImportCategory | 
   const unit = dose?.[2]?.toLowerCase();
   const offset = start?.[3] && start[3] === end?.[3] ? start[3] : '';
   const draft: PhotoDraft = {
-    title: '',
+    title: 'Health photo import',
     findings: normalized.trim().slice(0, 12_000),
     observedOn: '',
     name: environment.length === 1 ? environment[0]?.[1]?.trim() ?? '' : '',
@@ -61,9 +79,8 @@ export function extractPhotoDetails(text: string): { category: ImportCategory | 
     offset: offset === 'Z' ? '+00:00' : offset,
     kind: /^\s*nap\s*$/im.test(normalized) ? 'nap' : 'sleep',
   };
-  const hasOtherHealthDetails = /\b(?:blood pressure|pulse|heart rate|spo2|oxygen saturation|temperature|glucose|weight|cholesterol|hemoglobin)\b/i.test(normalized);
-  const category = hasOtherHealthDetails || hasRadiation === hasSleep ? 'health' : hasRadiation ? 'radiation' : 'sleep';
-  return { category, draft };
+  const suggestedLog = hasRadiation && !hasSleep ? 'radiation' : hasSleep && !hasRadiation ? 'sleep' : undefined;
+  return { suggestedLog, draft };
 }
 
 function parseTimestamp(value: string, offset: string) {
@@ -86,7 +103,7 @@ export function buildPhotoRecord(
     if (observedOn && !Number.isFinite(parseTimestamp(`${observedOn}T00:00`, '+00:00'))) {
       return { error: 'Enter a valid observation date.' };
     }
-    return { entry: { category, record: { id, title, findings, observedOn, source: 'photo-import' } } };
+    return { entry: { category, record: { id, title, findings, measurements: extractHealthMeasurements(findings), observedOn, source: 'photo-import' } } };
   }
 
   if (category === 'radiation') {

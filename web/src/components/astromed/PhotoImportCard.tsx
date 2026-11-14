@@ -17,15 +17,15 @@ async function shrink(image: File): Promise<File> {
 }
 
 /** Photo import wired to AstroMed: radiation goes to My exposure, sleep to the Sleep orbit, health text and photo to My records. */
-export function PhotoImportCard({ canSaveHealth }: { canSaveHealth: boolean }) {
+export function PhotoImportCard({ demo }: { demo: boolean }) {
   return (
     <PhotoImport
-      canSaveHealth={canSaveHealth}
+      healthNote={demo ? "In the demo, the text and readings are kept in this browser; the photo itself is only stored with an account." : "The photo is kept with the text and readings."}
       saveRecord={async (entry, image) => {
         const form = new FormData();
         form.set("category", entry.category);
         form.set("record", JSON.stringify(entry.record));
-        if (entry.category === "health") form.set("image", await shrink(image));
+        if (entry.category === "health" && !demo) form.set("image", await shrink(image));
         const result = await savePhotoImportAction(form);
         if ("error" in result) throw Object.assign(new Error(result.error), { userMessage: result.error });
         return result;

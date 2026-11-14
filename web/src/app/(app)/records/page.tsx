@@ -17,10 +17,10 @@ export default async function RecordsPage({ searchParams }: { searchParams: Prom
       <div>
         <p className="text-xs uppercase tracking-widest text-sky-400">Personalized</p>
         <h1 className="mt-1 text-2xl font-semibold">My records</h1>
-        <p className="mt-1 text-slate-400">Keep lab results, reports and other documents in one place, and import readings from a smartwatch or health app.</p>
+        <p className="mt-1 text-slate-400">Keep lab results, reports and other documents in one place, and import readings from a smartwatch or health app. To read the numbers off a screen or report, use <Link href="/photo-import" className="text-sky-300 hover:text-sky-200">Photo import</Link>.</p>
       </div>
 
-      {demo && <p className="flex items-center gap-2 rounded-xl bg-amber-300/10 p-3 text-sm text-amber-100"><Lock className="h-4 w-4" aria-hidden />Uploading and importing need an account. Sign in to use them.</p>}
+      {demo && <p className="flex items-center gap-2 rounded-xl bg-amber-300/10 p-3 text-sm text-amber-100"><Lock className="h-4 w-4" aria-hidden />Uploading files and CSV imports need an account. Photo imports work in the demo: their text and readings are kept in this browser.</p>}
       {problem && <p className="rounded-xl bg-amber-300/10 p-3 text-sm text-amber-100">Couldn&apos;t load your records: {problem}</p>}
       {missing && <p className="rounded-xl bg-amber-300/10 p-3 text-sm text-amber-100">That record couldn&apos;t be opened. It may have been deleted.</p>}
 
@@ -39,8 +39,15 @@ export default async function RecordsPage({ searchParams }: { searchParams: Prom
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{r.title}</p>
                       <p className="truncate text-xs text-slate-500">
-                        {RECORD_KINDS.find((k) => k.id === r.kind)?.label} · {r.recordedOn ? new Date(`${r.recordedOn}T12:00:00`).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "no date"} · {size(r.sizeBytes)}{r.notes ? ` · ${r.notes}` : ""}
+                        {RECORD_KINDS.find((k) => k.id === r.kind)?.label} · {r.recordedOn ? new Date(`${r.recordedOn}T12:00:00`).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "no date"}{r.sizeBytes > 0 ? ` · ${size(r.sizeBytes)}` : ""}{r.notes ? ` · ${r.notes}` : ""}
                       </p>
+                      {r.measurements && r.measurements.length > 0 && (
+                        <ul className="mt-1.5 flex flex-wrap gap-1.5">
+                          {r.measurements.map((m, i) => (
+                            <li key={i} className="rounded-full bg-sky-400/10 px-2 py-0.5 text-xs text-sky-100">{m.label}: <span className="tabular-nums">{m.value}</span> {m.unit}</li>
+                          ))}
+                        </ul>
+                      )}
                       {r.findings && (
                         <details className="mt-1 text-xs text-slate-400">
                           <summary className="cursor-pointer text-slate-300">Text read from the photo</summary>
@@ -50,7 +57,7 @@ export default async function RecordsPage({ searchParams }: { searchParams: Prom
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <a href={`/records/${r.id}/open`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1 text-xs text-slate-200 hover:bg-white/5"><Download className="h-3.5 w-3.5" aria-hidden />Open</a>
+                    {r.sizeBytes > 0 && <a href={`/records/${r.id}/open`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1 text-xs text-slate-200 hover:bg-white/5"><Download className="h-3.5 w-3.5" aria-hidden />Open</a>}
                     <DeleteRecordButton id={r.id} title={r.title} />
                   </div>
                 </li>

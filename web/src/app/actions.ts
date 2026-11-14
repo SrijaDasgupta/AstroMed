@@ -70,6 +70,7 @@ export async function signOut() {
   store.delete((await import("@/lib/body-notes-store")).DEMO_BODY_COOKIE);
   store.delete((await import("@/lib/sleep-store")).DEMO_SLEEP_COOKIE);
   store.delete((await import("@/lib/radiation-store")).DEMO_RADIATION_COOKIE);
+  store.delete((await import("@/lib/records-store")).DEMO_IMPORTS_COOKIE);
   redirect("/");
 }
 
@@ -601,18 +602,25 @@ async function savePhotoImport(formData: FormData): Promise<{ href: string }> {
   }
 
   if (category === "health") {
-    if (viewer.kind === "demo") throw new Error("Saving health records needs an account.");
-    const { uploadRecord } = await import("@/lib/records-store");
-    const image = formData.get("image");
-    if (!(image instanceof File) || image.size === 0) throw new Error("The photo is missing.");
+    const { addDemoImport, uploadRecord } = await import("@/lib/records-store");
+    const { extractHealthMeasurements } = await import("@/components/astromed/photo-import-data");
     const id = String(record.id ?? "");
     const title = String(record.title ?? "").trim().slice(0, 120);
     const findings = String(record.findings ?? "").trim().slice(0, 12000);
     const observedOn = record.observedOn ? String(record.observedOn) : undefined;
     if (!/^[0-9a-f-]{36}$/i.test(id) || !title || !findings) throw new Error("Add a title and the findings.");
     if (observedOn && !/^\d{4}-\d{2}-\d{2}$/.test(observedOn)) throw new Error("Enter a valid date.");
-    const { problem } = await uploadRecord(viewer, image, { id, title, kind: "report", recordedOn: observedOn, findings, notes: "Imported from a photo" });
-    if (problem) throw new Error(problem);
+    // Rebuilt from the reviewed text on the server rather than trusted from the browser.
+    const measurements = extractHealthMeasurements(findings).slice(0, 60)
+      .map((m) => ({ label: m.label.slice(0, 80), value: m.value.slice(0, 40), unit: m.unit.slice(0, 20) }));
+    if (viewer.kind === "demo") {
+      await addDemoImport({ id, title, recordedOn: observedOn, findings, measurements });
+    } else {
+      const image = formData.get("image");
+      if (!(image instanceof File) || image.size === 0) throw new Error("The photo is missing.");
+      const { problem } = await uploadRecord(viewer, image, { id, title, kind: "report", recordedOn: observedOn, findings, measurements, notes: "Imported from a photo" });
+      if (problem) throw new Error(problem);
+    }
     revalidatePath("/records");
     return { href: "/records" };
   }
