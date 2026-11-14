@@ -38,7 +38,16 @@ body {
 .am-draw { stroke-dasharray: 600; stroke-dashoffset: 600; animation: am-draw 0.7s ease-out forwards; }
 .am-pulse { transform-box: fill-box; transform-origin: center; animation: am-pulse 1.8s ease-out infinite; }
 .am-fade { animation: am-fade 0.3s ease-out; }
+/* Mission home scene. */
+@keyframes am-twinkle { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+@keyframes am-orbit { to { transform: rotate(360deg); } }
+@keyframes am-route { from { stroke-dashoffset: var(--route-from, 1); } }
+@keyframes am-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.am-twinkle { animation: am-twinkle 3.6s ease-in-out infinite; }
+.am-orbit { animation: am-orbit 18s linear infinite; }
+.am-route { animation: am-route 1.6s ease-out both; }
+.am-rise { animation: am-rise 0.5s ease-out both; }
 @media (prefers-reduced-motion: reduce) {
   .am-draw { animation: none; stroke-dashoffset: 0; }
-  .am-pulse, .am-fade { animation: none; }
+  .am-pulse, .am-fade, .am-twinkle, .am-orbit, .am-route, .am-rise { animation: none; }
 }
