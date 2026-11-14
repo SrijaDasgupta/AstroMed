@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Bone, HeartPulse, Info, Orbit, Radiation, ShieldAlert } from "lucide-react";
 import { ProjectionChart } from "@/components/ProjectionChart";
-import { SpaceRadiation } from "@/components/astromed";
+import { SpaceRadiationCard } from "@/components/astromed";
+import { listRadiation } from "@/lib/radiation-store";
 import { ENVIRONMENTS } from "@/lib/environments";
 import {
   boneSeries, CAREER_LIMIT_MSV, DEFAULT_LENGTH, gravityOf, IMMUNE_SIGNAL_LABELS, LENGTH_OPTIONS, myHazards, radiationSeries,
@@ -31,7 +32,7 @@ const signed = (v: number, dp = 0) => {
 
 export default async function HazardsPage({ searchParams }: { searchParams: Promise<{ length?: string }> }) {
   const viewer = await requireViewer();
-  const [{ env, assessment }, ctx] = await Promise.all([getMyHealth(viewer), getMissionContext()]);
+  const [{ env, assessment }, ctx, { readings }] = await Promise.all([getMyHealth(viewer), getMissionContext(), listRadiation(viewer)]);
   const today = ctx.day;
   // Projection options: the usual lengths, plus the mission's planned length if it has one.
   const options = ctx.length && !LENGTH_OPTIONS.some((o) => o.days === ctx.length)
@@ -111,8 +112,12 @@ export default async function HazardsPage({ searchParams }: { searchParams: Prom
         </Source>
       </section>
 
-      <SpaceRadiation
+      <SpaceRadiationCard
         environments={ENVIRONMENTS.map((e) => ({ id: e.id, name: e.name, msvPerDay: e.radiationMsvPerDay, source: e.radiationSource }))}
+        saved={readings.map((r) => ({
+          id: r.id, name: r.name, own: true, msvPerDay: (r.doseMsv / r.hours) * 24,
+          source: `Your reading${r.source === "photo-import" ? ", imported from a photo" : ""}: ${Number(r.doseMsv.toPrecision(3))} mSv over ${Number(r.hours.toPrecision(3))} h, shown as a daily rate.`,
+        }))}
         initialId={ctx.none ? undefined : env.id}
       />
 

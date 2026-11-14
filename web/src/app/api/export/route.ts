@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 const TABLES = [
   "profiles", "checkup_logs", "missions", "journal_entries", "body_notes", "body_note_updates",
-  "medications", "medication_logs", "reminders", "reminder_logs", "tip_actions", "records", "sleep_sessions",
+  "medications", "medication_logs", "reminders", "reminder_logs", "tip_actions", "records", "sleep_sessions", "radiation_readings",
 ] as const;
 
 export async function GET() {

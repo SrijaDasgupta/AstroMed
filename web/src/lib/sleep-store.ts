@@ -9,18 +9,22 @@ export const DEMO_SLEEP_COOKIE = DEMO;
 const DEMO_MAX = 16;
 const DAY_MS = 86_400_000;
 
-/** Compact demo form: [id, "s" | "n", start (unix seconds), end (unix seconds)]. */
-type DemoRow = [string, "s" | "n", number, number];
+/** Compact demo form: [id, "s" | "n", start (unix seconds), end (unix seconds), 1 if from a photo]. */
+type DemoRow = [string, "s" | "n", number, number, 1?];
 
-const toRecord = ([id, k, s, e]: DemoRow): SleepRecord => ({
-  id, kind: k === "n" ? "nap" : "sleep", source: "manual", startedAt: new Date(s * 1000).toISOString(), endedAt: new Date(e * 1000).toISOString(),
+const toRecord = ([id, k, s, e, photo]: DemoRow): SleepRecord => ({
+  id, kind: k === "n" ? "nap" : "sleep", source: photo ? "photo-import" : "manual", startedAt: new Date(s * 1000).toISOString(), endedAt: new Date(e * 1000).toISOString(),
 });
-const toRow = (r: SleepRecord): DemoRow => [r.id, r.kind === "nap" ? "n" : "s", Math.round(Date.parse(r.startedAt) / 1000), Math.round(Date.parse(r.endedAt) / 1000)];
+const toRow = (r: SleepRecord): DemoRow => {
+  const row: DemoRow = [r.id, r.kind === "nap" ? "n" : "s", Math.round(Date.parse(r.startedAt) / 1000), Math.round(Date.parse(r.endedAt) / 1000)];
+  if (r.source === "photo-import") row.push(1);
+  return row;
+};
 
 async function readDemo(): Promise<DemoRow[]> {
   try {
     const v = JSON.parse((await cookies()).get(DEMO)?.value ?? "[]");
-    return Array.isArray(v) ? v.filter((r) => Array.isArray(r) && r.length === 4) : [];
+    return Array.isArray(v) ? v.filter((r) => Array.isArray(r) && (r.length === 4 || r.length === 5)) : [];
   } catch {
     return [];
   }
@@ -34,12 +38,12 @@ export async function writeDemoSleep(rows: SleepRecord[]) {
 export async function listSleep(viewer: Viewer): Promise<{ records: SleepRecord[]; problem?: string }> {
   if (viewer.kind === "demo") return { records: (await readDemo()).map(toRecord) };
   const supabase = await createClient();
-  const { data, error } = await fetchAll<{ id: string; kind: "sleep" | "nap"; started_at: string; ended_at: string }>(
-    (from, to) => supabase.from("sleep_sessions").select("id, kind, started_at, ended_at").order("started_at", { ascending: true }).range(from, to),
+  const { data, error } = await fetchAll<{ id: string; kind: "sleep" | "nap"; started_at: string; ended_at: string; source: string }>(
+    (from, to) => supabase.from("sleep_sessions").select("id, kind, started_at, ended_at, source").order("started_at", { ascending: true }).range(from, to),
   );
   return {
     problem: error,
-    records: (data ?? []).map((r) => ({ id: r.id, kind: r.kind, source: "manual", startedAt: new Date(r.started_at).toISOString(), endedAt: new Date(r.ended_at).toISOString() })),
+    records: (data ?? []).map((r) => ({ id: r.id, kind: r.kind, source: r.source === "photo-import" ? "photo-import" : "manual", startedAt: new Date(r.started_at).toISOString(), endedAt: new Date(r.ended_at).toISOString() })),
   };
 }
 
@@ -54,15 +58,18 @@ export function checkSleep(r: { id?: unknown; kind?: unknown; startedAt?: unknow
   return null;
 }
 
-/** Saves a session; saving the same id again updates it (safe to retry). */
+/** Saves a session; saving the same id again updates it (safe to retry). Refuses sessions that overlap another. */
 export async function saveSleep(viewer: Viewer, r: SleepRecord): Promise<{ problem?: string }> {
+  const s = Date.parse(r.startedAt), e = Date.parse(r.endedAt);
+  const { records } = await listSleep(viewer);
+  if (records.some((x) => x.id !== r.id && Date.parse(x.startedAt) < e && Date.parse(x.endedAt) > s)) return { problem: "That session overlaps an existing sleep entry." };
   if (viewer.kind === "demo") {
     const rows = (await readDemo()).map(toRecord).filter((x) => x.id !== r.id);
     await writeDemoSleep([...rows, r]);
     return {};
   }
   const { error } = await (await createClient()).from("sleep_sessions").upsert({
-    id: r.id, user_id: viewer.id, kind: r.kind, started_at: r.startedAt, ended_at: r.endedAt,
+    id: r.id, user_id: viewer.id, kind: r.kind, started_at: r.startedAt, ended_at: r.endedAt, source: r.source === "photo-import" ? "photo-import" : "manual",
   });
   return { problem: error?.message };
 }

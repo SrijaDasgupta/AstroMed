@@ -69,6 +69,7 @@ export async function signOut() {
   store.delete((await import("@/lib/journal-store")).DEMO_JOURNAL_COOKIE);
   store.delete((await import("@/lib/body-notes-store")).DEMO_BODY_COOKIE);
   store.delete((await import("@/lib/sleep-store")).DEMO_SLEEP_COOKIE);
+  store.delete((await import("@/lib/radiation-store")).DEMO_RADIATION_COOKIE);
   redirect("/");
 }
 
@@ -536,4 +537,84 @@ export async function saveSleepSessionAction(record: { id: string; kind: "sleep"
   });
   if (saved.problem) throw new Error(saved.problem);
   revalidatePath("/vitals");
+}
+
+/** Saves a dosimeter reading from My exposure. Throws on failure so the form can retry. */
+export async function saveRadiationReadingAction(reading: { id: string; name: string; doseMsv: number; hours: number }): Promise<void> {
+  const viewer = await getViewer();
+  if (!viewer) throw new Error("Your session has ended. Sign in again.");
+  const { checkRadiation, saveRadiation } = await import("@/lib/radiation-store");
+  const input = { ...reading, source: "crew-entered" as const };
+  const problem = checkRadiation(input);
+  if (problem) throw new Error(problem);
+  const saved = await saveRadiation(viewer, { id: input.id, name: input.name.trim(), doseMsv: Number(input.doseMsv), hours: Number(input.hours), source: "crew-entered" });
+  if (saved.problem) throw new Error(saved.problem);
+  revalidatePath("/hazards");
+}
+
+/**
+ * Saves what the astronaut confirmed from a photo: a radiation reading, a sleep session, or a health
+ * record (the photo itself plus the reviewed text, in My records). Throws on failure so the card can retry.
+ */
+export async function savePhotoImportAction(formData: FormData): Promise<{ href: string } | { error: string }> {
+  // Errors are returned, not thrown, so the reason (such as an overlapping sleep) reaches the person.
+  try {
+    return await savePhotoImport(formData);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "The save didn't work." };
+  }
+}
+
+async function savePhotoImport(formData: FormData): Promise<{ href: string }> {
+  const viewer = await getViewer();
+  if (!viewer) throw new Error("Your session has ended. Sign in again.");
+  const category = String(formData.get("category") ?? "");
+  let record: Record<string, unknown>;
+  try {
+    record = JSON.parse(String(formData.get("record") ?? "{}"));
+  } catch {
+    throw new Error("Invalid import.");
+  }
+
+  if (category === "radiation") {
+    const { checkRadiation, saveRadiation } = await import("@/lib/radiation-store");
+    const input = { id: record.id, name: record.name, doseMsv: record.cumulativeDoseMsv, hours: record.durationHours, source: "photo-import" };
+    const problem = checkRadiation(input);
+    if (problem) throw new Error(problem);
+    const saved = await saveRadiation(viewer, { id: String(input.id), name: String(input.name).trim(), doseMsv: Number(input.doseMsv), hours: Number(input.hours), source: "photo-import" });
+    if (saved.problem) throw new Error(saved.problem);
+    revalidatePath("/hazards");
+    return { href: "/hazards" };
+  }
+
+  if (category === "sleep") {
+    const { checkSleep, saveSleep } = await import("@/lib/sleep-store");
+    const problem = checkSleep(record);
+    if (problem) throw new Error(problem);
+    const saved = await saveSleep(viewer, {
+      id: String(record.id), kind: record.kind === "nap" ? "nap" : "sleep", source: "photo-import",
+      startedAt: new Date(String(record.startedAt)).toISOString(), endedAt: new Date(String(record.endedAt)).toISOString(),
+    });
+    if (saved.problem) throw new Error(saved.problem);
+    revalidatePath("/vitals");
+    return { href: "/vitals" };
+  }
+
+  if (category === "health") {
+    if (viewer.kind === "demo") throw new Error("Saving health records needs an account.");
+    const { uploadRecord } = await import("@/lib/records-store");
+    const image = formData.get("image");
+    if (!(image instanceof File) || image.size === 0) throw new Error("The photo is missing.");
+    const id = String(record.id ?? "");
+    const title = String(record.title ?? "").trim().slice(0, 120);
+    const findings = String(record.findings ?? "").trim().slice(0, 12000);
+    const observedOn = record.observedOn ? String(record.observedOn) : undefined;
+    if (!/^[0-9a-f-]{36}$/i.test(id) || !title || !findings) throw new Error("Add a title and the findings.");
+    if (observedOn && !/^\d{4}-\d{2}-\d{2}$/.test(observedOn)) throw new Error("Enter a valid date.");
+    const { problem } = await uploadRecord(viewer, image, { id, title, kind: "report", recordedOn: observedOn, findings, notes: "Imported from a photo" });
+    if (problem) throw new Error(problem);
+    revalidatePath("/records");
+    return { href: "/records" };
+  }
+  throw new Error("Choose a record type.");
 }

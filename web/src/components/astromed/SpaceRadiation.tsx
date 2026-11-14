@@ -153,13 +153,20 @@ function DoseGame({ env }: { env: RadiationEnvironment }) {
 /* ---------- Card ---------- */
 
 /** Compares average daily dose across mission environments, with a reading of your own and a dose-matching game. */
-export function SpaceRadiation({ environments, initialId }: { environments: readonly RadiationEnvironment[]; initialId?: string }) {
+export function SpaceRadiation({ environments, initialId, saved = [], saveReading }: {
+  environments: readonly RadiationEnvironment[];
+  initialId?: string;
+  /** Readings the person saved earlier (typed in or imported from a photo). */
+  saved?: readonly RadiationEnvironment[];
+  /** Saves a new reading; rejects on failure. Without it, readings stay on this page only. */
+  saveReading?: (r: { id: string; name: string; doseMsv: number; hours: number }) => Promise<void>;
+}) {
   const [selection, setSelection] = useState(initialId);
   const [own, setOwn] = useState<RadiationEnvironment[]>([]);
   const [gameOpen, setGameOpen] = useState(false);
   const select = useId();
   const ownId = useId();
-  const valid = [...environments, ...own].filter(({ msvPerDay }) => Number.isFinite(msvPerDay) && msvPerDay >= 0);
+  const valid = [...environments, ...saved, ...own.filter((o) => !saved.some((x) => x.id === o.id))].filter(({ msvPerDay }) => Number.isFinite(msvPerDay) && msvPerDay >= 0);
   const current = valid.find(({ id }) => id === selection) ?? valid[0];
   const maximumRate = valid.reduce((max, e) => Math.max(max, e.msvPerDay), 0);
   if (!current) return <ModuleCard title="Radiation by environment"><p className="text-sm text-slate-400">No dose figures available.</p></ModuleCard>;
@@ -205,10 +212,12 @@ export function SpaceRadiation({ environments, initialId }: { environments: read
             ))}
           </ul>
           <p className="mt-3 text-xs text-slate-500">Daily averages don&apos;t include solar storms, which can add large doses quickly.</p>
-          <RadiationEntry onAdd={({ name, doseMsv, hours }) => {
+          <RadiationEntry saves={Boolean(saveReading)} onAdd={async ({ name, doseMsv, hours }) => {
+            const id = saveReading ? crypto.randomUUID() : `${ownId}-${own.length}`;
+            await saveReading?.({ id, name, doseMsv, hours });
             const entry: RadiationEnvironment = {
-              id: `${ownId}-${own.length}`, name, own: true, msvPerDay: (doseMsv / hours) * 24,
-              source: `Your reading: ${format(doseMsv)} mSv over ${format(hours)} h, shown as a daily rate. Not saved.`,
+              id, name, own: true, msvPerDay: (doseMsv / hours) * 24,
+              source: `Your reading: ${format(doseMsv)} mSv over ${format(hours)} h, shown as a daily rate.${saveReading ? "" : " Not saved."}`,
             };
             setOwn((previous) => [...previous, entry]);
             setSelection(entry.id);

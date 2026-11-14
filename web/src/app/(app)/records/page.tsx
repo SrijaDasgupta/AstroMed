@@ -41,6 +41,12 @@ export default async function RecordsPage({ searchParams }: { searchParams: Prom
                       <p className="truncate text-xs text-slate-500">
                         {RECORD_KINDS.find((k) => k.id === r.kind)?.label} · {r.recordedOn ? new Date(`${r.recordedOn}T12:00:00`).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "no date"} · {size(r.sizeBytes)}{r.notes ? ` · ${r.notes}` : ""}
                       </p>
+                      {r.findings && (
+                        <details className="mt-1 text-xs text-slate-400">
+                          <summary className="cursor-pointer text-slate-300">Text read from the photo</summary>
+                          <p className="mt-1 whitespace-pre-wrap break-words">{r.findings}</p>
+                        </details>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">

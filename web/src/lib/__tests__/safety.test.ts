@@ -238,3 +238,37 @@ describe("sleep orbit sessions", async () => {
     expect(checkSleep({ id, kind: "coma", startedAt: h(0), endedAt: h(6) })).not.toBeNull();
   });
 });
+
+describe("photo import", async () => {
+  const { extractPhotoDetails, buildPhotoRecord } = await import("@/components/astromed/photo-import-data");
+  const { checkRadiation } = await import("@/lib/radiation-store");
+  const id = "123e4567-e89b-42d3-a456-426614174000";
+
+  it("reads a dosimeter total, not the dose rate", () => {
+    const { category, draft } = extractPhotoDetails("Dosimeter\nEnvironment: EVA 3\nDose rate: 0.05 mSv/h\nTotal: 320 µSv\nDuration: 6.5 h");
+    expect(category).toBe("radiation");
+    expect(draft.dose).toBe("320");
+    expect(draft.unit).toBe("µSv");
+    expect(draft.hours).toBe("6.5");
+    const built = buildPhotoRecord("radiation", draft, id);
+    expect("entry" in built && built.entry.category === "radiation" && built.entry.record.cumulativeDoseMsv).toBeCloseTo(0.32);
+  });
+
+  it("reads a sleep tracker's bedtime and wake time", () => {
+    const { category, draft } = extractPhotoDetails("Sleep\nBedtime: 2026-11-12 22:40+00:00\nWake time: 2026-11-13 06:10+00:00");
+    expect(category).toBe("sleep");
+    const built = buildPhotoRecord("sleep", draft, id);
+    expect("entry" in built && built.entry.category === "sleep" && built.entry.record.endedAt).toBe("2026-11-13T06:10:00.000Z");
+  });
+
+  it("treats a blood pressure screen as a health record", () => {
+    expect(extractPhotoDetails("Blood pressure 128/82 mmHg\nPulse 64").category).toBe("health");
+  });
+
+  it("checks saved radiation readings", () => {
+    expect(checkRadiation({ id, name: "EVA 3", doseMsv: 0.32, hours: 6.5, source: "photo-import" })).toBeNull();
+    expect(checkRadiation({ id, name: "EVA 3", doseMsv: -1, hours: 6.5, source: "photo-import" })).not.toBeNull();
+    expect(checkRadiation({ id, name: "EVA 3", doseMsv: 1, hours: 0, source: "photo-import" })).not.toBeNull();
+    expect(checkRadiation({ id, name: "", doseMsv: 1, hours: 1, source: "photo-import" })).not.toBeNull();
+  });
+});

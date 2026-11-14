@@ -22,18 +22,18 @@ export const ALLOWED_TYPES: Record<string, string> = {
 };
 export const MAX_BYTES = 10 * 1024 * 1024;
 
-export type HealthRecord = { id: string; title: string; kind: RecordKind; recordedOn?: string; fileName: string; mimeType: string; sizeBytes: number; notes?: string; createdAt: string };
+export type HealthRecord = { id: string; title: string; kind: RecordKind; recordedOn?: string; fileName: string; mimeType: string; sizeBytes: number; notes?: string; findings?: string; createdAt: string };
 
 export async function listRecords(viewer: Viewer): Promise<{ records: HealthRecord[]; problem?: string }> {
   if (viewer.kind === "demo") return { records: [] };
   const { data, error } = await (await createClient())
     .from("records")
-    .select("id, title, kind, recorded_on, file_name, mime_type, size_bytes, notes, created_at")
+    .select("id, title, kind, recorded_on, file_name, mime_type, size_bytes, notes, findings, created_at")
     .order("recorded_on", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false });
   return {
     problem: error?.message,
-    records: (data ?? []).map((r) => ({ id: r.id, title: r.title, kind: r.kind, recordedOn: r.recorded_on ?? undefined, fileName: r.file_name, mimeType: r.mime_type, sizeBytes: r.size_bytes, notes: r.notes ?? undefined, createdAt: r.created_at })),
+    records: (data ?? []).map((r) => ({ id: r.id, title: r.title, kind: r.kind, recordedOn: r.recorded_on ?? undefined, fileName: r.file_name, mimeType: r.mime_type, sizeBytes: r.size_bytes, notes: r.notes ?? undefined, findings: r.findings ?? undefined, createdAt: r.created_at })),
   };
 }
 
@@ -41,16 +41,22 @@ function safeName(name: string) {
   return name.normalize("NFKD").replace(/[^\w.-]+/g, "_").replace(/_+/g, "_").slice(-80) || "file";
 }
 
-export async function uploadRecord(viewer: Viewer, file: File, meta: { title: string; kind: RecordKind; recordedOn?: string; notes?: string }): Promise<{ problem?: string }> {
+export async function uploadRecord(viewer: Viewer, file: File, meta: { title: string; kind: RecordKind; recordedOn?: string; notes?: string; findings?: string; id?: string }): Promise<{ problem?: string }> {
   if (viewer.kind === "demo") return { problem: "Uploading records needs an account. Sign in to upload." };
   if (!ALLOWED_TYPES[file.type]) return { problem: "Upload a PDF, image (PNG, JPEG, WebP, HEIC), CSV or text file." };
   if (file.size === 0 || file.size > MAX_BYTES) return { problem: "Files must be under 10 MB." };
   const supabase = await createClient();
+  // A retried save with the same id is already done.
+  if (meta.id) {
+    const { data: existing } = await supabase.from("records").select("id").eq("id", meta.id).maybeSingle();
+    if (existing) return {};
+  }
   const path = `${viewer.id}/${crypto.randomUUID()}-${safeName(file.name)}`;
   const up = await supabase.storage.from("records").upload(path, file, { contentType: file.type, upsert: false });
   if (up.error) return { problem: up.error.message };
   const { error } = await supabase.from("records").insert({
-    user_id: viewer.id, title: meta.title, kind: meta.kind, recorded_on: meta.recordedOn ?? null, notes: meta.notes ?? null,
+    ...(meta.id ? { id: meta.id } : {}),
+    user_id: viewer.id, title: meta.title, kind: meta.kind, recorded_on: meta.recordedOn ?? null, notes: meta.notes ?? null, findings: meta.findings ?? null,
     file_path: path, file_name: file.name.slice(0, 200), mime_type: file.type, size_bytes: file.size,
   });
   if (error) {

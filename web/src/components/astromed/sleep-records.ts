@@ -9,7 +9,7 @@ export type SleepStageInterval = {
 export type SleepRecord = {
   id: string;
   kind: 'sleep' | 'nap';
-  source: 'manual' | 'device' | 'simulated';
+  source: 'manual' | 'device' | 'simulated' | 'photo-import';
   startedAt: string;
   endedAt: string;
   stages?: readonly SleepStageInterval[];
@@ -23,7 +23,7 @@ export const interval = ({ startedAt, endedAt }: Pick<SleepRecord, 'startedAt' |
 
 export const stageLabels: Record<SleepStage, string> = { awake: 'Awake', light: 'Light', deep: 'Deep', rem: 'REM' };
 export const stageColors: Record<SleepStage, string> = { awake: '#fbbf24', light: '#38bdf8', deep: '#818cf8', rem: '#e879f9' };
-export const sourceLabels: Record<SleepRecord['source'], string> = { manual: 'Crew-entered', device: 'Device recording', simulated: 'Simulated' };
+export const sourceLabels: Record<SleepRecord['source'], string> = { manual: 'Crew-entered', device: 'Device recording', simulated: 'Simulated', 'photo-import': 'Photo import' };
 
 export function formatSleepDuration(ms: number) {
   const minutes = Math.round(ms / 60_000);

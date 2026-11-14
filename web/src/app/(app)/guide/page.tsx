@@ -31,6 +31,7 @@ const PAGES: { area: string; items: [string, string, string][] }[] = [
       ["/hazards", "My exposure", "Your radiation and bone-loss projections."],
       ["/assistant", "Ask AstroMed", "Ask questions about your own data, like “how did I sleep this week?”"],
       ["/records", "My records", "Upload lab reports and import smartwatch CSV files."],
+      ["/photo-import", "Photo import", "Snap a dosimeter, sleep tracker or device screen; AstroMed reads the numbers on your device and you check them before saving."],
       ["/profile", "My profile", "Your details and usual values."],
     ],
   },

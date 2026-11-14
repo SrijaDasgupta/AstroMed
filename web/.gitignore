@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Text-recognition files, copied from node_modules on each dev start and build
+/public/ocr/
