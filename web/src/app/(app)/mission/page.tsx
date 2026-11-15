@@ -1,5 +1,6 @@
 import { Check, Rocket } from "lucide-react";
 import { missionItemAction, setEnvironment } from "@/app/actions";
+import { MissionLaunch } from "@/components/astromed";
 import { CiteLink } from "@/components/CiteLink";
 import { EnvironmentStats } from "@/components/EnvironmentStats";
 import { contactText, DELAY_CITE, reachOf, supportLine } from "@/lib/contact";
@@ -70,6 +71,8 @@ export default async function MissionPage() {
           </div>
         )
       )}
+
+      {!ctx.none && <MissionLaunch envId={ctx.env.id} missionName={active?.name} />}
 
       <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
         <h2 className="text-lg font-medium">Medical support at this distance</h2>

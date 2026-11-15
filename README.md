@@ -35,7 +35,7 @@ The idea, the choice of NASA sources and all product decisions are the team's ow
 | Guidance on treatment and improvement | Self-care steps, warning signs, NASA-cited tips, an exercise plan for the mission type, and questions to take to the flight surgeon. No medicine recommendations, by design |
 | Which measurements, why an exam, how hazards affect them, when to get help, how to prevent problems | The **Health indicators guide** answers all five for 12 indicators (blood pressure, heart rate and HRV, blood sugar, temperature, sleep, mood, food and weight, water, vision, exercise and bone, radiation dose, symptoms), each with NASA citations and the astronaut's own latest reading; guided checkups walk through each measurement |
 | A clickable human figure | **My body**: an anatomical figure; tap any part to see what spaceflight does to it and your own data; red pins mark your reported problems |
-| Different environments | Earth analog, low Earth orbit (space station), lunar surface (base or rover), Mars transit (spacecraft), Mars surface (base or rover) |
+| Different environments | Earth analog, low Earth orbit (space station), lunar surface (base or rover), Mars transit (spacecraft), Mars surface (base or rover); the Mission page plays an animated launch along the route to your mission destination |
 | Prompts as part of the routine | Checkups that come due, medicine and routine reminders with notifications, and today's habit missions |
 | Gamification | XP, ranks from Cadet to Commander, streaks and badges |
 | Dynamic charts | Interactive charts with hover, keyboard access and table views |
