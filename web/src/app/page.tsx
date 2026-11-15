@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Activity, HeartPulse, Moon } from "lucide-react";
@@ -23,7 +24,9 @@ export default async function Home() {
         <Link href="/login" className="text-sm text-slate-300 hover:text-white">Sign in</Link>
       </header>
 
-      <section className="flex flex-1 flex-col justify-center py-20">
+      <section className="flex flex-1 flex-col justify-center py-16">
+        <div className="grid items-center gap-10 lg:grid-cols-[1fr_1.1fr]">
+        <div>
         <p className="text-sm font-medium uppercase tracking-widest text-sky-400">Your health beyond Earth</p>
         <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight sm:text-5xl">
           Know when you drift from your own normal.
@@ -37,6 +40,12 @@ export default async function Home() {
             Sign in
           </Link>
           <DemoButton />
+        </div>
+        </div>
+        <figure className="relative overflow-hidden rounded-2xl border border-white/10 shadow-2xl shadow-sky-950/50">
+          <Image src="/hero-astronaut.webp" alt="An astronaut in a spacesuit above Earth, with health readouts for heart rate, breathing and the body floating around the helmet." width={1672} height={941} priority sizes="(min-width: 1024px) 560px, 100vw" className="h-auto w-full" />
+          <figcaption className="absolute bottom-2 left-2 rounded-md bg-slate-950/70 px-2 py-1 text-xs text-slate-300">AI-generated image (ChatGPT)</figcaption>
+        </figure>
         </div>
 
         <div className="mt-20 grid gap-4 sm:grid-cols-3">

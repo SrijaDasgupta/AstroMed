@@ -93,6 +93,11 @@ function Figure({ parts, notes, selected, onSelect, focusNote }: { parts: PartVi
   return (
     <svg viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} className="mx-auto h-auto w-full max-w-[420px] rounded-2xl" role="group" aria-label="Body map. Choose a body part.">
       <image href={FIGURE.src} x={0} y={0} width={FIGURE.width} height={FIGURE.height} preserveAspectRatio="xMidYMid slice" aria-hidden />
+      {/* Space Apps rule: AI-generated images carry a visible label. */}
+      <g aria-hidden>
+        <rect x={vb.x + 8} y={vb.h - 34} width={212} height={24} rx={6} fill="#020617" fillOpacity={0.7} />
+        <text x={vb.x + 18} y={vb.h - 17} fontSize={13} fill="#cbd5e1">AI-generated image (ChatGPT)</text>
+      </g>
       {anchor && (
         <g aria-hidden className="hidden lg:inline">
           <path key={`${anchor.x}-${anchor.y}`} className="am-draw" d={`M${anchor.x},${anchor.y} C${anchor.x + 110},${anchor.y} ${corner.x - 60},${corner.y} ${corner.x},${corner.y}`} fill="none" stroke="#f43f5e" strokeWidth={2} />
