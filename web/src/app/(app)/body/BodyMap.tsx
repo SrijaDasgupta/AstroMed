@@ -10,7 +10,7 @@ import { Level, ProblemCard, type ProblemView } from "@/components/problems/Prob
 import { currentSeverity } from "@/lib/body-notes";
 import { ReportForm, type AreaOption } from "@/components/problems/ReportForm";
 import { pageHref, pageLabel, SOURCES, TIPS } from "@/lib/tips";
-import { AnatomyDefs, AnatomyFigure, Floor } from "./Anatomy";
+import { FIGURE, figurePin, PART_POINTS } from "@/lib/body-figure";
 
 export type PartStatus = "good" | "warning" | "critical" | "none";
 export type PartView = {
@@ -84,21 +84,29 @@ const TINTS = ["bg-amber-300/10 border-amber-300/20", "bg-sky-400/10 border-sky-
 const LINE = ["#fbbf24", "#38bdf8", "#a78bfa", "#34d399"];
 
 function Figure({ parts, notes, selected, onSelect, focusNote }: { parts: PartView[]; notes: NoteView[]; selected: string; onSelect: (id: string, note?: string) => void; focusNote?: string }) {
+  const { viewBox: vb } = FIGURE;
+  const pinOf = (n: NoteView) => (n.pin ? figurePin(n.area, n.side) : undefined);
   const sel = parts.find((p) => p.id === selected);
-  const focus = notes.find((n) => n.id === focusNote && n.pin);
-  const anchor = focus?.pin ?? (sel ? { x: sel.x, y: sel.y } : undefined);
+  const focus = notes.find((n) => n.id === focusNote && pinOf(n));
+  const anchor = focus ? pinOf(focus) : sel ? PART_POINTS[sel.id] : undefined;
+  const corner = { x: vb.x + vb.w - 8, y: 30 };
   return (
-    <svg viewBox="-10 0 320 650" className="mx-auto h-auto w-full max-w-[360px]" role="group" aria-label="Body map. Choose a body part.">
-      <AnatomyDefs />
-      <Floor />
-      <AnatomyFigure />
+    <svg viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} className="mx-auto h-auto w-full max-w-[420px] rounded-2xl" role="group" aria-label="Body map. Choose a body part.">
+      <image href={FIGURE.src} x={0} y={0} width={FIGURE.width} height={FIGURE.height} preserveAspectRatio="xMidYMid slice" aria-hidden />
+      {/* Space Apps rule: AI-generated images carry a visible label. */}
+      <g aria-hidden>
+        <rect x={vb.x + 8} y={vb.h - 34} width={150} height={24} rx={6} fill="#020617" fillOpacity={0.7} />
+        <text x={vb.x + 18} y={vb.h - 17} fontSize={13} fill="#cbd5e1">AI-generated image</text>
+      </g>
       {anchor && (
         <g aria-hidden className="hidden lg:inline">
-          <path key={`${anchor.x}-${anchor.y}`} className="am-draw" d={`M${anchor.x},${anchor.y} C${anchor.x + 70},${anchor.y} 250,24 310,24`} fill="none" stroke="#f43f5e" strokeWidth={1.4} />
-          <circle cx={310} cy={24} r={3.5} fill="#f43f5e" />
+          <path key={`${anchor.x}-${anchor.y}`} className="am-draw" d={`M${anchor.x},${anchor.y} C${anchor.x + 110},${anchor.y} ${corner.x - 60},${corner.y} ${corner.x},${corner.y}`} fill="none" stroke="#f43f5e" strokeWidth={2} />
+          <circle cx={corner.x} cy={corner.y} r={5} fill="#f43f5e" />
         </g>
       )}
       {parts.map((p) => {
+        const pt = PART_POINTS[p.id];
+        if (!pt) return null;
         const active = p.id === selected && !focus;
         return (
           <g
@@ -112,22 +120,25 @@ function Figure({ parts, notes, selected, onSelect, focusNote }: { parts: PartVi
             className="cursor-pointer outline-none [&:focus-visible>circle:first-of-type]:stroke-sky-300"
           >
             <title>{p.name}</title>
-            <circle cx={p.x} cy={p.y} r={14} fill="#ffffff" fillOpacity={active ? 0.25 : 0.12} stroke={active ? "#e0f2fe" : "transparent"} strokeWidth={1.5} />
-            {active && <circle cx={p.x} cy={p.y} r={10} fill="none" stroke="#e0f2fe" strokeWidth={1.5} className="am-pulse" aria-hidden />}
-            <circle cx={p.x} cy={p.y} r={active ? 6.5 : 5.5} fill={STATUS[p.status].color === "#64748b" ? "#f8fafc" : STATUS[p.status].color} stroke="#ffffff" strokeWidth={2} />
+            <circle cx={pt.x} cy={pt.y} r={20} fill="#ffffff" fillOpacity={active ? 0.28 : 0.12} stroke={active ? "#e0f2fe" : "transparent"} strokeWidth={2} />
+            {active && <circle cx={pt.x} cy={pt.y} r={14} fill="none" stroke="#e0f2fe" strokeWidth={2} className="am-pulse" aria-hidden />}
+            <circle cx={pt.x} cy={pt.y} r={active ? 9 : 7.5} fill={STATUS[p.status].color === "#64748b" ? "#f8fafc" : STATUS[p.status].color} stroke="#ffffff" strokeWidth={2.5} />
           </g>
         );
       })}
-      {notes.filter((n) => n.pin && !n.resolvedOn).map((n) => (
-        <g key={n.id} role="button" tabIndex={0} aria-label={`Your note: ${n.title}`}
-          onClick={() => onSelect(n.part, n.id)}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(n.part, n.id); } }}
-          className="cursor-pointer outline-none">
-          <title>{n.title}</title>
-          <circle cx={n.pin!.x} cy={n.pin!.y} r={10} fill="#f43f5e" fillOpacity={0.25} className="motion-safe:animate-pulse" />
-          <circle cx={n.pin!.x} cy={n.pin!.y} r={n.id === focusNote ? 6 : 4.5} fill="#f43f5e" stroke="#fff" strokeWidth={1.5} />
-        </g>
-      ))}
+      {notes.filter((n) => pinOf(n) && !n.resolvedOn).map((n) => {
+        const pin = pinOf(n)!;
+        return (
+          <g key={n.id} role="button" tabIndex={0} aria-label={`Your note: ${n.title}`}
+            onClick={() => onSelect(n.part, n.id)}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(n.part, n.id); } }}
+            className="cursor-pointer outline-none">
+            <title>{n.title}</title>
+            <circle cx={pin.x} cy={pin.y} r={14} fill="#f43f5e" fillOpacity={0.3} className="motion-safe:animate-pulse" />
+            <circle cx={pin.x} cy={pin.y} r={n.id === focusNote ? 8.5 : 6.5} fill="#f43f5e" stroke="#fff" strokeWidth={2} />
+          </g>
+        );
+      })}
     </svg>
   );
 }
