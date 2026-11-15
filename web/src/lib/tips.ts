@@ -165,6 +165,12 @@ export const SOURCES = {
     url: "https://doi.org/10.1097/mnh.0000000000000863",
     web: true,
   },
+  compendium: {
+    short: "2024 Adult Compendium of Physical Activities",
+    title: "2024 Adult Compendium of Physical Activities: a third update of the energy costs of human activities. Herrmann et al., Journal of Sport and Health Science, 2024",
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC10818145/",
+    web: true,
+  },
 } as const;
 
 export type SourceId = keyof typeof SOURCES;

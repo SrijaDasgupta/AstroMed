@@ -43,7 +43,7 @@ export default async function ExercisePage({ searchParams }: { searchParams: Pro
       <div>
         <p className="text-xs uppercase tracking-widest text-sky-400">Personalized</p>
         <h1 className="mt-1 text-2xl font-semibold">Exercise plan</h1>
-        <p className="mt-1 text-slate-400">Built on how NASA structures in-flight exercise, adjusted to your mission and your recent data.</p>
+        <p className="mt-1 text-slate-400">Built on how NASA structures in-flight exercise, adjusted to your mission and your recent data. <Link href="/nutrition" className="text-sky-300 hover:text-sky-200">Log a session and the calories burned</Link>.</p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 text-sm" role="group" aria-label="Plan">

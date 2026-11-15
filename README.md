@@ -38,6 +38,7 @@ The idea, the choice of NASA sources and all product decisions are the team's ow
 | Which measurements, why an exam, how hazards affect them, when to get help, how to prevent problems | The **Health indicators guide** answers all five for 12 indicators (blood pressure, heart rate and HRV, blood sugar, temperature, sleep, mood, food and weight, water, vision, exercise and bone, radiation dose, symptoms), each with NASA citations and the astronaut's own latest reading; guided checkups walk through each measurement |
 | A clickable human figure | **My body**: an anatomical figure; tap any part to see what spaceflight does to it and your own data; red pins mark your reported problems |
 | Different environments | Earth analog, low Earth orbit (space station), lunar surface (base or rover), Mars transit (spacecraft), Mars surface (base or rover); the Mission page plays an animated launch along the route to your mission destination |
+| Food and exercise | Log meals and exercise sessions; exercise calories are estimated from the 2024 Compendium of Physical Activities and your weight. Add the foods you have on board and build a diet plan; AstroMed checks it against NASA's energy need and a protein target and suggests foods from what you have, including when a food will run out before the mission ends |
 | Medicine tracking | Add a medicine once the dose is confirmed with your flight surgeon or doctor; set how often (every day, chosen days such as a weekly dose, every N days, or as needed), get reminders only on the days it's due, tick doses taken, note side effects, and see whether it's helping: AstroMed compares the measure it's for (sleep, blood pressure, headaches and more) in the 2 weeks before and after you started. Severe side effects and emergencies always point to the flight surgeon |
 | Prompts as part of the routine | Checkups that come due, medicine and routine reminders with notifications, and today's habit missions |
 | Gamification | XP, ranks from Cadet to Commander, streaks and badges |
@@ -73,7 +74,7 @@ Absolute alert limits (for example very high blood pressure) are general clinica
 - AstroMed supports self-monitoring. It does not diagnose and never recommends medicines or doses.
 - Emergency phrases (chest pain, trouble breathing, stroke signs, fire or toxic leaks, thoughts of self-harm) always show an immediate "act now" message.
 - Each person's data is visible only to them (database row-level security on every table; private file storage).
-- 107 automated tests cover the safety-critical rules: emergency detection, urgency levels, crew-versus-ground contact, NASA's energy formula, and the self-harm check, and that every indicator in the guide answers all five questions with NASA sources.
+- 112 automated tests cover the safety-critical rules: emergency detection, urgency levels, crew-versus-ground contact, NASA's energy formula, and the self-harm check, and that every indicator in the guide answers all five questions with NASA sources.
 
 ## Run it yourself
 

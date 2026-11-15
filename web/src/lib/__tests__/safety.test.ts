@@ -559,3 +559,37 @@ describe("medicine schedules", async () => {
     expect(adherence({ schedule: "as-needed", times: [] }, [], "2026-11-14")).toBeUndefined();
   });
 });
+
+describe("food and exercise", async () => {
+  const { exerciseKcal, planTotals, dietSuggestions, proteinTarget } = await import("@/lib/diet");
+  const foods = [
+    { id: "a", name: "Oatmeal", kcal: 300, proteinG: 10, servings: 30 },
+    { id: "b", name: "Beef tips", kcal: 250, proteinG: 25, servings: 3 },
+    { id: "c", name: "Tortilla with peanut butter", kcal: 400, proteinG: 12 },
+  ];
+  it("estimates exercise calories from MET × weight × time", () => {
+    expect(exerciseKcal("cycle", "moderate", 60, 80)).toBe(544); // 6.8 MET × 80 kg × 1 h
+    expect(exerciseKcal("resistance", "vigorous", 30, 70)).toBe(210);
+    expect(proteinTarget(80)).toBe(64);
+  });
+  it("totals the plan by meal", () => {
+    const t = planTotals([{ id: "1", foodId: "a", meal: "breakfast", servings: 2 }, { id: "2", foodId: "b", meal: "dinner", servings: 1 }], foods);
+    expect(t).toMatchObject({ kcal: 850, proteinG: 45 });
+    expect(t.byMeal.breakfast.kcal).toBe(600);
+  });
+  it("suggests foods the astronaut has to close an energy or protein gap", () => {
+    const s = dietSuggestions({ foods, plan: [{ id: "1", foodId: "a", meal: "breakfast", servings: 2 }], needKcal: 2800, proteinG: 64 });
+    const text = s.map((x) => x.text).join(" ");
+    expect(text).toMatch(/short of your 2,800 kcal need/);
+    expect(text).toMatch(/2 × Tortilla with peanut butter, 2 × Oatmeal/);
+    expect(text).toMatch(/Beef tips has the most protein/);
+    expect(text).toMatch(/No lunch or dinner/);
+  });
+  it("warns when a planned food will run out", () => {
+    const s = dietSuggestions({ foods, plan: [{ id: "1", foodId: "b", meal: "dinner", servings: 1 }], needKcal: 250, proteinG: 20, daysLeft: 30 });
+    expect(s.some((x) => /Beef tips: 3 servings left lasts about 3 days/.test(x.text))).toBe(true);
+  });
+  it("asks for foods first when none are added", () => {
+    expect(dietSuggestions({ foods: [], plan: [], needKcal: 2800, proteinG: 64 })[0].text).toMatch(/Add the foods you have/);
+  });
+});

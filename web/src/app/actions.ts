@@ -71,6 +71,7 @@ export async function signOut() {
   store.delete((await import("@/lib/sleep-store")).DEMO_SLEEP_COOKIE);
   store.delete((await import("@/lib/radiation-store")).DEMO_RADIATION_COOKIE);
   store.delete((await import("@/lib/records-store")).DEMO_IMPORTS_COOKIE);
+  store.delete((await import("@/lib/diet-store")).DEMO_FOOD_COOKIE);
   redirect("/");
 }
 
@@ -306,6 +307,103 @@ export async function sideEffectAction(_prev: SideEffectState, formData: FormDat
   if (problem) return { error: problem };
   revalidatePath("/", "layout");
   return { ok: true, severe: severity === "severe" };
+}
+
+// ---------------------------------------------------------------------------
+// Food and exercise
+// ---------------------------------------------------------------------------
+
+const num = (formData: FormData, key: string) => { const raw = String(formData.get(key) ?? "").trim(); return raw === "" ? undefined : Number(raw); };
+
+/** Body weight for exercise calories: the profile's, else the sample recording's, else 70 kg. */
+async function bodyWeight(viewer: NonNullable<Awaited<ReturnType<typeof getViewer>>>) {
+  const profile = await getProfile(viewer);
+  return profile.details.weightKg ?? getCrewMember(profile.crewId)?.baseline.weightKg ?? 70;
+}
+
+export async function dietAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: "Your session has ended. Sign in again." };
+  const store = await import("@/lib/diet-store");
+  const { MEALS, ACTIVITIES, exerciseKcal } = await import("@/lib/diet");
+  const { localDate } = await import("@/lib/dates");
+  const op = String(formData.get("op") ?? "");
+  const meal = MEALS.find((m) => m === formData.get("meal"));
+  const servings = num(formData, "servings") ?? 1;
+  const today = localDate();
+  let problem: string | undefined;
+  let message = "Saved.";
+
+  if (op === "addFood") {
+    const name = String(formData.get("name") ?? "").trim().slice(0, 80);
+    const kcal = num(formData, "kcal"), proteinG = num(formData, "proteinG") ?? 0, onHand = num(formData, "onHand");
+    if (!name) return { error: "Enter the food's name." };
+    if (kcal === undefined || !(kcal >= 0 && kcal <= 3000)) return { error: "Enter calories per serving (0–3,000 kcal)." };
+    if (!(proteinG >= 0 && proteinG <= 300)) return { error: "Protein must be 0–300 g per serving." };
+    if (onHand !== undefined && !(onHand >= 0 && onHand <= 10000)) return { error: "Servings on hand must be 0–10,000." };
+    ({ problem } = await store.addFood(viewer, { name, kcal, proteinG, servings: onHand }));
+    message = `${name} added to your foods.`;
+  } else if (op === "addPlan") {
+    const foodId = String(formData.get("foodId") ?? "");
+    if (!foodId || !meal) return { error: "Choose a food and a meal." };
+    if (!(servings > 0 && servings <= 20)) return { error: "Servings must be between 0.25 and 20." };
+    ({ problem } = await store.addPlanItem(viewer, { foodId, meal, servings }));
+    message = "Added to your plan.";
+  } else if (op === "logFood" || op === "logMeal") {
+    const { foods, plan } = await store.loadDiet(viewer);
+    if (!meal) return { error: "Choose a meal." };
+    let entries: Parameters<typeof store.logFood>[1];
+    if (op === "logMeal") {
+      entries = plan.filter((p) => p.meal === meal).flatMap((p) => {
+        const f = foods.find((x) => x.id === p.foodId);
+        return f ? [{ date: today, meal, foodId: f.id, name: f.name, servings: p.servings, kcal: Math.round(f.kcal * p.servings), proteinG: Math.round(f.proteinG * p.servings) }] : [];
+      });
+      if (!entries.length) return { error: "That meal has nothing in your plan yet." };
+    } else {
+      const foodId = String(formData.get("foodId") ?? "");
+      if (!(servings > 0 && servings <= 20)) return { error: "Servings must be between 0.25 and 20." };
+      if (foodId && foodId !== "custom") {
+        const f = foods.find((x) => x.id === foodId);
+        if (!f) return { error: "Choose one of your foods." };
+        entries = [{ date: today, meal, foodId: f.id, name: f.name, servings, kcal: Math.round(f.kcal * servings), proteinG: Math.round(f.proteinG * servings) }];
+      } else {
+        const name = String(formData.get("name") ?? "").trim().slice(0, 80);
+        const kcal = num(formData, "kcal"), proteinG = num(formData, "proteinG") ?? 0;
+        if (!name || kcal === undefined || !(kcal >= 0 && kcal <= 3000)) return { error: "For something not in your foods, enter its name and calories per serving." };
+        entries = [{ date: today, meal, name, servings, kcal: Math.round(kcal * servings), proteinG: Math.round(proteinG * servings) }];
+      }
+    }
+    ({ problem } = await store.logFood(viewer, entries));
+    message = `Logged ${entries.reduce((s, e) => s + e.kcal, 0).toLocaleString("en-US")} kcal.`;
+  } else if (op === "logExercise") {
+    const activity = ACTIVITIES.find((a) => a.id === formData.get("activity"));
+    const intensity = (["light", "moderate", "vigorous"] as const).find((x) => x === formData.get("intensity"));
+    const minutes = num(formData, "minutes");
+    if (!activity || !intensity) return { error: "Choose the exercise and how hard it was." };
+    if (minutes === undefined || !Number.isInteger(minutes) || minutes < 1 || minutes > 600) return { error: "Enter minutes, from 1 to 600." };
+    const kcal = exerciseKcal(activity.id, intensity, minutes, await bodyWeight(viewer));
+    ({ problem } = await store.logExercise(viewer, { date: today, activity: activity.id, intensity, minutes, kcal }));
+    message = `Logged ${minutes} min of ${activity.label.toLowerCase()}: about ${kcal} kcal.`;
+  } else {
+    return { error: "Unknown action." };
+  }
+  if (problem) return { error: problem };
+  revalidatePath("/", "layout");
+  return { ok: true, message };
+}
+
+export async function dietRemoveAction(formData: FormData) {
+  const viewer = await getViewer();
+  if (!viewer) redirect("/login");
+  const store = await import("@/lib/diet-store");
+  const id = String(formData.get("id") ?? "");
+  const kind = String(formData.get("kind") ?? "");
+  if (!id) return;
+  if (kind === "food") await store.removeFood(viewer, id);
+  else if (kind === "plan") await store.removePlanItem(viewer, id);
+  else if (kind === "log") await store.removeFoodLog(viewer, id);
+  else if (kind === "exercise") await store.removeExercise(viewer, id);
+  revalidatePath("/", "layout");
 }
 
 export async function addReminderAction(_prev: FormState, formData: FormData): Promise<FormState> {
