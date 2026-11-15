@@ -51,8 +51,8 @@ export function MedicationForm() {
   return (
     <form ref={ref} action={action} className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-2">
-        <label className="block"><span className="text-sm text-slate-300">Medicine</span><input name="name" required maxLength={80} placeholder="e.g. Vitamin D" className={`mt-1 ${field}`} /></label>
-        <label className="block"><span className="text-sm text-slate-300">Dose, as prescribed</span><input name="dose" required maxLength={60} placeholder="e.g. 1 tablet" className={`mt-1 ${field}`} /></label>
+        <label className="block"><span className="text-sm text-slate-300">Medicine</span><input name="name" required maxLength={80} placeholder="Name on your prescription" className={`mt-1 ${field}`} /></label>
+        <label className="block"><span className="text-sm text-slate-300">Dose, as prescribed</span><input name="dose" required maxLength={60} placeholder="As prescribed" className={`mt-1 ${field}`} /></label>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block"><span className="text-sm text-slate-300">What it&apos;s for</span>
