@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Activity, Brain, ClipboardCheck, Eye, Radiation, Rocket, ShieldPlus, Timer, Wind } from "lucide-react";
 import { EscalationBadge } from "@/components/EscalationBadge";
 import { ago } from "@/lib/checkup-schedule";
+import { contributorsLine, nextStep } from "@/lib/insights";
 import { MetricChart } from "@/components/MetricChart";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SleepOrbitCard, VitalSigns, type VitalReading } from "@/components/astromed";
@@ -121,6 +122,7 @@ export default async function MyVitalsPage() {
             {flagged.map((m) => (
               <li key={m.def.key}>
                 <span className="text-slate-100">{m.def.label}</span>: last 3 days averaged {formatValue(m.recentMean, m.def)} vs. usual {formatValue(m.baseline, m.def)}, which is {explain(m.deviation, m.def.worseWhen)}.
+                {(() => { const c = contributorsLine(m.def.key, logs); return <span className="block text-slate-400">{c ? `${c} ` : ""}{nextStep(m.def.key, m.def.worseWhen === "higher" ? "high" : "low")}</span>; })()}
               </li>
             ))}
           </ul>

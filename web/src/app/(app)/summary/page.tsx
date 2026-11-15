@@ -51,6 +51,7 @@ export default async function SummaryPage({ searchParams }: { searchParams: Prom
   const [health, ctx, { entries }, actions, routine, { logs }, { notes: bodyNotes }, schedule] = await Promise.all([
     getMyHealth(viewer), getMissionContext(), listEntries(viewer, 400), loadTipActions(viewer), routineStats(viewer, days), loadLogs(viewer), listBodyNotes(viewer), loadSchedule(viewer),
   ]);
+  const { foods } = await (await import("@/lib/diet-store")).loadDiet(viewer);
   const medInsights = schedule.meds.filter((m) => m.active).map((m) => ({
     name: m.name, status: assessEffect(m.purpose, m.startedOn, logs).status, noun: getPurpose(m.purpose)?.noun,
     sideEffects: schedule.effects.filter((e) => e.medicationId === m.id),
@@ -60,7 +61,7 @@ export default async function SummaryPage({ searchParams }: { searchParams: Prom
   const s0today = localDate();
   const s = buildSummary({
     assessment: health.assessment, logs, journal: entries, ctx, routine, checkupsDue: dueCount(logs),
-    progress: { xp: p.xp, rank: p.rank, streak: p.streak }, days, includeSample: viewer.kind === "demo", bodyNotes, medInsights,
+    progress: { xp: p.xp, rank: p.rank, streak: p.streak }, days, includeSample: viewer.kind === "demo", bodyNotes, medInsights, foods,
     energyTarget: energyTarget(health.profile.details, Number(s0today.slice(0, 4))).kcal,
   });
   const fmt = (v: number | undefined, dp = 0, unit = "") => (v === undefined ? "—" : `${v.toFixed(dp)}${unit}`);

@@ -3,6 +3,8 @@
  * ranked suggestions, and questions for the flight surgeon. Suggestions explain the data behind
  * them and cite the NASA page they rest on. No diagnosis and no medicine recommendations.
  */
+import { fillGap } from "@/lib/diet";
+import { contributorsLine, nextStep } from "@/lib/insights";
 import { adviceFor, noteTitle, type BodyNote } from "@/lib/body-notes";
 import type { CheckupLog } from "@/lib/checkup-store";
 import type { Assessment, MetricKey, Status } from "@/lib/crew";
@@ -36,6 +38,8 @@ type Input = {
   /** Demo mode: also use sample-data alerts so suggestions can be explored. */
   includeSample?: boolean;
   /** Per medicine: whether it seems to be helping, and side effects noted. */
+  /** Foods the person has on hand, to suggest specific foods when they're eating too little. */
+  foods?: import("@/lib/diet").Food[];
   medInsights?: { name: string; status: string; noun?: string; sideEffects: { date: string; severity: string; note: string }[] }[];
 };
 
@@ -98,7 +102,11 @@ export function buildSummary(i: Input) {
     suggestions.push({
       id: `metric-${m.def.key}`, area: m.def.group === "Mood" ? "mental" : "physical", priority: m.status === "critical" ? 1 : 2,
       title: `${m.def.label} is outside your normal range`,
-      reason: `Your last 3 days averaged ${m.recentMean.toFixed(m.def.decimals)} ${m.def.unit}; your normal is ${m.range[0].toFixed(m.def.decimals)}–${m.range[1].toFixed(m.def.decimals)}.`,
+      reason: [
+        `Your last 3 days averaged ${m.recentMean.toFixed(m.def.decimals)} ${m.def.unit}; your normal is ${m.range[0].toFixed(m.def.decimals)}–${m.range[1].toFixed(m.def.decimals)}.`,
+        contributorsLine(m.def.key, i.logs, today),
+        nextStep(m.def.key, m.def.worseWhen === "higher" ? "high" : "low"),
+      ].filter(Boolean).join(" "),
       action: { text: "See the trend", href: "/vitals" },
     });
     if (m.status === "critical") questions.push({ text: `My ${m.def.label.toLowerCase()} has been well outside my normal range for the last few days. What should I do?`, reason: `${m.recentMean.toFixed(m.def.decimals)} ${m.def.unit} vs. normal ${m.range[0].toFixed(m.def.decimals)}–${m.range[1].toFixed(m.def.decimals)}` });
@@ -117,7 +125,10 @@ export function buildSummary(i: Input) {
     suggestions.push({ id: "water", area: "physical", priority: 3, title: "Drink more water", reason: `You averaged ${waterAvg.toFixed(1)} L a day; NASA's minimum is 2.5 L per crewmember per day.`, action: { text: "Add a water reminder", href: "/reminders" }, cite: { source: "std2", page: 68 } });
   }
   if (kcal.length >= 3 && kcalPct !== undefined && kcalPct < 90) {
-    suggestions.push({ id: "food", area: "physical", priority: kcalPct < 75 ? 1 : 2, title: "Eat enough to meet your energy needs", reason: `You averaged ${Math.round(kcalAvg!).toLocaleString("en-US")} kcal a day, ${Math.round(kcalPct)}% of your need, and fell short on ${lowFoodDays} of ${kcal.length} logged days. NASA plans for each crewmember to get 100% of their calculated needs.`, action: { text: "Log today's food", href: "/log" }, cite: { source: "std1", page: 37 } });
+    const gap = Math.max(0, (i.energyTarget ?? 3035) - kcalAvg!);
+    const adds = i.foods?.length ? fillGap(i.foods, gap) : [];
+    const fromFoods = adds.length ? ` From your foods, ${adds.map((a) => `${a.servings} × ${a.food.name}`).join(" and ")} a day would add about ${Math.round(adds.reduce((n, a) => n + a.food.kcal * a.servings, 0)).toLocaleString("en-US")} kcal.` : ` That's about ${Math.round(gap).toLocaleString("en-US")} kcal a day to add: an extra snack between meals is the easiest way.`;
+    suggestions.push({ id: "food", area: "physical", priority: kcalPct < 75 ? 1 : 2, title: "Eat enough to meet your energy needs", reason: `You averaged ${Math.round(kcalAvg!).toLocaleString("en-US")} kcal a day, ${Math.round(kcalPct)}% of your need, and fell short on ${lowFoodDays} of ${kcal.length} logged days.${fromFoods} NASA plans for each crewmember to get 100% of their calculated needs.`, action: { text: i.foods?.length ? "Plan meals from your foods" : "Add your foods and plan meals", href: "/nutrition" }, cite: { source: "std1", page: 37 } });
     if (kcalPct < 75) questions.push({ text: "I've been eating well under my energy needs. Should we change my menu or add snacks or supplements?", reason: `${Math.round(kcalPct)}% of need over ${kcal.length} days` });
   }
   if (weightChangePct !== undefined && weightChangePct <= -2) {

@@ -4,6 +4,7 @@
  * builds an answer from My vitals, checkups, exposure and progress. An AI model can later be
  * placed in front of this, using the same data.
  */
+import { contributorsLine, nextStep } from "@/lib/insights";
 import { analyzeText, type Analysis } from "@/lib/space-conditions";
 import { contactText } from "@/lib/contact";
 import { CHECKUPS, getCheckup } from "@/lib/checkups";
@@ -270,6 +271,10 @@ export function answer(rawQuestion: string, ctx: AssistantContext): Answer {
       const m = metric(k);
       if (found.keys.length > 1) blocks.push({ type: "text", text: m.def.label });
       blocks.push(...metricBlock(m, period));
+      if (m.status !== "good") {
+        const why = contributorsLine(k, ctx.logs);
+        blocks.push({ type: "text", text: `${why ? `${why} ` : ""}${nextStep(k, m.def.worseWhen === "higher" ? "high" : "low")}` });
+      }
       blocks.push(chartOf(m));
     }
     blocks.push(...tipsFor(found.keys, ctx));

@@ -593,3 +593,28 @@ describe("food and exercise", async () => {
     expect(dietSuggestions({ foods: [], plan: [], needKcal: 2800, proteinG: 64 })[0].text).toMatch(/Add the foods you have/);
   });
 });
+
+describe("insights: what else changed", async () => {
+  const { contributors, nextStep } = await import("@/lib/insights");
+  const today = "2026-11-15";
+  const day = (n: number, answers: Record<string, number>) => ({ createdAt: `2026-11-${String(15 - n).padStart(2, "0")}T08:00:00`, answers });
+  const logs = [
+    ...[10, 9, 8, 7, 6, 5, 4].map((n) => day(n, { sleepHours: 7, stress: 2, resistiveMin: 40, aerobicMin: 30, waterL: 2.8 })),
+    ...[2, 1, 0].map((n) => day(n, { sleepHours: 5.2, stress: 4, resistiveMin: 0, aerobicMin: 10, waterL: 1.9 })),
+    { createdAt: "2026-11-14T10:00:00", answers: { co2Mmhg: 3.8 } },
+  ];
+  it("points to sleep, stress, exercise and cabin CO2 for a blood pressure rise", () => {
+    const c = contributors("systolic", logs, today).join(" | ");
+    expect(c).toMatch(/sleep averaged 5.2 h over the last 3 nights \(7 h before\)/);
+    expect(c).toMatch(/stress was 4\/5 or higher on 3 of the last 3 days/);
+    expect(c).toMatch(/exercise was 30 min over the last 3 days, against about 210 min usually/);
+    expect(c).toMatch(/cabin CO₂ reached 3.8 mmHg/);
+  });
+  it("points to low water for a fast heart rate, and says nothing when nothing changed", () => {
+    expect(contributors("restingHr", logs, today).join(" ")).toMatch(/water averaged 1.9 L/);
+    expect(contributors("systolic", logs.slice(0, 7), today)).toEqual([]);
+  });
+  it("gives a practical next step", () => {
+    expect(nextStep("systolic", "high")).toMatch(/Re-measure tomorrow morning/);
+  });
+});
