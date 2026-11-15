@@ -11,7 +11,7 @@ import { DEMO_LOGS_COOKIE_NAME, fitDemoLogs } from "@/lib/checkup-store";
 import { CREW, METRICS, type MetricKey } from "@/lib/crew";
 import { DAILY_LOG_ID, evaluateDailyLog } from "@/lib/daily-log";
 import type { SleepRecord } from "@/components/astromed/sleep-records";
-import { addDays, localDate, middayOf } from "@/lib/dates";
+import { addDays, localDate, middayOf, weekdayOf } from "@/lib/dates";
 import { ENV_COOKIE } from "@/lib/environments";
 import { DEMO_JOURNAL_COOKIE, type JournalEntry } from "@/lib/journal-store";
 import { DEMO_MISSIONS_COOKIE, type Mission } from "@/lib/missions-store";
@@ -134,7 +134,8 @@ export async function seedDemo() {
   // Medicines and reminders, with this morning's dose ticked off.
   const meds = {
     m: [
-      { id: "demo-med-1", name: "Vitamin D", dose: "1 capsule", instructions: "With breakfast", times: ["08:00"], active: true, startedOn: addDays(today, -4), confirmed: true },
+      // A weekly dose (Sundays), as prescribed, to show non-daily schedules.
+      { id: "demo-med-1", name: "Vitamin D", dose: "1 capsule (weekly dose)", instructions: "With breakfast", times: ["08:00"], active: true, startedOn: addDays(today, -35), confirmed: true, schedule: "weekdays", days: [0] },
       { id: "demo-med-2", name: "Sleep medicine", dose: "As prescribed by flight surgeon", instructions: "30 minutes before sleep", times: ["21:30"], active: true, purpose: "sleep", startedOn: addDays(today, -4), confirmed: true },
     ],
     r: [
@@ -143,11 +144,10 @@ export async function seedDemo() {
     ],
     d: today,
     ml: [
-      ...[4, 3, 2, 1].flatMap((n) => [
-        { medicationId: "demo-med-1", time: "08:00", status: n === 3 ? "skipped" : "taken", date: addDays(today, -n) },
-        { medicationId: "demo-med-2", time: "21:30", status: "taken", date: addDays(today, -n) },
-      ]),
-      { medicationId: "demo-med-1", time: "08:00", status: "taken", date: today },
+      ...[4, 3, 2, 1].map((n) => ({ medicationId: "demo-med-2", time: "21:30", status: "taken", date: addDays(today, -n) })),
+      // Vitamin D on each Sunday of the last 4 weeks, with one week missed.
+      ...Array.from({ length: 28 }, (_, n) => addDays(today, -n)).filter((d) => weekdayOf(d) === 0)
+        .map((d, i) => ({ medicationId: "demo-med-1", time: "08:00", status: i === 2 ? "skipped" : "taken", date: d })),
     ],
     fx: [{ id: "demo-fx-1", medicationId: "demo-med-2", date: addDays(today, -2), severity: "mild", note: "A bit groggy the first morning" }],
     rl: [{ reminderId: "demo-rem-water", time: "10:00" }],

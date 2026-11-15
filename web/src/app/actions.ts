@@ -271,10 +271,21 @@ export async function addMedicationAction(_prev: FormState, formData: FormData):
   if (!name) return { error: "Enter the medicine's name." };
   if (!dose) return { error: "Enter the dose your flight surgeon or doctor prescribed." };
   if (formData.get("confirmed") !== "on") return { error: "Confirm the dose with your flight surgeon or doctor first, then tick the box." };
-  if (times.length === 0) return { error: "Add at least one time." };
-  if (times.length > 6 || !times.every((t) => TIME_RE.test(t))) return { error: "Times must look like 08:00 (up to 6)." };
+  if (formData.get("schedule") !== "as-needed") {
+    if (times.length === 0) return { error: "Add at least one time." };
+    if (times.length > 6 || !times.every((t) => TIME_RE.test(t))) return { error: "Times must look like 08:00 (up to 6)." };
+  }
   if (startedOn && (!/^\d{4}-\d{2}-\d{2}$/.test(startedOn) || startedOn > localDate() || startedOn < addDays(localDate(), -365))) return { error: "Choose a start date in the past year." };
-  const { problem } = await addMedication(viewer, { name, dose, instructions, times, purpose, startedOn: startedOn || localDate(), confirmed: true });
+  const scheduleRaw = String(formData.get("schedule") ?? "daily");
+  const schedule = (["daily", "weekdays", "interval", "as-needed"] as const).find((k) => k === scheduleRaw) ?? "daily";
+  const days = [...new Set(formData.getAll("medDay").map(Number).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))];
+  const everyDays = Number(formData.get("everyDays"));
+  if (schedule === "weekdays" && days.length === 0) return { error: "Choose at least one day of the week." };
+  if (schedule === "interval" && !(Number.isInteger(everyDays) && everyDays >= 2 && everyDays <= 90)) return { error: "Enter how many days apart, from 2 to 90." };
+  const { problem } = await addMedication(viewer, {
+    name, dose, instructions, times: schedule === "as-needed" ? [] : times, purpose, startedOn: startedOn || localDate(), confirmed: true,
+    schedule, days: schedule === "weekdays" ? days : undefined, everyDays: schedule === "interval" ? everyDays : undefined,
+  });
   if (problem) return { error: problem };
   revalidatePath("/", "layout");
   return { ok: true };

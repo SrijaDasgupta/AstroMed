@@ -528,7 +528,34 @@ describe("medicine tracking: is it working?", async () => {
   });
   it("counts doses taken without penalising doses not yet due today", () => {
     const t = (d: string, status: "taken" | "skipped") => ({ date: d, status });
-    const a = adherence(1, "2026-11-13", [t("2026-11-13", "taken"), t("2026-11-14", "skipped")], today)!;
+    const a = adherence({ times: ["08:00"], startedOn: "2026-11-13" }, [t("2026-11-13", "taken"), t("2026-11-14", "skipped")], today)!;
     expect(a).toMatchObject({ expected: 2, taken: 1, pct: 50 });
+  });
+});
+
+describe("medicine schedules", async () => {
+  const { isDueOn, describeSchedule, dosesBetween, nextDueDate } = await import("@/lib/med-schedule");
+  const { adherence } = await import("@/lib/med-effect");
+  const weekly = { schedule: "weekdays" as const, days: [0], startedOn: "2026-10-01", times: ["08:00"] };
+  const every3 = { schedule: "interval" as const, everyDays: 3, startedOn: "2026-11-01", times: ["09:00"] };
+  it("is due only on the scheduled days", () => {
+    expect(isDueOn(weekly, "2026-11-15")).toBe(true); // a Sunday
+    expect(isDueOn(weekly, "2026-11-16")).toBe(false);
+    expect(isDueOn(every3, "2026-11-04")).toBe(true);
+    expect(isDueOn(every3, "2026-11-05")).toBe(false);
+    expect(isDueOn({ schedule: "as-needed", times: [] }, "2026-11-15")).toBe(false);
+    expect(isDueOn({ times: ["08:00", "20:00"], startedOn: "2026-11-16" }, "2026-11-15")).toBe(false);
+  });
+  it("describes the schedule in plain words", () => {
+    expect(describeSchedule(weekly, "2026-11-15")).toBe("Weekly on Sunday at 08:00 · due today");
+    expect(describeSchedule(every3, "2026-11-15")).toMatch(/^Every 3 days at 09:00 · next /);
+    expect(describeSchedule({ times: ["08:00", "20:00"] }, "2026-11-15")).toBe("Every day at 08:00, 20:00");
+    expect(nextDueDate(weekly, "2026-11-16")).toBe("2026-11-22");
+  });
+  it("counts only scheduled doses for adherence", () => {
+    expect(dosesBetween(weekly, "2026-10-19", "2026-11-14")).toBe(3);
+    const a = adherence(weekly, ["2026-10-25", "2026-11-01", "2026-11-08"].map((date) => ({ date, status: "taken" as const })), "2026-11-14")!;
+    expect(a).toMatchObject({ expected: 4, taken: 3, pct: 75 });
+    expect(adherence({ schedule: "as-needed", times: [] }, [], "2026-11-14")).toBeUndefined();
   });
 });

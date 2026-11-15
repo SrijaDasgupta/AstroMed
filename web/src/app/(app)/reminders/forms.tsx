@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { Plus } from "lucide-react";
-import { addMedicationAction, addReminderAction, sideEffectAction, type FormState, type SideEffectState } from "@/app/actions";
+import { addMedicationAction, addReminderAction, reminderItemAction, sideEffectAction, type FormState, type SideEffectState } from "@/app/actions";
 import { PURPOSES } from "@/lib/med-effect";
 
 const field = "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-sky-400";
@@ -36,9 +36,18 @@ function useReset(state: FormState) {
   return { ref, key };
 }
 
+const OFTEN = [
+  { id: "daily", label: "Every day" },
+  { id: "weekdays", label: "Certain days (e.g. weekly)" },
+  { id: "interval", label: "Every few days" },
+  { id: "as-needed", label: "As needed" },
+] as const;
+
 export function MedicationForm() {
   const [state, action, pending] = useActionState<FormState, FormData>(addMedicationAction, {});
   const { ref, key } = useReset(state);
+  const [often, setOften] = useState<(typeof OFTEN)[number]["id"]>("daily");
+  useEffect(() => { if (state.ok) setOften("daily"); }, [state]);
   return (
     <form ref={ref} action={action} className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-2">
@@ -54,7 +63,38 @@ export function MedicationForm() {
         </label>
         <label className="block"><span className="text-sm text-slate-300">Started on</span><input key={key} type="date" name="startedOn" defaultValue={today()} max={today()} className={`mt-1 ${field} [color-scheme:dark]`} /></label>
       </div>
-      <Times key={key} initial={["08:00"]} />
+      <fieldset>
+        <legend className="text-sm text-slate-300">How often</legend>
+        <div className="mt-1 flex flex-wrap gap-2">
+          {OFTEN.map((o) => (
+            <label key={o.id} className="cursor-pointer">
+              <input type="radio" name="schedule" value={o.id} checked={often === o.id} onChange={() => setOften(o.id)} className="peer sr-only" />
+              <span className="inline-block rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-300 peer-checked:border-sky-400 peer-checked:bg-sky-400/15 peer-checked:text-sky-100 peer-focus-visible:ring-2 peer-focus-visible:ring-sky-400">{o.label}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      {often === "weekdays" && (
+        <fieldset>
+          <legend className="text-sm text-slate-300">On which days? <span className="text-slate-500">(one day for a weekly dose)</span></legend>
+          <div className="mt-1 flex flex-wrap gap-2">
+            {DAYS.map((d, i) => (
+              <label key={d} className="cursor-pointer">
+                <input type="checkbox" name="medDay" value={i} defaultChecked={i === 0} className="peer sr-only" />
+                <span className="inline-block rounded-lg border border-white/15 px-2.5 py-1 text-xs text-slate-400 peer-checked:border-sky-400 peer-checked:bg-sky-400/15 peer-checked:text-sky-100 peer-focus-visible:ring-2 peer-focus-visible:ring-sky-400">{d}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
+      {often === "interval" && (
+        <label className="block"><span className="text-sm text-slate-300">Every how many days?</span>
+          <span className="mt-1 flex items-center gap-2"><input type="number" name="everyDays" min={2} max={90} defaultValue={2} required className="w-24 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm tabular-nums outline-none focus:border-sky-400" /><span className="text-sm text-slate-400">days, counting from the start date</span></span>
+        </label>
+      )}
+      {often === "as-needed"
+        ? <p className="text-xs text-slate-400">No reminders. Log each dose on the medicine&apos;s card when you take it.</p>
+        : <Times key={key} initial={["08:00"]} />}
       <label className="block"><span className="text-sm text-slate-300">Instructions (optional)</span><input name="instructions" maxLength={200} placeholder="e.g. with food" className={`mt-1 ${field}`} /></label>
       <label className="flex items-start gap-2 text-sm text-slate-300">
         <input type="checkbox" name="confirmed" required className="mt-0.5 h-4 w-4 accent-sky-500" />
@@ -70,6 +110,23 @@ export function MedicationForm() {
 function today() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** For as-needed medicines: records a dose taken now. */
+export function LogDoseButton({ medicationId }: { medicationId: string }) {
+  const time = useRef<HTMLInputElement>(null);
+  // Set the time in the DOM on click, before the form data is read.
+  const stamp = () => { const d = new Date(); if (time.current) time.current.value = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
+  return (
+    <form action={reminderItemAction}>
+      <input type="hidden" name="kind" value="med" /><input type="hidden" name="id" value={medicationId} /><input type="hidden" name="op" value="taken" />
+      <input ref={time} type="hidden" name="time" defaultValue="" />
+      <button type="submit" onClick={stamp}
+        className="inline-flex items-center gap-1 rounded-lg bg-sky-500 px-3 py-1.5 text-sm font-medium text-slate-950 hover:bg-sky-400">
+        <Plus className="h-4 w-4" aria-hidden /> I took a dose now
+      </button>
+    </form>
+  );
 }
 
 export function SideEffectForm({ medicationId }: { medicationId: string }) {

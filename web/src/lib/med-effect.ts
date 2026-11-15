@@ -6,6 +6,7 @@
  */
 import type { Answers } from "@/lib/checkups";
 import { addDays, daysBetween, localDate } from "@/lib/dates";
+import { dosesBetween, isDueOn, type MedScheduleFields } from "@/lib/med-schedule";
 
 type LogLike = { createdAt: string; checkupId?: string; answers?: Answers };
 
@@ -94,15 +95,20 @@ export function assessEffect(purposeId: string | undefined, startedOn: string | 
   return { ...base, status: "same", before: b, after: a, text: `${what} No clear change yet. Some medicines take longer; mention it at your next conference if it stays the same.` };
 }
 
-/** Share of scheduled doses marked taken since the start (up to 14 days). */
-export function adherence(times: number, startedOn: string | undefined, taken: { date: string; status: "taken" | "skipped" }[], today = localDate()) {
-  if (!times) return undefined;
-  const from = startedOn && daysBetween(startedOn, today) < WINDOW ? startedOn : addDays(today, -(WINDOW - 1));
-  const days = daysBetween(from, today) + 1;
+/**
+ * Share of scheduled doses marked taken since the start: over the last 2 weeks, or 4 weeks for
+ * medicines taken less than daily. Doses later today aren't due yet, so only today's ticked doses count.
+ * As-needed medicines have no schedule, so this returns undefined.
+ */
+export function adherence(m: MedScheduleFields, taken: { date: string; status: "taken" | "skipped" }[], today = localDate()) {
+  if (!m.times.length || m.schedule === "as-needed") return undefined;
+  const sparse = m.schedule === "interval" || (m.schedule === "weekdays" && (m.days ?? []).length < 7);
+  const windowDays = sparse ? 28 : WINDOW;
+  const earliest = addDays(today, -(windowDays - 1));
+  const from = m.startedOn && m.startedOn > earliest ? m.startedOn : earliest;
   const inRange = taken.filter((t) => t.date >= from && t.date <= today);
-  // Full days before today, plus today's doses already ticked (later ones aren't due yet).
-  const expected = (days - 1) * times + inRange.filter((t) => t.date === today).length;
+  const expected = (today > from ? dosesBetween(m, from, addDays(today, -1)) : 0) + (isDueOn(m, today) ? inRange.filter((t) => t.date === today).length : 0);
   const done = inRange.filter((t) => t.status === "taken").length;
   if (expected === 0) return undefined;
-  return { expected, taken: done, pct: Math.min(100, Math.round((done / expected) * 100)), days };
+  return { expected, taken: Math.min(done, expected), pct: Math.min(100, Math.round((done / expected) * 100)), days: daysBetween(from, today) + 1 };
 }

@@ -27,7 +27,7 @@ A visual health self-assessment tool that tells an astronaut what their readings
 ## 5. Designed for astronauts
 - Clickable anatomical body map; interactive charts; gamification (XP, ranks, streaks).
 - Works on phones and offline; installs to the home screen.
-- Safety first: no diagnosis, no medicine recommendations, emergency phrases always escalate, 104 automated safety tests.
+- Safety first: no diagnosis, no medicine recommendations, emergency phrases always escalate, 107 automated safety tests.
 - Private by design: each person sees only their own data; optional bring-your-own AI keeps the key on the device.
 
 ## 6. What's next

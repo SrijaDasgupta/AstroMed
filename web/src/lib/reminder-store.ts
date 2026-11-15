@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { addDays, localDate, weekdayOf } from "@/lib/dates";
+import { dosesBetween, isDueOn, type ScheduleKind } from "@/lib/med-schedule";
 import type { Viewer } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 
@@ -7,6 +8,8 @@ export type Medication = {
   id: string; name: string; dose: string; instructions: string; times: string[]; active: boolean;
   /** What it's for (a med-effect purpose id), when it was started, and whether the dose was confirmed with a doctor. */
   purpose?: string; startedOn?: string; confirmed?: boolean;
+  /** How often: every day (default), chosen weekdays, every N days from the start, or as needed. */
+  schedule?: ScheduleKind; days?: number[]; everyDays?: number;
 };
 export type ReminderCategory = "exercise" | "water" | "checkup" | "sleep" | "other";
 export type Reminder = { id: string; title: string; category: ReminderCategory; times: string[]; days: number[]; active: boolean };
@@ -65,7 +68,7 @@ export async function loadSchedule(viewer: Viewer): Promise<ScheduleData> {
   }
   const supabase = await createClient();
   const [m, r, ml, rl, fx] = await Promise.all([
-    supabase.from("medications").select("id, name, dose, instructions, times, active, purpose, started_on, confirmed_at").order("created_at"),
+    supabase.from("medications").select("id, name, dose, instructions, times, active, purpose, started_on, confirmed_at, schedule, days, every_days").order("created_at"),
     supabase.from("reminders").select("id, title, category, times, days, active").order("created_at"),
     supabase.from("medication_logs").select("medication_id, scheduled_for, status, taken_on").gte("taken_on", addDays(today, -(HISTORY_DAYS - 1))).lte("taken_on", today),
     supabase.from("reminder_logs").select("reminder_id, scheduled_for").eq("done_on", today),
@@ -76,7 +79,7 @@ export async function loadSchedule(viewer: Viewer): Promise<ScheduleData> {
   return {
     today,
     problem: err?.message,
-    meds: (m.data ?? []).map((x) => ({ id: x.id, name: x.name, dose: x.dose ?? "", instructions: x.instructions ?? "", times: x.times ?? [], active: x.active, purpose: x.purpose ?? undefined, startedOn: x.started_on ?? undefined, confirmed: !!x.confirmed_at })),
+    meds: (m.data ?? []).map((x) => ({ id: x.id, name: x.name, dose: x.dose ?? "", instructions: x.instructions ?? "", times: x.times ?? [], active: x.active, purpose: x.purpose ?? undefined, startedOn: x.started_on ?? undefined, confirmed: !!x.confirmed_at, schedule: x.schedule ?? "daily", days: x.days ?? undefined, everyDays: x.every_days ?? undefined })),
     reminders: (r.data ?? []).map((x) => ({ id: x.id, title: x.title, category: x.category, times: x.times ?? [], days: x.days ?? [], active: x.active })),
     medHistory,
     effects: (fx.data ?? []).map((x) => ({ id: x.id, medicationId: x.medication_id, date: x.noted_on, severity: x.severity, note: x.note ?? "" })),
@@ -95,8 +98,11 @@ export async function addMedication(viewer: Viewer, med: Omit<Medication, "id" |
     await writeDemo(s);
     return {};
   }
-  const { purpose, startedOn, confirmed, ...rest } = med;
-  const { error } = await (await createClient()).from("medications").insert({ user_id: viewer.id, ...rest, purpose: purpose ?? null, started_on: startedOn ?? null, confirmed_at: confirmed ? new Date().toISOString() : null });
+  const { purpose, startedOn, confirmed, schedule, days, everyDays, ...rest } = med;
+  const { error } = await (await createClient()).from("medications").insert({
+    user_id: viewer.id, ...rest, purpose: purpose ?? null, started_on: startedOn ?? null, confirmed_at: confirmed ? new Date().toISOString() : null,
+    schedule: schedule ?? "daily", days: schedule === "weekdays" ? days ?? [] : null, every_days: schedule === "interval" ? everyDays ?? null : null,
+  });
   return { problem: error?.message };
 }
 
@@ -183,7 +189,7 @@ export type ScheduleItem = { key: string; kind: "med" | "rem"; id: string; time:
 export function todaySchedule(d: ScheduleData): ScheduleItem[] {
   const weekday = weekdayOf(d.today);
   const items: ScheduleItem[] = [];
-  for (const m of d.meds.filter((x) => x.active)) {
+  for (const m of d.meds.filter((x) => x.active && isDueOn(x, d.today))) {
     for (const t of m.times) {
       const log = d.medLogs.find((l) => l.medicationId === m.id && l.time === t);
       items.push({ key: `med-${m.id}-${t}`, kind: "med", id: m.id, time: t, title: m.name, detail: [m.dose, m.instructions].filter(Boolean).join(" · "), state: log?.status ?? "open" });
@@ -217,7 +223,7 @@ export async function routineStats(viewer: Viewer, days: number): Promise<Routin
   });
   if (viewer.kind === "demo") {
     const s = await loadSchedule(viewer);
-    const meds = s.meds.filter((m) => m.active).map((m) => ({
+    const meds = s.meds.filter((m) => m.active && isDueOn(m, today)).map((m) => ({
       name: m.name, expected: m.times.length,
       taken: s.medLogs.filter((l) => l.medicationId === m.id && l.status === "taken").length,
       skipped: s.medLogs.filter((l) => l.medicationId === m.id && l.status === "skipped").length,
@@ -229,16 +235,17 @@ export async function routineStats(viewer: Viewer, days: number): Promise<Routin
   const supabase = await createClient();
   const from = dayList[0].date;
   const [m, r, ml, rl] = await Promise.all([
-    supabase.from("medications").select("id, name, times, active, created_at"),
+    supabase.from("medications").select("id, name, times, active, created_at, started_on, schedule, days, every_days"),
     supabase.from("reminders").select("id, times, days, active, created_at"),
     supabase.from("medication_logs").select("medication_id, status").gte("taken_on", from).lte("taken_on", today),
     supabase.from("reminder_logs").select("reminder_id").gte("done_on", from).lte("done_on", today),
   ]);
-  const meds = (m.data ?? []).filter((x) => x.active).map((x) => {
-    const since = localDate(new Date(x.created_at));
-    const activeDays = dayList.filter((d) => d.date >= since).length;
+  const meds = (m.data ?? []).filter((x) => x.active && x.schedule !== "as-needed").map((x) => {
+    const since = (x.started_on as string | null) ?? localDate(new Date(x.created_at));
+    const fields = { schedule: x.schedule ?? "daily", days: x.days ?? undefined, everyDays: x.every_days ?? undefined, startedOn: since, times: (x.times ?? []) as string[] };
+    const start = since > from ? since : from;
     const logs = (ml.data ?? []).filter((l) => l.medication_id === x.id);
-    return { name: x.name as string, expected: activeDays * (x.times?.length ?? 0), taken: logs.filter((l) => l.status === "taken").length, skipped: logs.filter((l) => l.status === "skipped").length };
+    return { name: x.name as string, expected: start <= today ? dosesBetween(fields, start, today) : 0, taken: logs.filter((l) => l.status === "taken").length, skipped: logs.filter((l) => l.status === "skipped").length };
   });
   const remindersExpected = (r.data ?? []).filter((x) => x.active).reduce((n, x) => {
     const since = localDate(new Date(x.created_at));

@@ -6,7 +6,8 @@ import { NotificationToggle } from "@/components/ReminderNotifier";
 import { loadSchedule, todaySchedule, type Medication, type MedLog, type Reminder, type SideEffect } from "@/lib/reminder-store";
 import { requireViewer } from "@/lib/session";
 import { pageHref, pageLabel, SOURCES, type SourceId } from "@/lib/tips";
-import { MedicationForm, ReminderForm, SideEffectForm } from "./forms";
+import { LogDoseButton, MedicationForm, ReminderForm, SideEffectForm } from "./forms";
+import { describeSchedule } from "@/lib/med-schedule";
 import { Schedule } from "./Schedule";
 
 const DAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -48,7 +49,10 @@ const fmtDay = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString("en-U
 
 function MedCard({ m, history, effects, logs, today }: { m: Medication; history: MedLog[]; effects: SideEffect[]; logs: CheckupLog[]; today: string }) {
   const purpose = getPurpose(m.purpose);
-  const taken = adherence(m.times.length, m.startedOn, history.filter((h) => h.medicationId === m.id), today);
+  const mineLogs = history.filter((h) => h.medicationId === m.id);
+  const taken = adherence(m, mineLogs, today);
+  const asNeeded = m.schedule === "as-needed";
+  const asNeededDoses = asNeeded ? mineLogs.filter((h) => h.status === "taken") : [];
   const effect = m.active ? assessEffect(m.purpose, m.startedOn, logs, today) : undefined;
   const style = effect && EFFECT_STYLE[effect.status];
   const mine = effects.filter((e) => e.medicationId === m.id).slice(0, 3);
@@ -57,11 +61,18 @@ function MedCard({ m, history, effects, logs, today }: { m: Medication; history:
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className={`text-sm font-medium ${m.active ? "" : "text-slate-500"}`}>{m.name}{m.dose && <span className="font-normal text-slate-400"> · {m.dose}</span>}{!m.active && <span className="ml-2 text-xs font-normal">(paused)</span>}</p>
-          <p className="text-xs text-slate-500">{m.times.join(", ")}{m.instructions ? ` · ${m.instructions}` : ""}{purpose ? ` · for ${purpose.label.toLowerCase()}` : ""}{m.startedOn ? ` · since ${fmtDay(m.startedOn)}` : ""}</p>
+          <p className="text-xs text-slate-300">{describeSchedule(m, today)}</p>
+          <p className="text-xs text-slate-500">{[m.instructions, purpose && `for ${purpose.label.toLowerCase()}`, m.startedOn && `since ${fmtDay(m.startedOn)}`].filter(Boolean).join(" · ")}</p>
           {m.confirmed && <p className="mt-1 inline-flex items-center gap-1 text-xs text-emerald-300"><BadgeCheck className="h-3.5 w-3.5" aria-hidden /> Dose confirmed with your doctor</p>}
         </div>
         <ItemControls kind="med" id={m.id} active={m.active} />
       </div>
+      {m.active && asNeeded && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs text-slate-400">{asNeededDoses.length === 0 ? "No doses logged in the last 4 weeks." : `${asNeededDoses.length} dose${asNeededDoses.length === 1 ? "" : "s"} in the last 4 weeks · last ${fmtDay(asNeededDoses.map((d) => d.date).sort().at(-1)!)}`}</p>
+          <LogDoseButton medicationId={m.id} />
+        </div>
+      )}
       {m.active && taken && (
         <div>
           <div className="flex justify-between text-xs text-slate-400"><span>Doses taken, last {taken.days} day{taken.days === 1 ? "" : "s"}</span><span className="tabular-nums">{taken.taken} of {taken.expected} ({taken.pct}%)</span></div>
