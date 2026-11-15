@@ -502,3 +502,33 @@ describe("advice stays safe", async () => {
     expect(steps("speed-drill")).toMatch(/flashing images/);
   });
 });
+
+describe("medicine tracking: is it working?", async () => {
+  const { assessEffect, adherence } = await import("@/lib/med-effect");
+  const today = "2026-11-15";
+  const day = (n: number, answers: Record<string, number | boolean>) => ({ createdAt: `2026-11-${String(15 - n).padStart(2, "0")}T08:00:00`, checkupId: "daily", answers });
+  const sleep = (before: number, after: number) => [6, 5, 4].map((n) => day(n, { sleepHours: before })).concat([2, 1, 0].map((n) => day(n, { sleepHours: after })));
+  it("says it's helping when the measure improves after starting", () => {
+    expect(assessEffect("sleep", "2026-11-12", sleep(5.5, 6.8), today).status).toBe("better");
+  });
+  it("flags the wrong direction without telling anyone to stop", () => {
+    const e = assessEffect("sleep", "2026-11-12", sleep(6.8, 5.5), today);
+    expect(e.status).toBe("worse");
+    expect(e.text).toMatch(/flight surgeon/);
+    expect(e.text).toMatch(/keep taking it as prescribed/);
+  });
+  it("waits for enough readings on both sides", () => {
+    expect(assessEffect("sleep", "2026-11-14", sleep(5.5, 6.8), today).status).toBe("early");
+    expect(assessEffect("sleep", "2026-11-15", [day(0, { sleepHours: 7 })], today).status).toBe("no-before");
+    expect(assessEffect(undefined, "2026-11-12", [], today).status).toBe("untracked");
+  });
+  it("compares how often a symptom happens, using daily logs only", () => {
+    const logs = [6, 5, 4].map((n) => day(n, { headache: true })).concat([2, 1, 0].map((n) => day(n, { mood: 4 })));
+    expect(assessEffect("headache", "2026-11-12", logs, today).status).toBe("better");
+  });
+  it("counts doses taken without penalising doses not yet due today", () => {
+    const t = (d: string, status: "taken" | "skipped") => ({ date: d, status });
+    const a = adherence(1, "2026-11-13", [t("2026-11-13", "taken"), t("2026-11-14", "skipped")], today)!;
+    expect(a).toMatchObject({ expected: 2, taken: 1, pct: 50 });
+  });
+});

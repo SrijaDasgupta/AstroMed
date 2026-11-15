@@ -263,13 +263,38 @@ export async function addMedicationAction(_prev: FormState, formData: FormData):
   const dose = String(formData.get("dose") ?? "").trim().slice(0, 60);
   const instructions = String(formData.get("instructions") ?? "").trim().slice(0, 200);
   const times = readTimes(formData);
+  const { getPurpose } = await import("@/lib/med-effect");
+  const purposeRaw = String(formData.get("purpose") ?? "");
+  const purpose = getPurpose(purposeRaw)?.id;
+  const startedOn = String(formData.get("startedOn") ?? "");
+  const { localDate, addDays } = await import("@/lib/dates");
   if (!name) return { error: "Enter the medicine's name." };
+  if (!dose) return { error: "Enter the dose your flight surgeon or doctor prescribed." };
+  if (formData.get("confirmed") !== "on") return { error: "Confirm the dose with your flight surgeon or doctor first, then tick the box." };
   if (times.length === 0) return { error: "Add at least one time." };
   if (times.length > 6 || !times.every((t) => TIME_RE.test(t))) return { error: "Times must look like 08:00 (up to 6)." };
-  const { problem } = await addMedication(viewer, { name, dose, instructions, times });
+  if (startedOn && (!/^\d{4}-\d{2}-\d{2}$/.test(startedOn) || startedOn > localDate() || startedOn < addDays(localDate(), -365))) return { error: "Choose a start date in the past year." };
+  const { problem } = await addMedication(viewer, { name, dose, instructions, times, purpose, startedOn: startedOn || localDate(), confirmed: true });
   if (problem) return { error: problem };
   revalidatePath("/", "layout");
   return { ok: true };
+}
+
+export type SideEffectState = { error?: string; ok?: boolean; severe?: boolean };
+
+export async function sideEffectAction(_prev: SideEffectState, formData: FormData): Promise<SideEffectState> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: "Your session has ended. Sign in again." };
+  const { addSideEffect } = await import("@/lib/reminder-store");
+  const { localDate } = await import("@/lib/dates");
+  const medicationId = String(formData.get("medicationId") ?? "");
+  const severity = String(formData.get("severity") ?? "");
+  const note = String(formData.get("note") ?? "").trim().slice(0, 200);
+  if (severity !== "mild" && severity !== "moderate" && severity !== "severe") return { error: "Choose how bad it is." };
+  const { problem } = await addSideEffect(viewer, { medicationId, severity, note, date: localDate() });
+  if (problem) return { error: problem };
+  revalidatePath("/", "layout");
+  return { ok: true, severe: severity === "severe" };
 }
 
 export async function addReminderAction(_prev: FormState, formData: FormData): Promise<FormState> {

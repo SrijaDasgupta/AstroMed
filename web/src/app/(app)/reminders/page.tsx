@@ -1,10 +1,12 @@
-import { AlarmClock, ExternalLink, Info, Pill } from "lucide-react";
+import { AlarmClock, BadgeCheck, ExternalLink, Info, Minus, Pill, TrendingDown, TrendingUp } from "lucide-react";
+import { loadLogs, type CheckupLog } from "@/lib/checkup-store";
+import { adherence, assessEffect, getPurpose, type EffectStatus } from "@/lib/med-effect";
 import { reminderItemAction } from "@/app/actions";
 import { NotificationToggle } from "@/components/ReminderNotifier";
-import { loadSchedule, todaySchedule, type Medication, type Reminder } from "@/lib/reminder-store";
+import { loadSchedule, todaySchedule, type Medication, type MedLog, type Reminder, type SideEffect } from "@/lib/reminder-store";
 import { requireViewer } from "@/lib/session";
 import { pageHref, pageLabel, SOURCES, type SourceId } from "@/lib/tips";
-import { MedicationForm, ReminderForm } from "./forms";
+import { MedicationForm, ReminderForm, SideEffectForm } from "./forms";
 import { Schedule } from "./Schedule";
 
 const DAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -33,14 +35,56 @@ function ItemControls({ kind, id, active }: { kind: "med" | "rem"; id: string; a
   );
 }
 
-function MedRow({ m }: { m: Medication }) {
+const EFFECT_STYLE: Record<EffectStatus, { icon: typeof TrendingUp; cls: string; label: string }> = {
+  better: { icon: TrendingUp, cls: "text-emerald-300", label: "Looks like it's helping" },
+  same: { icon: Minus, cls: "text-slate-300", label: "No clear change yet" },
+  worse: { icon: TrendingDown, cls: "text-amber-300", label: "Going the wrong way" },
+  early: { icon: Minus, cls: "text-slate-400", label: "Too early to tell" },
+  "no-before": { icon: Minus, cls: "text-slate-400", label: "Tracking from now" },
+  untracked: { icon: Minus, cls: "text-slate-500", label: "Not compared" },
+};
+
+const fmtDay = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+function MedCard({ m, history, effects, logs, today }: { m: Medication; history: MedLog[]; effects: SideEffect[]; logs: CheckupLog[]; today: string }) {
+  const purpose = getPurpose(m.purpose);
+  const taken = adherence(m.times.length, m.startedOn, history.filter((h) => h.medicationId === m.id), today);
+  const effect = m.active ? assessEffect(m.purpose, m.startedOn, logs, today) : undefined;
+  const style = effect && EFFECT_STYLE[effect.status];
+  const mine = effects.filter((e) => e.medicationId === m.id).slice(0, 3);
   return (
-    <li className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-      <div>
-        <p className={`text-sm font-medium ${m.active ? "" : "text-slate-500"}`}>{m.name}{m.dose && <span className="font-normal text-slate-400"> · {m.dose}</span>}{!m.active && <span className="ml-2 text-xs font-normal">(paused)</span>}</p>
-        <p className="text-xs text-slate-500">{m.times.join(", ")}{m.instructions ? ` · ${m.instructions}` : ""}</p>
+    <li className="space-y-3 px-4 py-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className={`text-sm font-medium ${m.active ? "" : "text-slate-500"}`}>{m.name}{m.dose && <span className="font-normal text-slate-400"> · {m.dose}</span>}{!m.active && <span className="ml-2 text-xs font-normal">(paused)</span>}</p>
+          <p className="text-xs text-slate-500">{m.times.join(", ")}{m.instructions ? ` · ${m.instructions}` : ""}{purpose ? ` · for ${purpose.label.toLowerCase()}` : ""}{m.startedOn ? ` · since ${fmtDay(m.startedOn)}` : ""}</p>
+          {m.confirmed && <p className="mt-1 inline-flex items-center gap-1 text-xs text-emerald-300"><BadgeCheck className="h-3.5 w-3.5" aria-hidden /> Dose confirmed with your doctor</p>}
+        </div>
+        <ItemControls kind="med" id={m.id} active={m.active} />
       </div>
-      <ItemControls kind="med" id={m.id} active={m.active} />
+      {m.active && taken && (
+        <div>
+          <div className="flex justify-between text-xs text-slate-400"><span>Doses taken, last {taken.days} day{taken.days === 1 ? "" : "s"}</span><span className="tabular-nums">{taken.taken} of {taken.expected} ({taken.pct}%)</span></div>
+          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/10"><div className={`h-full rounded-full ${taken.pct >= 80 ? "bg-emerald-400" : "bg-amber-300"}`} style={{ width: `${taken.pct}%` }} /></div>
+        </div>
+      )}
+      {effect && style && effect.status !== "untracked" && (
+        <div className="rounded-xl bg-white/[0.04] p-3 text-sm">
+          <p className={`flex items-center gap-1.5 font-medium ${style.cls}`}><style.icon className="h-4 w-4" aria-hidden /> {style.label}</p>
+          <p className="mt-1 text-slate-300">{effect.text}{taken && taken.pct < 70 && (effect.status === "same" || effect.status === "worse") ? ` You took ${taken.pct}% of doses, which can make it look less effective.` : ""}</p>
+        </div>
+      )}
+      {mine.length > 0 && (
+        <ul className="space-y-1 text-xs text-slate-400">
+          {mine.map((e) => <li key={e.id}>Side effect, {fmtDay(e.date)}: <span className={e.severity === "severe" ? "text-rose-300" : "text-slate-300"}>{e.severity === "moderate" ? "bothering me" : e.severity}</span>{e.note ? ` · ${e.note}` : ""}</li>)}
+        </ul>
+      )}
+      {m.active && (
+        <details className="group">
+          <summary className="cursor-pointer text-xs text-sky-300 hover:text-sky-200">Note a side effect</summary>
+          <SideEffectForm medicationId={m.id} />
+        </details>
+      )}
     </li>
   );
 }
@@ -59,7 +103,7 @@ function RemRow({ r }: { r: Reminder }) {
 
 export default async function RemindersPage() {
   const viewer = await requireViewer();
-  const data = await loadSchedule(viewer);
+  const [data, { logs }] = await Promise.all([loadSchedule(viewer), loadLogs(viewer)]);
   const items = todaySchedule(data);
 
   return (
@@ -83,11 +127,12 @@ export default async function RemindersPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="space-y-4">
           <h2 className="flex items-center gap-2 text-lg font-medium"><Pill className="h-5 w-5 text-slate-400" aria-hidden /> My medicines</h2>
-          {data.meds.length > 0 && <ul className="divide-y divide-white/5 rounded-2xl border border-white/10 bg-white/[0.03]">{data.meds.map((m) => <MedRow key={m.id} m={m} />)}</ul>}
+          {data.meds.length > 0 && <p className="text-xs text-slate-400">Trouble breathing, swelling of the face or throat, chest pain or fainting after a dose: contact your flight surgeon now.</p>}
+          {data.meds.length > 0 && <ul className="divide-y divide-white/5 rounded-2xl border border-white/10 bg-white/[0.03]">{data.meds.map((m) => <MedCard key={m.id} m={m} history={data.medHistory} effects={data.effects} logs={logs} today={data.today} />)}</ul>}
           <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
             <h3 className="mb-3 text-sm font-medium">Add a medicine</h3>
             <MedicationForm />
-            <p className="mt-3 text-xs text-slate-500">Enter medicines exactly as your flight surgeon or doctor prescribed. AstroMed reminds you; it doesn&apos;t recommend medicines or doses.</p>
+            <p className="mt-3 text-xs text-slate-500">Enter the medicine and dose your flight surgeon or doctor prescribed. Pick what it&apos;s for and AstroMed compares your readings before and after you started.</p>
           </div>
         </section>
 
@@ -113,7 +158,6 @@ export default async function RemindersPage() {
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-xs text-slate-500">Information only. Always check with your flight surgeon before starting, stopping or combining medicines.</p>
       </section>
 
       <p className="text-xs text-slate-500">

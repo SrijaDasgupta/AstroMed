@@ -180,7 +180,7 @@ export function SpeedDrill({ onDone, onReset }: { onDone: (r: DrillResult) => vo
           </div>
         </div>
       )}
-      <p className="mt-4 text-xs text-slate-500">Keep your eyes on the centre cross. The flash gets shorter as you get faster, and grey shapes appear around the star once it&apos;s quick. Modelled on the speed training in the ACTIVE and INHANCE trials; this drill itself hasn&apos;t been tested in a trial.</p>
+      <p className="mt-4 text-xs text-slate-500">Keep your eyes on the centre cross. The flash gets shorter as you get faster, and grey shapes appear around the star once it&apos;s quick. Modelled on the speed training in the ACTIVE and INHANCE trials.</p>
     </div>
   );
 }

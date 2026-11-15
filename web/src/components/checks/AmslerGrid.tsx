@@ -61,7 +61,7 @@ export function AmslerGrid() {
         </p>
         {count > 0 && <button type="button" onClick={() => setMarks((m) => ({ ...m, [eye]: new Set() }))} className="text-slate-400 underline decoration-white/20 underline-offset-2 hover:text-white">Clear marks</button>}
       </div>
-      <p className="mt-3 text-xs text-slate-500">A screen check can&apos;t replace the eye exams flight surgeons run in flight. Any new distortion should be checked properly.</p>
+      <p className="mt-3 text-xs text-slate-500">New distortion? Answer Yes below and AstroMed will tell you who to contact.</p>
     </div>
   );
 }

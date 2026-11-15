@@ -110,7 +110,6 @@ export default async function BodyPage({ searchParams }: { searchParams: Promise
         initial={initial}
         canUpload={viewer.kind === "user"}
       />
-      <p className="text-xs text-slate-500">For education and demonstration, not medical advice. For symptoms or concerns, contact your flight surgeon.</p>
     </div>
   );
 }

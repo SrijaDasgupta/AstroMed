@@ -74,7 +74,8 @@ export async function seedDemo() {
       diastolic: Math.round(dia.b + dia.sd * (n <= 2 ? 1.6 : noise())),
       temperature: r1(temp.b + temp.sd * noise() * 0.6),
       glucose: Math.round(glu.b + glu.sd * noise()),
-      sleepHours: r1([3, 7, 11].includes(n) ? 5.1 + rand() * 0.4 : 6.4 + rand() * 0.8),
+      // Shorter sleep until a prescribed sleep medicine was started 4 days ago, so My medicines can show the before-and-after.
+      sleepHours: r1(n >= 5 ? ([7, 11].includes(n) ? 5.1 + rand() * 0.4 : 5.6 + rand() * 0.5) : 6.6 + rand() * 0.6),
       resistiveMin: [4, 9, 12].includes(n) ? 0 : 40 + Math.round(rand() * 4) * 5,
       aerobicMin: 25 + Math.round(rand() * 3) * 5,
       mood: n === 1 ? 2 : n === 0 ? 3 : 4,
@@ -132,13 +133,23 @@ export async function seedDemo() {
 
   // Medicines and reminders, with this morning's dose ticked off.
   const meds = {
-    m: [{ id: "demo-med-1", name: "Vitamin D", dose: "As prescribed", instructions: "With breakfast", times: ["08:00"], active: true }],
+    m: [
+      { id: "demo-med-1", name: "Vitamin D", dose: "1 capsule", instructions: "With breakfast", times: ["08:00"], active: true, startedOn: addDays(today, -4), confirmed: true },
+      { id: "demo-med-2", name: "Sleep medicine", dose: "As prescribed by flight surgeon", instructions: "30 minutes before sleep", times: ["21:30"], active: true, purpose: "sleep", startedOn: addDays(today, -4), confirmed: true },
+    ],
     r: [
       { id: "demo-rem-water", title: "Drink water", category: "water", times: ["10:00", "14:00", "18:00"], days: [0, 1, 2, 3, 4, 5, 6], active: true },
       { id: "demo-rem-ex", title: "Resistance exercise", category: "exercise", times: ["16:00"], days: [1, 2, 3, 4, 5], active: true },
     ],
     d: today,
-    ml: [{ medicationId: "demo-med-1", time: "08:00", status: "taken" }],
+    ml: [
+      ...[4, 3, 2, 1].flatMap((n) => [
+        { medicationId: "demo-med-1", time: "08:00", status: n === 3 ? "skipped" : "taken", date: addDays(today, -n) },
+        { medicationId: "demo-med-2", time: "21:30", status: "taken", date: addDays(today, -n) },
+      ]),
+      { medicationId: "demo-med-1", time: "08:00", status: "taken", date: today },
+    ],
+    fx: [{ id: "demo-fx-1", medicationId: "demo-med-2", date: addDays(today, -2), severity: "mild", note: "A bit groggy the first morning" }],
     rl: [{ reminderId: "demo-rem-water", time: "10:00" }],
   };
   store.set(DEMO_MEDS_COOKIE, JSON.stringify(meds), options);

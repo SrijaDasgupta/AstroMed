@@ -58,7 +58,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           )}
         </header>
         <OfflineSync owner={viewer.kind === "user" ? viewer.id : "demo"} />
-        <Main>{children}</Main>
+        <Main>
+          {children}
+          <p className="mt-10 border-t border-white/5 pt-4 text-xs text-slate-500">AstroMed helps you track your health; it doesn&apos;t diagnose or prescribe. In an emergency, contact your flight surgeon or crew medical officer straight away.</p>
+        </Main>
         <ReminderNotifier items={pending} />
         <TabBar />
       </div>

@@ -87,7 +87,7 @@ export default async function TipsPage({ searchParams }: { searchParams: Promise
             <li key={s.url}><a href={s.url} target="_blank" rel="noopener noreferrer" className="hover:text-sky-300">{s.title}</a></li>
           ))}
         </ul>
-        <p className="mt-3">Tips are summaries for education and demonstration, not medical advice. Page numbers refer to pages of the PDF file.</p>
+        <p className="mt-3">Page numbers refer to pages of the PDF file.</p>
       </section>
     </div>
   );

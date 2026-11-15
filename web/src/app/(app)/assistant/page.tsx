@@ -11,7 +11,7 @@ export default async function AssistantPage() {
         <p className="mt-1 text-slate-400">Questions answered from your own data in AstroMed. No AI model is used yet, so it works best with short questions about one measure or topic.</p>
       </div>
       <Chat starters={["How am I doing?", "Give me the details for my blood pressure", "What was my temperature yesterday?", "How did I sleep this week?", "How much radiation have I had?", "Which checkups are due?"]} />
-      <p className="text-xs text-slate-500">Answers summarize your data and NASA-based tips. Not medical advice; for symptoms or concerns, contact your flight surgeon.</p>
+      <p className="text-xs text-slate-500">Answers summarize your data and NASA-based tips.</p>
     </div>
   );
 }

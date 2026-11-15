@@ -120,7 +120,7 @@ export default async function IndicatorsPage() {
         })}
       </div>
 
-      <p className="text-xs text-slate-500">The five hazards of spaceflight follow NASA&apos;s Human Research Program <CiteLink c={HAZARD_CITE} />. AstroMed supports self-monitoring; it doesn&apos;t diagnose or recommend medicines.</p>
+      <p className="text-xs text-slate-500">The five hazards of spaceflight follow NASA&apos;s Human Research Program <CiteLink c={HAZARD_CITE} />.</p>
     </div>
   );
 }

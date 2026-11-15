@@ -214,7 +214,6 @@ export default async function HazardsPage({ searchParams }: { searchParams: Prom
         </div>
       </section>
 
-      <p className="text-xs text-slate-500">Estimates for demonstration and education, not medical advice.</p>
     </div>
   );
 }

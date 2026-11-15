@@ -38,7 +38,7 @@ export default async function ToolsPage() {
         </section>
       ))}
 
-      <p className="text-xs text-slate-500">Estimates for education and demonstration, not medical advice.</p>
+      <p className="text-xs text-slate-500">Estimates from NASA formulas and your profile.</p>
     </div>
   );
 }

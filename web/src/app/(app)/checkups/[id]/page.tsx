@@ -83,10 +83,10 @@ export default async function CheckupPage({ params }: { params: Promise<{ id: st
         </ul>
         <p className="mt-3 text-xs text-slate-500">
           {checkup.id === "cabin"
-            ? "Cabin readings are compared with the NASA-STD-3001 limits above. Real missions also set their own operating limits. Not medical advice."
+            ? "Cabin readings are compared with the NASA-STD-3001 limits above. Real missions also set their own operating limits."
             : checkup.id === "reaction"
-              ? "Each result is compared with your own earlier tests. Slower than usual is a prompt to look at sleep, workload and cabin air, not a diagnosis. Not medical advice."
-              : "Readings are compared with your own normal range and with general clinical limits (for example, fever from 38 °C, high blood pressure from 140/90, oxygen saturation below 94%). These limits are AstroMed demo settings, not NASA values; a real flight surgeon team sets its own. Not medical advice."}
+              ? "Each result is compared with your own earlier tests. Slower than usual is a prompt to look at sleep, workload and cabin air."
+              : "Readings are compared with your own normal range and with general clinical limits (for example, fever from 38 °C, high blood pressure from 140/90, oxygen saturation below 94%). These are general limits, not NASA values; your flight surgeon team can set its own."}
         </p>
       </section>
     </div>

@@ -35,6 +35,8 @@ type Input = {
   bodyNotes?: BodyNote[];
   /** Demo mode: also use sample-data alerts so suggestions can be explored. */
   includeSample?: boolean;
+  /** Per medicine: whether it seems to be helping, and side effects noted. */
+  medInsights?: { name: string; status: string; noun?: string; sideEffects: { date: string; severity: string; note: string }[] }[];
 };
 
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : undefined);
@@ -181,6 +183,20 @@ export function buildSummary(i: Input) {
   }
   if (i.routine.meds.length >= 2) {
     questions.push({ text: "Is it safe to take my current medicines together?", reason: `You have ${i.routine.meds.length} active medicines. Spaceflight medicines can interact.`, cite: { source: "cardio", page: 36 } });
+  }
+  for (const m of i.medInsights ?? []) {
+    if (m.status === "worse") {
+      suggestions.push({ id: `med-${m.name}`, area: "routine", priority: 2, title: `${m.name} may not be helping your ${m.noun ?? "symptoms"}`, reason: "Your readings since starting are worse than before.", action: { text: "Medicines", href: "/reminders" } });
+      questions.push({ text: `My ${m.noun ?? "symptoms"} got worse after starting ${m.name}. Should we change anything?`, reason: "Before-and-after comparison of your own readings" });
+    } else if (m.status === "same") {
+      questions.push({ text: `I haven't seen a change in my ${m.noun ?? "symptoms"} since starting ${m.name}. How long should it take to work?`, reason: "Before-and-after comparison of your own readings" });
+    }
+    const fx = m.sideEffects.filter((e) => e.date >= from);
+    if (fx.length) {
+      if (fx.some((e) => e.severity === "severe")) suggestions.push({ id: `fx-${m.name}`, area: "routine", priority: 1, title: `Severe side effect from ${m.name}`, reason: "Contact your flight surgeon before the next dose.", action: { text: "Medicines", href: "/reminders" } });
+      const notes = fx.map((e) => e.note).filter(Boolean).slice(0, 2).join("; ");
+      questions.push({ text: `I've had side effects from ${m.name}${notes ? ` (${notes})` : ""}. Should we change anything?`, reason: `${fx.length} noted in this period` });
+    }
   }
   if (i.checkupsDue > 0) {
     suggestions.push({ id: "checkups", area: "routine", priority: 3, title: `${i.checkupsDue} checkup${i.checkupsDue === 1 ? " is" : "s are"} due`, reason: "Regular checks keep your trends and alerts accurate.", action: { text: "Open checkups", href: "/checkups" } });

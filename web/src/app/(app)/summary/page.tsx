@@ -8,7 +8,8 @@ import { listEntries } from "@/lib/journal-store";
 import { getMissionContext } from "@/lib/mission";
 import { getMyHealth } from "@/lib/my-health";
 import { loadTipActions } from "@/lib/profile-store";
-import { routineStats } from "@/lib/reminder-store";
+import { loadSchedule, routineStats } from "@/lib/reminder-store";
+import { assessEffect, getPurpose } from "@/lib/med-effect";
 import { requireViewer } from "@/lib/session";
 import { listBodyNotes } from "@/lib/body-notes-store";
 import { localDate } from "@/lib/dates";
@@ -47,15 +48,19 @@ function Row({ k, v }: { k: string; v: React.ReactNode }) {
 export default async function SummaryPage({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
   const viewer = await requireViewer();
   const days = (await searchParams).days === "30" ? 30 : 7;
-  const [health, ctx, { entries }, actions, routine, { logs }, { notes: bodyNotes }] = await Promise.all([
-    getMyHealth(viewer), getMissionContext(), listEntries(viewer, 400), loadTipActions(viewer), routineStats(viewer, days), loadLogs(viewer), listBodyNotes(viewer),
+  const [health, ctx, { entries }, actions, routine, { logs }, { notes: bodyNotes }, schedule] = await Promise.all([
+    getMyHealth(viewer), getMissionContext(), listEntries(viewer, 400), loadTipActions(viewer), routineStats(viewer, days), loadLogs(viewer), listBodyNotes(viewer), loadSchedule(viewer),
   ]);
+  const medInsights = schedule.meds.filter((m) => m.active).map((m) => ({
+    name: m.name, status: assessEffect(m.purpose, m.startedOn, logs).status, noun: getPurpose(m.purpose)?.noun,
+    sideEffects: schedule.effects.filter((e) => e.medicationId === m.id),
+  }));
   const missions = dailyMissions(health.assessment, health.env);
   const p = progress(logs, actions, missions.map((m) => m.id), undefined, entries.map((e) => e.date));
   const s0today = localDate();
   const s = buildSummary({
     assessment: health.assessment, logs, journal: entries, ctx, routine, checkupsDue: dueCount(logs),
-    progress: { xp: p.xp, rank: p.rank, streak: p.streak }, days, includeSample: viewer.kind === "demo", bodyNotes,
+    progress: { xp: p.xp, rank: p.rank, streak: p.streak }, days, includeSample: viewer.kind === "demo", bodyNotes, medInsights,
     energyTarget: energyTarget(health.profile.details, Number(s0today.slice(0, 4))).kcal,
   });
   const fmt = (v: number | undefined, dp = 0, unit = "") => (v === undefined ? "—" : `${v.toFixed(dp)}${unit}`);
@@ -176,7 +181,7 @@ export default async function SummaryPage({ searchParams }: { searchParams: Prom
       </section>
 
       <p className="text-xs text-slate-500">
-        Suggestions come from your own data and NASA&apos;s crew health documents. They support, and don&apos;t replace, advice from your flight surgeon. If you feel unwell or unsafe, contact them right away.
+        Suggestions come from your own data and NASA&apos;s crew health documents.
       </p>
     </div>
   );

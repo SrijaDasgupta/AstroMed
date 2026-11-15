@@ -212,7 +212,7 @@ export default async function MyVitalsPage() {
       </div>
 
       <p className="text-xs text-slate-500">
-        Baselines come from the MMASH dataset (Rossi et al., 2020). Days without your own reading are simulated from that baseline for {env.name.toLowerCase()}. Not medical advice.
+        Baselines come from the MMASH dataset (Rossi et al., 2020). Days without your own reading are simulated from that baseline for {env.name.toLowerCase()}.
       </p>
     </div>
   );

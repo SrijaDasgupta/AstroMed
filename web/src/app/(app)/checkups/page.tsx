@@ -84,7 +84,7 @@ export default async function CheckupsPage() {
       </section>
 
       <p className="text-xs text-slate-500">
-        NASA requires periodic monitoring of these areas but doesn&apos;t set how often. The daily and weekly schedules are AstroMed suggestions. Not medical advice.
+        NASA requires periodic monitoring of these areas but doesn&apos;t set how often. The daily and weekly schedules are AstroMed suggestions.
       </p>
     </div>
   );
