@@ -400,3 +400,16 @@ describe("balance, after-spacewalk and immune checks", async () => {
     for (const [id, href] of Object.entries(want)) expect(SPACE_RISKS.find((r) => r.id === id)!.inApp.map((l) => l.href)).toContain(href);
   });
 });
+
+describe("brain health tips", async () => {
+  const { TIPS, TOPICS, SOURCES } = await import("@/lib/tips");
+  const brain = TIPS.filter((t) => t.topic === "Brain health");
+  it("covers each recommendation with a cited source", () => {
+    expect(TOPICS.some((t) => t.slug === "brain")).toBe(true);
+    for (const id of ["speed-training", "open-skill-exercise", "daily-novelty", "dual-task-balance", "movement-snacks", "track-alertness"]) expect(brain.some((t) => t.id === id), id).toBe(true);
+    for (const t of brain) for (const c of [{ source: t.source }, ...(t.also ?? [])]) expect(SOURCES[c.source], `${t.id} ${c.source}`).toBeDefined();
+  });
+  it("never suggests replacing prescribed exercise", () => {
+    expect(TIPS.find((t) => t.id === "open-skill-exercise")!.action).toMatch(/Keep every prescribed exercise session/);
+  });
+});

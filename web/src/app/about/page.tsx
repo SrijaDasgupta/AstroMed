@@ -37,7 +37,8 @@ function A({ href, children }: { href: string; children: React.ReactNode }) {
 }
 
 export default function AboutPage() {
-  const nasa = Object.values(SOURCES).filter((s) => !s.url.includes("asc-csa"));
+  const nasa = Object.values(SOURCES).filter((s) => s.url.includes("nasa.gov"));
+  const research = Object.values(SOURCES).filter((s) => !s.url.includes("nasa.gov") && !s.url.includes("asc-csa"));
   const csa = Object.values(SOURCES).filter((s) => s.url.includes("asc-csa"));
   return (
     <main className="mx-auto max-w-3xl space-y-10 px-6 py-8">
@@ -77,6 +78,14 @@ export default function AboutPage() {
           {csa.map((s) => <li key={s.url}><A href={s.url}>{s.title}</A></li>)}
         </ul>
         <p className="mt-3 text-sm text-slate-400">Used for the radiation pages: neutrons make up about 30% of the radiation dose on the ISS.</p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold">Brain health research</h2>
+        <ul className="mt-3 space-y-2 text-sm text-slate-300">
+          {research.map((s) => <li key={s.url}><A href={s.url}>{s.title}</A></li>)}
+        </ul>
+        <p className="mt-3 text-sm text-slate-400">Used for the Brain health tips: speed-of-processing training, reactive exercise, daily novelty, balance with a thinking task, and movement breaks.</p>
       </section>
 
       <section>

@@ -73,7 +73,7 @@ export const SPACE_RISKS: SpaceRisk[] = [
     inApp: [{ text: "Bone-loss projection", href: "/hazards" }, { text: "Exercise plan", href: "/exercise" }] },
   { id: "behavioral", name: "Behavioral conditions and psychiatric disorders", group: "behavior", url: ref("risk-of-behavioral-conditions-and-psychiatric-disorders"),
     summary: "Isolation, distance and other stressors can affect mental health.",
-    inApp: [{ text: "Mood and stress", href: "/indicators#mood" }, { text: "Reaction-time test", href: "/checkups/reaction" }, { text: "Journal and breathing break", href: "/journal" }] },
+    inApp: [{ text: "Mood and stress", href: "/indicators#mood" }, { text: "Reaction-time test", href: "/checkups/reaction" }, { text: "Brain health tips", href: "/tips?all=1&topic=brain" }, { text: "Journal and breathing break", href: "/journal" }] },
   { id: "teamwork", name: "Inadequate teamwork", group: "behavior", url: ref("risk-of-inadequate-teamwork"),
     summary: "Small crews in long isolation must communicate well and recover from tension.",
     inApp: [{ text: "Tag crew-relations entries in your journal", href: "/journal" }] },

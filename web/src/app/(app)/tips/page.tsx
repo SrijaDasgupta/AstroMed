@@ -36,7 +36,7 @@ export default async function TipsPage({ searchParams }: { searchParams: Promise
         <p className="text-xs uppercase tracking-widest text-sky-400">General</p>
         <h1 className="mt-1 text-2xl font-semibold">Health tips</h1>
         <p className="mt-1 text-slate-400">
-          Guidance from NASA&apos;s crew health standards and evidence reports, grouped by topic. Tips with a daily habit can be marked done for XP.
+          Guidance from NASA&apos;s crew health standards and evidence reports, plus peer-reviewed brain health research, grouped by topic. Tips with a daily habit can be marked done for XP.
         </p>
       </div>
 

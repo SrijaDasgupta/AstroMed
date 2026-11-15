@@ -1,7 +1,7 @@
 import type { MetricKey } from "@/lib/crew";
 import type { EnvironmentId } from "@/lib/environments";
 
-/** NASA documents the tips are drawn from (copies in data/raw/nasa). Page numbers are PDF pages. */
+/** Sources the tips are drawn from: NASA documents (copies in data/raw/nasa; page numbers are PDF pages), partner agencies and brain health research. */
 export const SOURCES = {
   sleep: {
     short: "Sleep evidence report",
@@ -61,6 +61,67 @@ export const SOURCES = {
     url: "https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp",
     web: true,
   },
+  // Brain health research (peer-reviewed papers, plus one university news release).
+  active20: {
+    short: "Coe et al. 2026, ACTIVE trial 20-year follow-up",
+    title: "Impact of cognitive training on claims-based diagnosed dementia over 20 years: evidence from the ACTIVE study. Alzheimer's & Dementia: Translational Research & Clinical Interventions, 2026",
+    url: "https://doi.org/10.1002/trc2.70197",
+    web: true,
+  },
+  inhance: {
+    short: "Attarha et al. 2025, INHANCE trial",
+    title: "Effects of computerized cognitive training on vesicular acetylcholine transporter levels using [18F]FEOBV PET in healthy older adults: results from the INHANCE randomized clinical trial. JMIR Serious Games, 2025",
+    url: "https://doi.org/10.2196/75161",
+    web: true,
+  },
+  openSkillReview: {
+    short: "Gu et al. 2019, open vs. closed skill exercise review",
+    title: "Effects of open versus closed skill exercise on cognitive function: a systematic review. Frontiers in Psychology, 2019",
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC6718477/",
+    web: true,
+  },
+  openSkillFnirs: {
+    short: "Li et al. 2024, open and closed skill fNIRS study",
+    title: "Comparative effectiveness of open and closed skill exercises on cognitive function in young adults: a fNIRS study. Scientific Reports, 2024",
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC11385981/",
+    web: true,
+  },
+  exerciseNeuro: {
+    short: "Zong et al. 2022, exercise and brain messenger systems",
+    title: "Understanding how physical exercise improves Alzheimer's disease: cholinergic and monoaminergic systems. Frontiers in Aging Neuroscience, 2022",
+    url: "https://www.frontiersin.org/journals/aging-neuroscience/articles/10.3389/fnagi.2022.869507/full",
+    web: true,
+  },
+  brandeisNovelty: {
+    short: "Brandeis University news, 2026 (wearables and novelty study)",
+    title: "New experiences in daily routine might improve brain health, study finds. Brandeis University, May 2026 (university news release)",
+    url: "https://www.brandeis.edu/stories/2026/may/wearables-study.html",
+    web: true,
+  },
+  dualTaskTrial: {
+    short: "Park 2021, dual-task training trial",
+    title: "Effects of cognitive-physical dual-task training on executive function and activity in the prefrontal cortex of older adults with mild cognitive impairment. Brain & NeuroRehabilitation, 2021",
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC9879379/",
+    web: true,
+  },
+  dualTaskReview: {
+    short: "Li et al. 2018, balance and dual-tasking review",
+    title: "Cognitive involvement in balance, gait and dual-tasking in aging: a focused review from a neuroscience of aging perspective. Frontiers in Neurology, 2018",
+    url: "https://www.frontiersin.org/journals/neurology/articles/10.3389/fneur.2018.00913/full",
+    web: true,
+  },
+  sittingBrainFlow: {
+    short: "Carter et al. 2018, walking breaks and brain blood flow",
+    title: "Regular walking breaks prevent the decline in cerebral blood flow associated with prolonged sitting. Journal of Applied Physiology, 2018",
+    url: "https://doi.org/10.1152/japplphysiol.00310.2018",
+    web: true,
+  },
+  sittingGlucose: {
+    short: "Dunstan et al. 2012, breaking up sitting and blood sugar",
+    title: "Breaking up prolonged sitting reduces postprandial glucose and insulin responses. Diabetes Care, 2012",
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC3329818/",
+    web: true,
+  },
 } as const;
 
 export type SourceId = keyof typeof SOURCES;
@@ -75,7 +136,8 @@ export type Topic =
   | "Radiation"
   | "Infection and hygiene"
   | "Spacewalks and pressure"
-  | "Medicine";
+  | "Medicine"
+  | "Brain health";
 
 export const TOPICS: { id: Topic; slug: string; blurb: string }[] = [
   { id: "Sleep and body clock", slug: "sleep", blurb: "Getting enough sleep, at the right time, in a good sleep space." },
@@ -88,6 +150,7 @@ export const TOPICS: { id: Topic; slug: string; blurb: string }[] = [
   { id: "Infection and hygiene", slug: "infection", blurb: "Lowering the chance of infection when immunity and microbes change in flight." },
   { id: "Spacewalks and pressure", slug: "eva", blurb: "Avoiding the bends and other pressure problems around spacewalks." },
   { id: "Medicine", slug: "medicine", blurb: "Planning the medical kit for long missions." },
+  { id: "Brain health", slug: "brain", blurb: "Keeping attention, memory and mood sharp: speed training, reactive exercise, novelty, balance and movement breaks." },
 ];
 
 export function topicBySlug(slug: string | undefined) {
@@ -102,10 +165,12 @@ export type Tip = {
   action: string;
   /** A small thing a person can do today, for daily missions. Omitted for planning-level tips. */
   habit?: string;
-  /** What the NASA document says, paraphrased. */
+  /** What the source says, paraphrased. */
   evidence: string;
   source: SourceId;
   page: number;
+  /** Further sources for the same tip. */
+  also?: { source: SourceId; page: number }[];
   /** Alerts on these measures bring this tip up on a crew member's page. */
   metrics: MetricKey[];
   environments: EnvironmentId[] | "all";
@@ -397,6 +462,66 @@ export const TIPS: Tip[] = [
     evidence: "Programs must train at least two crew members per vehicle as crew medical officers so a backup is always available, and crew medical training covers first aid, CPR, the medical kit, decompression sickness, CO₂ and toxic exposures.",
     source: "std1", page: 48,
     metrics: [], environments: SPACE,
+  },
+  {
+    id: "speed-training",
+    topic: "Brain health",
+    title: "Train processing speed, and keep up booster sessions",
+    action: "Do adaptive visual speed-of-processing drills: identify an object in the centre of a screen while spotting a target at the edge of your vision, with the task getting faster as you improve. Start with about 10–15 hours over 5–6 weeks (2–3 sessions a week of 30–60 minutes), then keep it up with short sessions of 10–30 minutes a few times a week, or booster blocks about 1 and 3 years later. The boosters matter.",
+    habit: "Spend 10 minutes on a speed-of-processing drill.",
+    evidence: "In the ACTIVE trial, older adults who did speed-of-processing training and at least one booster session were 25% less likely to be diagnosed with dementia over 20 years; speed training without boosters showed no benefit, and a 2026 reanalysis questions how strong the effect is. In the INHANCE trial, speed training raised a PET marker of acetylcholine, a brain messenger for attention and learning, in the anterior cingulate cortex.",
+    source: "active20", page: 0, also: [{ source: "inhance", page: 0 }],
+    metrics: [], environments: "all",
+  },
+  {
+    id: "open-skill-exercise",
+    topic: "Brain health",
+    title: "Add reactive, unpredictable exercise on top of your prescribed exercise",
+    action: "Keep every prescribed exercise session; they protect bone, muscle and heart. On top of them, aim for 30–45 minutes of \"open-skill\" activity 2–3 times a week at moderate effort: anything where you react to something that changes, such as table tennis, badminton, martial-arts drills, trail running, or catch and reaction games with a crewmate. In a small habitat, vary your moves and partners rather than repeating the same set.",
+    habit: "Play 10 minutes of catch or a reaction game with a crewmate.",
+    evidence: "A systematic review found that open-skill exercise, where you react to a changing environment, tended to help cognitive flexibility and inhibition more than closed-skill exercise such as running or cycling. A 2024 brain-imaging study found open-skill players had better inhibitory control, while closed-skill exercisers did better on working memory, so both have value. Exercise also supports the brain's acetylcholine, dopamine and norepinephrine systems.",
+    source: "openSkillReview", page: 0, also: [{ source: "openSkillFnirs", page: 0 }, { source: "exerciseNeuro", page: 0 }],
+    metrics: [], environments: "all",
+  },
+  {
+    id: "daily-novelty",
+    topic: "Brain health",
+    title: "Add a little novelty every day, especially in confinement",
+    action: "Aim for one new place and one new activity every day or two. In a habitat: work from a different module, take a new route, look out of a different window, learn a new manual skill, try a new recipe, or use your non-dominant hand for a routine task. Monotony is one of the stresses of long missions.",
+    habit: "Do one routine task somewhere new, or in a new way, today.",
+    evidence: "In a 2026 Brandeis University study, 180 people aged 18 to 90 wore fitness rings and phone GPS for three weeks. Days with more new places and activities came with better mood at every age, and brain scans linked the two kinds of variety to different brain systems, including the locus coeruleus, an early site of Alzheimer's changes. Reported in a university news release; the full paper was not yet available.",
+    source: "brandeisNovelty", page: 0,
+    metrics: ["moodPositive", "moodNegative"], environments: "all",
+  },
+  {
+    id: "dual-task-balance",
+    topic: "Brain health",
+    title: "Pair balance with a thinking task",
+    action: "2–3 times a week for 20–30 minutes, over at least 6–8 weeks (or in 2-minute bits through the day), stand on one leg, stand heel-to-toe or walk while doing a mental task: count back from 100 by 3s or 7s, name words in a category, or recall a list. Stay next to a handrail. In weightlessness, pair the thinking task with your bike or treadmill session instead. After a gravity change, check your balance with the Balance and stand-up test.",
+    habit: "Balance on one leg for 2 minutes while counting back from 100 by 7s.",
+    evidence: "In a trial in older adults with mild cognitive impairment, 16 sessions of combined thinking and physical training improved executive function more than computer training alone, with less prefrontal effort during testing. A review explains that balance and walking draw on the same brain networks as attention and working memory, more so with age.",
+    source: "dualTaskTrial", page: 0, also: [{ source: "dualTaskReview", page: 0 }],
+    metrics: [], environments: "all",
+  },
+  {
+    id: "movement-snacks",
+    topic: "Brain health",
+    title: "Break up sitting with 2-minute movement snacks",
+    action: "During long desk or console work, move for 2 minutes every 20–30 minutes: walk, climb stairs, or do squats and calf raises (in weightlessness, use your restraints or a bungee). Keep these breaks going after meals, when they also blunt the rise in blood sugar.",
+    habit: "Set a 30-minute timer during desk work and move for 2 minutes each time it rings.",
+    evidence: "In desk workers, 2 minutes of light walking every 30 minutes prevented the drop in brain blood flow seen after 4 hours of sitting. In overweight adults, 2-minute walking breaks every 20 minutes lowered the blood sugar rise after a meal drink by about 24% (light walking) to 30% (moderate walking).",
+    source: "sittingBrainFlow", page: 0, also: [{ source: "sittingGlucose", page: 0 }],
+    metrics: ["glucose"], environments: "all",
+  },
+  {
+    id: "track-alertness",
+    topic: "Brain health",
+    title: "Check your alertness, not just how you feel",
+    action: "Do the 3-minute reaction-time test at the same time each day, especially after short sleep, schedule shifts or high cabin CO₂. People often feel more alert than they are; a result slower than your usual is a cue to rest before safety-critical work.",
+    habit: "Do today's 3-minute reaction-time test.",
+    evidence: "The psychomotor vigilance task is the main way to measure the effect of sleep loss, and a 3-minute version (PVT-B) was developed for operational settings such as spaceflight.",
+    source: "sleep", page: 25,
+    metrics: ["sleepHours"], environments: "all",
   },
 ];
 

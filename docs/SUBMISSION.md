@@ -29,12 +29,13 @@ https://astro-med-two.vercel.app
 - **Projections**: radiation dose against NASA's 600 mSv career limit, bone loss, and a nutrition target from NASA's energy equation (with extra for spacewalks).
 - **Body map**: a clickable anatomical figure showing what spaceflight does to each part and the astronaut's own data.
 - **Photo import**: reads text from device screens, lab reports, dosimeters and sleep trackers on the device (no upload, no AI) and adds readings to My vitals. Smartwatch CSV import and lab report uploads too.
+- **Brain health**: tips on speed-of-processing training, reactive exercise, daily novelty, balance with a thinking task and 2-minute movement breaks, each citing peer-reviewed research and adapted for life in a habitat.
 - **Mental health and routine**: private journal with a self-harm safety check, breathing exercises and mini-games, medicine reminders (no dosing advice), habit missions, XP, ranks, streaks and badges.
 - **My summary**: physical, mental and routine health in one place, with suggestions and questions to take to the flight surgeon.
 - **Five mission environments**: Earth analog, low Earth orbit, lunar surface, Mars transit and Mars surface, each changing radiation, gravity and signal delay.
 
 **How it works**
-Rules, not a black box: every threshold is a fixed rule with a page-level citation to a NASA standard or evidence report, and 85 automated tests check the safety-critical ones (emergency detection, urgency levels, contact by distance, NASA's energy equation, cabin limits, decompression sickness signs, the self-harm check). Personal baselines start from real recordings in the MMASH dataset and switch to the astronaut's own readings after 7 days.
+Rules, not a black box: every threshold is a fixed rule with a page-level citation to a NASA standard or evidence report, and 87 automated tests check the safety-critical ones (emergency detection, urgency levels, contact by distance, NASA's energy equation, cabin limits, decompression sickness signs, the self-harm check). Personal baselines start from real recordings in the MMASH dataset and switch to the astronaut's own readings after 7 days.
 
 **Benefits**
 Astronauts get an immediate, explainable answer to "is this normal for me, here, and what should I do now?", which matters most when the ground is minutes away. Flight surgeons get cleaner self-reports and a summary of questions.
@@ -46,7 +47,7 @@ A crew-tested self-assessment tool for the Artemis and Mars era, validated with 
 TypeScript, Next.js 15, React 19, Tailwind CSS, Supabase (Postgres with row-level security, sign-in, private file storage), Vercel hosting, tesseract.js (on-device text reading), Lucide icons, Zod, Vitest. Works as an installable, offline-capable web app on phones and laptops.
 
 ## Use of Super Intelligence (SI)
-Yes. The idea, the choice of NASA sources and all product decisions are mine. I used an AI coding assistant (Claude, by Anthropic, through Claude Code) to help write the code, text and data files, and to extract and check numbers and page references from the NASA PDFs. I reviewed and tested all of it, including 85 automated tests. No AI-generated images, video or audio are used; all graphics are drawn in code. This is acknowledged in the project on the About page (https://astro-med-two.vercel.app/about), in the README, and in the site's metadata (an "ai-assistance" meta tag). Inside the app, advice comes from fixed rules, not AI; an optional photo analysis uses AI only if the user connects their own API key.
+Yes. The idea, the choice of NASA sources and all product decisions are mine. I used an AI coding assistant (Claude, by Anthropic, through Claude Code) to help write the code, text and data files, and to extract and check numbers and page references from the NASA PDFs. I reviewed and tested all of it, including 87 automated tests. No AI-generated images, video or audio are used; all graphics are drawn in code. This is acknowledged in the project on the About page (https://astro-med-two.vercel.app/about), in the README, and in the site's metadata (an "ai-assistance" meta tag). Inside the app, advice comes from fixed rules, not AI; an optional photo analysis uses AI only if the user connects their own API key.
 
 ## NASA Data
 - **NASA-STD-3001 Volume 1, Revision C: Crew Health**: the list of about 80 spaceflight conditions (Table E.2-2), monitoring requirements for vital signs, sleep, fitness, behavioral health, sensorimotor function, immune function and eye changes (SANS), the 600 mSv career radiation limit.
@@ -58,6 +59,7 @@ Yes. The idea, the choice of NASA sources and all product decisions are mine. I 
 ## Space Agency Partner Data and Other References
 - **Canadian Space Agency (CSA)**: "Monitoring radiation for astronaut health" (2026): neutrons are about 30% of the ISS radiation dose.
 - **MMASH dataset** (Rossi et al., 2020; PhysioNet, ODC-BY 1.0): real heart rate, heart rate variability, sleep and mood recordings used as starting baselines.
+- **Brain health research** (for the Brain health tips): Coe et al. 2026, ACTIVE 20-year follow-up (Alzheimer's & Dementia: TRCI); Attarha et al. 2025, INHANCE trial (JMIR Serious Games); Gu et al. 2019, open vs. closed skill exercise review (Frontiers in Psychology); Li et al. 2024, open/closed skill fNIRS study (Scientific Reports); Zong et al. 2022 (Frontiers in Aging Neuroscience); Brandeis University news release on novelty and brain health (2026); Park 2021, dual-task training trial (Brain & NeuroRehabilitation); Li et al. 2018, balance and dual-tasking review (Frontiers in Neurology); Carter et al. 2018, walking breaks and brain blood flow (Journal of Applied Physiology); Dunstan et al. 2012, breaking up sitting (Diabetes Care).
 - **Open-source software**: Next.js, React, TypeScript, Tailwind CSS, Supabase, tesseract.js and its English language data (Apache 2.0), Lucide icons (ISC), Zod, Vitest, Anthropic SDK (optional feature).
 - **Hosting**: Vercel. **Database**: Supabase.
 - No copyrighted images are used. No NASA logos or branding are used. No images of people.
