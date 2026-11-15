@@ -178,7 +178,7 @@ export const CHECKUPS: Checkup[] = [
     widget: "speed",
     hazard: "Isolation and confinement",
     steps: [
-      "Find a quiet spot and choose a session length. 10 minutes or more counts as today's brain health habit.",
+      "Find a quiet spot and choose a session length. 10 minutes or more counts as today's brain health habit. The drill uses brief flashes: skip it if flashing images have ever caused you a seizure or migraine.",
       "Keep your eyes on the centre cross. A rocket or a satellite flashes in the centre while a star flashes somewhere on the ring, then a pattern covers them.",
       "Say what was in the centre, then tap where the star was. Two right in a row makes the flash shorter; a miss makes it longer.",
       "Aim for 2–3 sessions a week. The studies used 10–15 hours over 5–6 weeks, then regular top-ups.",
@@ -232,6 +232,7 @@ export const CHECKUPS: Checkup[] = [
       "Have a crewmate nearby and stand next to something you can hold, in case you lose balance.",
       "Lie down quietly for 5 minutes. Take your heart rate and, if you can, blood pressure.",
       "Stand up and stay still for 3 minutes (use the stand timer below). Take your heart rate and blood pressure again. Sit or lie down at once if you feel faint.",
+      "If you have fainted since landing, or feel faint just sitting up, skip the standing part and contact your flight surgeon instead.",
       "Balance: stand on one leg, eyes open, arms by your sides. Use the stopwatch and record your best of 3 tries (stop at 30 s).",
       "Then stand heel-to-toe (one foot right in front of the other), close your eyes, and time how long you can hold it (stop at 30 s).",
     ],

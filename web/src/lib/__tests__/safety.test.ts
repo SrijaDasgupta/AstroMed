@@ -470,3 +470,35 @@ describe("hidden spaceflight risks", async () => {
     expect(r.findings.some((f) => /space anemia/.test(f.text))).toBe(true);
   });
 });
+
+describe("advice stays safe", async () => {
+  const { CONDITIONS } = await import("@/lib/space-conditions");
+  const { TIPS } = await import("@/lib/tips");
+  const { CHECKUPS } = await import("@/lib/checkups");
+  const { HIDDEN_RISKS } = await import("@/lib/hidden-risks");
+  const DRUGS = /\b(ibuprofen|aspirin|paracetamol|acetaminophen|naproxen|antihistamine|antibiotic|decongestant|melatonin|modafinil|steroid|opioid|\d+\s?mg|tablet|pill|capsule|dose of)\b/i;
+  const advice = [
+    ...CONDITIONS.flatMap((c) => [...c.care, ...c.watch]),
+    ...TIPS.flatMap((t) => [t.action, t.habit ?? ""]),
+    ...CHECKUPS.flatMap((c) => c.steps),
+    ...HIDDEN_RISKS.flatMap((r) => r.self),
+  ];
+  it("never names a medicine or a dose in self-care advice", () => {
+    for (const text of advice) expect(text, text).not.toMatch(DRUGS);
+  });
+  it("treats decompression sickness as urgent everywhere", () => {
+    expect(CONDITIONS.find((c) => c.id === "decompression")!.level).toBe("now");
+  });
+  it("warns against massaging a possible clot", () => {
+    expect(CONDITIONS.find((c) => c.id === "vte")!.care.join(" ")).toMatch(/Don't massage/);
+  });
+  it("gives every condition warning signs that make it more urgent", () => {
+    for (const c of CONDITIONS) if (c.level !== "now") expect(c.watch.length, c.id).toBeGreaterThan(0);
+  });
+  it("adds safety steps to the physical tests", () => {
+    const steps = (id: string) => CHECKUPS.find((c) => c.id === id)!.steps.join(" ");
+    expect(steps("balance")).toMatch(/crewmate nearby/);
+    expect(steps("balance")).toMatch(/fainted since landing/);
+    expect(steps("speed-drill")).toMatch(/flashing images/);
+  });
+});
