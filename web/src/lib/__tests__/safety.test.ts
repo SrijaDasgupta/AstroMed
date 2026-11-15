@@ -442,3 +442,31 @@ describe("speed drill", async () => {
     expect(f.every((x) => x.level === "none")).toBe(true);
   });
 });
+
+describe("hidden spaceflight risks", async () => {
+  const { HIDDEN_RISKS } = await import("@/lib/hidden-risks");
+  const { SOURCES } = await import("@/lib/tips");
+  const { evaluate, getCheckup } = await import("@/lib/checkups");
+  const member = CREW[0];
+  it("covers all five, each with detection, self-checks and citations", () => {
+    expect(HIDDEN_RISKS.map((r) => r.id)).toEqual(["jugular-clot", "sans", "latent-virus", "space-anemia", "kidney-stones"]);
+    for (const r of HIDDEN_RISKS) {
+      expect(r.detect.length).toBeGreaterThan(20);
+      expect(r.self.length).toBeGreaterThan(0);
+      expect(r.cites.length).toBeGreaterThan(0);
+      for (const c of r.cites) expect(SOURCES[c.source], `${r.id} ${c.source}`).toBeDefined();
+    }
+  });
+  it("flags neck swelling and kidney symptoms in the daily log the same day", () => {
+    expect(evaluateDailyLog(member, { neckSwelling: true }).level).toBe("today");
+    expect(evaluateDailyLog(member, { flankPain: true }).level).toBe("today");
+  });
+  it("recognises neck clots and anemia in plain words", () => {
+    expect(analyzeText("my neck is swollen on one side").matches.map((m) => m.condition.id)).toContain("vte");
+    expect(analyzeText("I get out of breath easily and look pale").matches.map((m) => m.condition.id)).toContain("space-anemia");
+  });
+  it("asks about anemia after a gravity change", () => {
+    const r = evaluate(getCheckup("balance")!, member, { dizzyStanding: false, fainted: false, vertigo: false, tiredBreathless: true });
+    expect(r.findings.some((f) => /space anemia/.test(f.text))).toBe(true);
+  });
+});

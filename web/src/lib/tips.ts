@@ -122,6 +122,49 @@ export const SOURCES = {
     url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC3329818/",
     web: true,
   },
+  // Hidden spaceflight risks: NASA brief and peer-reviewed spaceflight studies.
+  nasaFundamentals: {
+    short: "NASA: Fundamentals of Human Health (urinary health brief)",
+    title: "Fundamentals of Human Health, NASA Office of the Chief Health and Medical Officer: medical technical briefs including Urinary Health",
+    url: "https://www.nasa.gov/reference/fundamentals-of-human-health/",
+    web: true,
+  },
+  jugularVte: {
+    short: "Marshall-Goebel et al. 2019, jugular flow and clots in space",
+    title: "Assessment of jugular venous blood flow stasis and thrombosis during spaceflight. JAMA Network Open, 2019",
+    url: "https://doi.org/10.1001/jamanetworkopen.2019.15011",
+    web: true,
+  },
+  sansPredict: {
+    short: "Brunstetter et al. 2025, predicting SANS",
+    title: "Predicting spaceflight-associated neuro-ocular syndrome in International Space Station astronauts. JAMA Ophthalmology, 2025",
+    url: "https://doi.org/10.1001/jamaophthalmol.2025.3406",
+    web: true,
+  },
+  latentVirus: {
+    short: "Mehta et al. 2017, latent virus reactivation on the ISS",
+    title: "Latent virus reactivation in astronauts on the International Space Station. npj Microgravity, 2017",
+    url: "https://doi.org/10.1038/s41526-017-0015-y",
+    web: true,
+  },
+  spaceAnemia: {
+    short: "Trudel et al. 2022, hemolysis and space anemia",
+    title: "Hemolysis contributes to anemia during long-duration space flight. Nature Medicine, 2022",
+    url: "https://doi.org/10.1038/s41591-021-01637-7",
+    web: true,
+  },
+  stoneRisk: {
+    short: "Goodenow-Messman et al. 2022, kidney stone risk in flight",
+    title: "Numerical characterization of astronaut CaOx renal stone incidence rates to quantify in-flight and post-flight relative risk. npj Microgravity, 2022",
+    url: "https://doi.org/10.1038/s41526-021-00187-z",
+    web: true,
+  },
+  boneKidney: {
+    short: "Buckey et al. 2023, bone loss and kidney stone risk",
+    title: "Bone loss and kidney stone risk in weightlessness. Current Opinion in Nephrology and Hypertension, 2023",
+    url: "https://doi.org/10.1097/mnh.0000000000000863",
+    web: true,
+  },
 } as const;
 
 export type SourceId = keyof typeof SOURCES;

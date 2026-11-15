@@ -142,6 +142,7 @@ export const CHECKUPS: Checkup[] = [
     why: [
       { text: "NASA requires periodic monitoring for Spaceflight Associated Neuro-Ocular Syndrome (SANS).", source: "std1", page: 20 },
       { text: "Crews carry glasses with stronger lenses because SANS can change eyesight in flight.", source: "std1", page: 21 },
+      { text: "Among 16 NASA astronauts who flew two long ISS missions, SANS on the first mission predicted SANS on the second.", source: "sansPredict", page: 0 },
     ],
   },
   {
@@ -244,6 +245,7 @@ export const CHECKUPS: Checkup[] = [
       { id: "dizzyStanding", label: "Did you feel dizzy, light-headed or see grey when standing?", kind: "yesno" },
       { id: "fainted", label: "Did you faint or nearly faint?", kind: "yesno" },
       { id: "vertigo", label: "Room spinning, motion sickness, or trouble judging movement?", kind: "yesno" },
+      { id: "tiredBreathless", label: "Unusually tired, or out of breath with light effort?", kind: "yesno" },
     ],
     why: [
       { text: "NASA requires sensorimotor function (balance, walking, eye-hand coordination) to be assessed during and after gravity changes, such as landing, capsule egress and surface spacewalks.", source: "std1", page: 34 },
@@ -303,6 +305,7 @@ export const CHECKUPS: Checkup[] = [
     why: [
       { text: "NASA's preventive care includes optimising and periodically monitoring immune function.", source: "std1", page: 20 },
       { text: "Stress in spaceflight has been linked to dormant viruses reactivating, such as cold sores and shingles.", source: "behavioral", page: 31 },
+      { text: "On long ISS missions, Epstein-Barr, chickenpox-shingles and cytomegalovirus were shed more often and in larger amounts than on short flights, mostly without symptoms.", source: "latentVirus", page: 0 },
       { text: "Cleaning and sanitising hygiene equipment controls microbial growth on the spacecraft.", source: "std2", page: 122 },
     ],
   },

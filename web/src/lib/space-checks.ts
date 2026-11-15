@@ -18,6 +18,7 @@ export function balanceFindings(a: Answers): Finding[] {
   const one = num(a, "singleLegSec"), tandem = num(a, "tandemSec");
   const short = [one !== undefined && one < 10 && `one leg ${one} s`, tandem !== undefined && tandem < 10 && `heel-to-toe ${tandem} s`].filter(Boolean);
   if (short.length) f.push({ level: "routine", text: `Balance is reduced (${short.join(", ")}; under 10 s). Take extra care on ladders, hatches and uneven ground, hold handrails, and avoid driving a rover until it improves.` });
+  if (yes(a, "tiredBreathless")) f.push({ level: "routine", text: "Unusually tired or out of breath with light effort. Spaceflight speeds up red blood cell destruction (space anemia), which adds to dizziness and fatigue after landing; ask for a blood count. Breathless at rest or chest pain: contact now." });
   if (yes(a, "vertigo")) f.push({ level: "routine", text: "Spinning, motion sickness or misjudging movement. Your balance system is still adapting: move your head slowly and avoid tasks where a fall or misjudgment is dangerous." });
   if (f.length === 0 && (hrL !== undefined || one !== undefined || tandem !== undefined)) f.push({ level: "none", text: "No signs of orthostatic intolerance or reduced balance in this test." });
   return f;

@@ -81,11 +81,11 @@ export default function AboutPage() {
       </section>
 
       <section>
-        <h2 className="text-xl font-semibold">Brain health research</h2>
+        <h2 className="text-xl font-semibold">Spaceflight and brain health research</h2>
         <ul className="mt-3 space-y-2 text-sm text-slate-300">
           {research.map((s) => <li key={s.url}><A href={s.url}>{s.title}</A></li>)}
         </ul>
-        <p className="mt-3 text-sm text-slate-400">Used for the Brain health tips: speed-of-processing training, reactive exercise, daily novelty, balance with a thinking task, and movement breaks.</p>
+        <p className="mt-3 text-sm text-slate-400">Used for the Brain health tips and drill, and for the hidden spaceflight risks: clots in the neck veins, SANS, silent virus reactivation, space anemia and kidney stones.</p>
       </section>
 
       <section>

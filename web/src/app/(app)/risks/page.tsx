@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { ExternalLink, Globe2 } from "lucide-react";
+import { ExternalLink, EyeOff, Globe2 } from "lucide-react";
+import { HIDDEN_RISKS } from "@/lib/hidden-risks";
+import { pageHref, pageLabel, SOURCES } from "@/lib/tips";
 import { HAZARDS, type Hazard } from "@/lib/space-conditions";
 import { HAZARD_PAGES, HRP_HAZARDS_URL, HRP_RESEARCH_URL, HRP_RISKS_URL, PARTNER_RESOURCES, RISK_GROUPS, SPACE_RISKS } from "@/lib/space-risks";
 import { requireViewer } from "@/lib/session";
@@ -63,6 +65,33 @@ export default async function RisksPage() {
             </ul>
           </div>
         ))}
+      </section>
+
+      <section id="hidden">
+        <h2 className="flex items-center gap-2 text-lg font-medium"><EyeOff className="h-5 w-5 text-slate-400" aria-hidden />Hidden risks: problems that can start without symptoms</h2>
+        <p className="mt-1 max-w-3xl text-sm text-slate-400">These can develop silently, so flight surgeons look for them with tests. AstroMed can&apos;t do those tests, but it tracks the early signs you can notice and tells you when to ask.</p>
+        <ul className="mt-3 grid gap-3 lg:grid-cols-2">
+          {HIDDEN_RISKS.map((r) => (
+            <li key={r.id} id={r.id} className="scroll-mt-20 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+              <h3 className="font-medium text-white">{r.name}</h3>
+              <p className="mt-2 text-sm text-slate-300">{r.what}</p>
+              <p className="mt-3 text-xs uppercase tracking-widest text-slate-500">How it&apos;s detected</p>
+              <p className="mt-1 text-sm text-slate-300">{r.detect}</p>
+              <p className="mt-3 text-xs uppercase tracking-widest text-slate-500">What you can do</p>
+              <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-slate-300">{r.self.map((x) => <li key={x}>{x}</li>)}</ul>
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {r.links.map((l) => (
+                  <li key={l.href + l.text}><Link href={l.href} className="inline-block rounded-full bg-white/5 px-2.5 py-1 text-xs text-sky-300 hover:bg-white/10 hover:text-sky-200">{l.text}</Link></li>
+                ))}
+              </ul>
+              <ul className="mt-3 space-y-1">
+                {r.cites.map((c) => (
+                  <li key={c.source}><Ext href={pageHref(SOURCES[c.source], c.page)} className="text-xs text-slate-400 underline decoration-white/20 underline-offset-2">{pageLabel(SOURCES[c.source], c.page)}</Ext></li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section>

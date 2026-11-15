@@ -56,6 +56,8 @@ export const SYMPTOMS = [
   { id: "blurred", label: "Change in vision" },
   { id: "rash", label: "Rash or skin problem" },
   { id: "coldSore", label: "Cold sore, mouth ulcer or blisters" },
+  { id: "neckSwelling", label: "Swelling, heaviness or pain in the neck, face or one arm" },
+  { id: "flankPain", label: "Pain in your side or back, or blood in your urine" },
 ];
 
 const NUMBERS = DAILY_SECTIONS.flatMap((s) => s.numbers ?? []);
@@ -107,6 +109,8 @@ export function evaluateDailyLog(member: CrewMember, a: Answers, kcalTarget?: nu
   if (a.backPain) extra.push({ level: "routine", text: "Back pain. Common while adapting to weightlessness; mention it if it continues." });
   if (a.rash) extra.push({ level: "routine", text: "Rash or skin problem. Report it if it spreads or looks infected." });
   if (a.coldSore) extra.push({ level: "routine", text: "Cold sore, mouth ulcer or blisters. Stress in spaceflight has been linked to dormant viruses reactivating, so mention it; report blisters in a band on one side of the body today (Behavioral health evidence report, p. 31)." });
+  if (a.neckSwelling) extra.push({ level: "today", text: "Swelling, heaviness or pain in the neck, face or one arm. Blood can pool in the neck veins in weightlessness, and clots there have been found in astronauts; contact the flight surgeon today and ask about a neck-vein ultrasound. Sudden breathlessness or chest pain: contact now." });
+  if (a.flankPain) extra.push({ level: "today", text: "Pain in your side or back, or blood in your urine, can be a kidney stone. Drink water steadily and contact the flight surgeon today. Severe pain, fever or not being able to pass urine: contact now." });
   if (a.congestion) extra.push({ level: "none", text: "Blocked nose or sore throat. Take your temperature to check for fever." });
   if (typeof a.kcal === "number" && kcalTarget) {
     const need = kcalTarget + 200 * (typeof a.evaHours === "number" ? a.evaHours : 0);
