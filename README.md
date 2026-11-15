@@ -19,7 +19,7 @@ Built for the NASA Space Apps Challenge brief *"create a visual tool that helps 
 - Paste-ready project page text: [docs/SUBMISSION.md](docs/SUBMISSION.md); 30-second video script: [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md)
 
 ## Use of AI
-The idea, the choice of NASA sources and all product decisions are the team's own. Code, text and data files were written with the help of an AI coding assistant (Claude, by Anthropic) and reviewed and tested by the team. The figure image on the My body page is AI-generated and carries a visible "AI-generated image" label; all other graphics are drawn in code, and no AI-generated video or audio is used. This is also stated on the /about page and in the site metadata. Inside the app, advice comes from fixed NASA-cited rules, not AI.
+The idea, the choice of NASA sources and all product decisions are the team's own. Code, text and data files were written with the help of an AI coding assistant (Claude, by Anthropic) and reviewed and tested by the team. No AI-generated images, video or audio are used. This is also stated on the /about page and in the site metadata. Inside the app, advice comes from fixed NASA-cited rules, not AI.
 
 ## How AstroMed answers the challenge
 
