@@ -13,7 +13,7 @@ export default async function CheckupPage({ params }: { params: Promise<{ id: st
   if (!checkup) notFound();
   const viewer = await requireViewer();
   // Earlier results for checks whose history isn't charted elsewhere.
-  const history = checkup.id === "reaction" || checkup.id === "cabin" || checkup.id === "balance"
+  const history = checkup.id === "reaction" || checkup.id === "cabin" || checkup.id === "balance" || checkup.id === "speed-drill"
     ? (await loadLogs(viewer)).logs.filter((l) => l.checkupId === checkup.id && l.answers).slice(0, 8)
     : [];
   const numberFields = checkup.fields.filter((f) => f.kind === "number");

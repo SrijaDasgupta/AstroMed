@@ -1,6 +1,7 @@
 import { getMetric, normalRange, type CrewMember, type MetricKey } from "@/lib/crew";
 import { afterEvaFindings, balanceFindings, immuneFindings } from "@/lib/space-checks";
 import { reactionFindings } from "@/lib/reaction";
+import { drillFindings } from "@/lib/speed-drill";
 import type { SourceId } from "@/lib/tips";
 
 export type Field =
@@ -19,7 +20,7 @@ export type Checkup = {
   /** Why this check exists, with the NASA page it comes from. */
   why: { text: string; source: SourceId; page: number }[];
   /** An interactive tool shown with the steps: the reaction-time test fills the form, the Amsler grid is a visual aid. */
-  widget?: "reaction" | "amsler" | "timer";
+  widget?: "reaction" | "amsler" | "timer" | "speed";
   /** Checks that aren't on a fixed schedule: after a spacewalk, or when needed (after a gravity change). */
   when?: "after-eva" | "as-needed";
   /** Every field is optional, but at least one must be filled. */
@@ -169,6 +170,30 @@ export const CHECKUPS: Checkup[] = [
     ],
   },
   {
+    id: "speed-drill",
+    title: "Speed drill",
+    summary: "Brain training: name the object in the centre and spot the star at the edge, faster and faster.",
+    everyDays: 3,
+    widget: "speed",
+    hazard: "Isolation and confinement",
+    steps: [
+      "Find a quiet spot and choose a session length. 10 minutes or more counts as today's brain health habit.",
+      "Keep your eyes on the centre cross. A rocket or a satellite flashes in the centre while a star flashes somewhere on the ring, then a pattern covers them.",
+      "Say what was in the centre, then tap where the star was. Two right in a row makes the flash shorter; a miss makes it longer.",
+      "Aim for 2–3 sessions a week. The studies used 10–15 hours over 5–6 weeks, then regular top-ups.",
+    ],
+    fields: [
+      { id: "sdThresholdMs", label: "Flash time reached", kind: "number", unit: "ms", min: 20, max: 2000, step: 1, filledByTest: true },
+      { id: "sdAccuracy", label: "Accuracy", kind: "number", unit: "%", min: 0, max: 100, step: 1, filledByTest: true },
+      { id: "sdTrials", label: "Rounds", kind: "number", unit: "", min: 5, max: 2000, step: 1, filledByTest: true },
+      { id: "sdMinutes", label: "Minutes", kind: "number", unit: "min", min: 1, max: 60, step: 1, filledByTest: true },
+    ],
+    why: [
+      { text: "In the ACTIVE trial, speed-of-processing training with booster sessions was followed by 25% fewer dementia diagnoses over 20 years; without boosters there was no difference.", source: "active20", page: 0 },
+      { text: "In the INHANCE trial, speed training raised a PET marker of acetylcholine, a brain messenger for attention and learning.", source: "inhance", page: 0 },
+    ],
+  },
+  {
     id: "cabin",
     title: "Cabin air and noise",
     summary: "CO₂, temperature, humidity and noise where you live and work.",
@@ -308,7 +333,7 @@ export type Finding = { level: Escalation; text: string };
  * Absolute limits are general clinical thresholds chosen for this demo, not from the NASA
  * documents. A real program's flight surgeons would set their own.
  */
-export function evaluate(checkup: Checkup, member: CrewMember, a: Answers, context?: { priorReaction?: number[] }): { level: Escalation; findings: Finding[] } {
+export function evaluate(checkup: Checkup, member: CrewMember, a: Answers, context?: { priorReaction?: number[]; priorDrill?: number[] }): { level: Escalation; findings: Finding[] } {
   const f: Finding[] = [];
   const num = (k: string) => (typeof a[k] === "number" ? (a[k] as number) : undefined);
   const yes = (k: string) => a[k] === true;
@@ -398,6 +423,7 @@ export function evaluate(checkup: Checkup, member: CrewMember, a: Answers, conte
   if (checkup.id === "balance") f.push(...balanceFindings(a));
   if (checkup.id === "after-eva") f.push(...afterEvaFindings(a));
   if (checkup.id === "immune") f.push(...immuneFindings(a));
+  if (checkup.id === "speed-drill") f.push(...drillFindings(a, context?.priorDrill ?? []));
 
   const level = f.reduce<Escalation>((l, x) => (ESCALATION_RANK[x.level] > ESCALATION_RANK[l] ? x.level : l), "none");
   f.sort((x, y) => ESCALATION_RANK[y.level] - ESCALATION_RANK[x.level]);

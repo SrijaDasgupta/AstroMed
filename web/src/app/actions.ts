@@ -121,12 +121,20 @@ export async function submitCheckup(_prev: CheckupState, formData: FormData): Pr
   if ("error" in parsed) return { error: parsed.error };
 
   // The reaction test is compared with the person's own earlier results.
-  let priorReaction: number[] | undefined;
-  if (checkup.id === "reaction") {
+  let priorReaction: number[] | undefined, priorDrill: number[] | undefined;
+  if (checkup.id === "reaction" || checkup.id === "speed-drill") {
     const { loadLogs } = await import("@/lib/checkup-store");
-    priorReaction = (await loadLogs(viewer)).logs.filter((l) => l.checkupId === "reaction" && typeof l.answers?.rtMedianMs === "number").map((l) => l.answers!.rtMedianMs as number);
+    const logs = (await loadLogs(viewer)).logs;
+    const prior = (id: string, key: string) => logs.filter((l) => l.checkupId === id && typeof l.answers?.[key] === "number").map((l) => l.answers![key] as number);
+    priorReaction = prior("reaction", "rtMedianMs");
+    priorDrill = prior("speed-drill", "sdThresholdMs");
   }
-  const { level, findings } = evaluate(checkup, member, parsed.answers, { priorReaction });
+  const { level, findings } = evaluate(checkup, member, parsed.answers, { priorReaction, priorDrill });
+  // 10 minutes or more of speed training completes the brain health habit for today.
+  if (checkup.id === "speed-drill" && typeof parsed.answers.sdMinutes === "number" && parsed.answers.sdMinutes >= 10) {
+    const { setTipDone } = await import("@/lib/profile-store");
+    await setTipDone(viewer, "speed-training", true);
+  }
   const { problem } = await saveLog(viewer, { crewId: member.id, checkupId: checkup.id, escalation: level, answers: parsed.answers });
   revalidatePath("/", "layout");
   const { contactText } = await import("@/lib/contact");

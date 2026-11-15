@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, ClipboardCheck, Eye, Radiation, Rocket, ShieldPlus, Timer, Wind } from "lucide-react";
+import { Activity, Brain, ClipboardCheck, Eye, Radiation, Rocket, ShieldPlus, Timer, Wind } from "lucide-react";
 import { EscalationBadge } from "@/components/EscalationBadge";
 import { ago } from "@/lib/checkup-schedule";
 import { MetricChart } from "@/components/MetricChart";
@@ -63,7 +63,7 @@ export default async function MyVitalsPage() {
   // Latest space-specific checks: alertness, cabin air and vision.
   const lastOf = (id: string) => logs.find((l) => l.checkupId === id);
   const reaction = lastOf("reaction"), cabin = lastOf("cabin"), vision = lastOf("vision");
-  const balance = lastOf("balance"), afterEva = lastOf("after-eva"), immune = lastOf("immune");
+  const balance = lastOf("balance"), afterEva = lastOf("after-eva"), immune = lastOf("immune"), drill = lastOf("speed-drill");
   const status = (l: typeof cabin) => (l!.escalation === "none" ? "Nothing to report" : "Something to follow up");
   const n = (l: typeof cabin, k: string) => (typeof l?.answers?.[k] === "number" ? (l.answers[k] as number) : undefined);
   const cabinParts = cabin ? [
@@ -78,6 +78,7 @@ export default async function MyVitalsPage() {
     { id: "vision", icon: Eye, title: "Vision (SANS)", log: vision, text: vision ? (vision.escalation === "none" ? "No changes reported" : "Changes reported") : "Amsler grid and near-vision card" },
     { id: "balance", icon: Activity, title: "Balance and standing", log: balance, text: balance ? [n(balance, "hrLying") !== undefined && n(balance, "hrStanding") !== undefined && `Heart rate +${n(balance, "hrStanding")! - n(balance, "hrLying")!} bpm standing`, n(balance, "singleLegSec") !== undefined && `one leg ${n(balance, "singleLegSec")} s`].filter(Boolean).join(" · ") || status(balance) : "After a gravity change" },
     { id: "after-eva", icon: Rocket, title: "After a spacewalk", log: afterEva, text: afterEva ? status(afterEva) : "Bends, hand and suit injuries" },
+    { id: "speed-drill", icon: Brain, title: "Brain training", log: drill, text: drill ? `Flash time ${n(drill, "sdThresholdMs") ?? "—"} ms, ${n(drill, "sdAccuracy") ?? "—"}% right` : "Speed drill, 2–3 times a week" },
     { id: "immune", icon: ShieldPlus, title: "Immune and infection", log: immune, text: immune ? status(immune) : "Weekly infection and virus check" },
   ];
 

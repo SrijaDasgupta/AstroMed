@@ -4,16 +4,16 @@ import Link from "next/link";
 import { useActionState, useCallback, useState } from "react";
 import { AmslerGrid } from "@/components/checks/AmslerGrid";
 import { ReactionTest } from "@/components/checks/ReactionTest";
+import { SpeedDrill } from "@/components/checks/SpeedDrill";
 import { StandTimer } from "@/components/checks/StandTimer";
-import type { ReactionResult } from "@/lib/reaction";
 import { submitCheckup, type CheckupState } from "@/app/actions";
 import { EscalationBadge, ESCALATION_COLOR } from "@/components/EscalationBadge";
 import type { Checkup, Field } from "@/lib/checkups";
 
 export function CheckupForm({ checkupId, fields, widget }: { checkupId: string; fields: Field[]; widget?: Checkup["widget"] }) {
   const [state, action, pending] = useActionState<CheckupState, FormData>(submitCheckup, {});
-  const [test, setTest] = useState<ReactionResult>();
-  const onDone = useCallback((r: ReactionResult) => setTest(r), []);
+  const [test, setTest] = useState<Record<string, number>>();
+  const onDone = useCallback((r: Record<string, number>) => setTest(r), []);
   const onReset = useCallback(() => setTest(undefined), []);
   const needsTest = fields.some((f) => f.kind === "number" && f.filledByTest);
 
@@ -51,6 +51,7 @@ export function CheckupForm({ checkupId, fields, widget }: { checkupId: string; 
     {widget === "reaction" && <ReactionTest onDone={onDone} onReset={onReset} />}
     {widget === "amsler" && <AmslerGrid />}
     {widget === "timer" && <StandTimer />}
+    {widget === "speed" && <SpeedDrill onDone={onDone} onReset={onReset} />}
     <form action={action} className="space-y-5 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
       <input type="hidden" name="checkupId" value={checkupId} />
       {fields.map((f) => (
@@ -58,7 +59,7 @@ export function CheckupForm({ checkupId, fields, widget }: { checkupId: string; 
           {f.kind === "number" && f.filledByTest ? (
             <label className="flex items-center justify-between gap-3 text-sm">
               <span className="text-slate-300">{f.label}</span>
-              <input name={f.id} readOnly required tabIndex={-1} value={test ? String(test[f.id as keyof ReactionResult]) : ""} placeholder="—"
+              <input name={f.id} readOnly required tabIndex={-1} value={test?.[f.id] !== undefined ? String(test[f.id]) : ""} placeholder="—"
                 className="w-24 rounded-lg border border-white/10 bg-transparent px-3 py-1.5 text-right tabular-nums text-slate-100 outline-none" />
               <span className="w-6 text-slate-400">{f.unit}</span>
             </label>

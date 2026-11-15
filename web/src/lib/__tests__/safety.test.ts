@@ -413,3 +413,32 @@ describe("brain health tips", async () => {
     expect(TIPS.find((t) => t.id === "open-skill-exercise")!.action).toMatch(/Keep every prescribed exercise session/);
   });
 });
+
+describe("speed drill", async () => {
+  const { nextDisplay, makeTrial, isCorrect, summarizeDrill, drillFindings, MIN_MS, MAX_MS, DISTRACTOR_MS } = await import("@/lib/speed-drill");
+  it("shortens the flash after 2 right in a row and lengthens it after a miss", () => {
+    expect(nextDisplay(500, true, 1)).toBe(500);
+    expect(nextDisplay(500, true, 2)).toBe(425);
+    expect(nextDisplay(500, false, 0)).toBe(600);
+    expect(nextDisplay(MIN_MS, true, 2)).toBe(MIN_MS);
+    expect(nextDisplay(MAX_MS, false, 0)).toBe(MAX_MS);
+  });
+  it("adds distractors once the flash is short, and needs both answers right", () => {
+    expect(makeTrial(500).distractors).toBe(false);
+    expect(makeTrial(DISTRACTOR_MS).distractors).toBe(true);
+    const t = { displayMs: 300, centre: "rocket" as const, position: 3, distractors: false };
+    expect(isCorrect(t, { centre: "rocket", position: 3 })).toBe(true);
+    expect(isCorrect(t, { centre: "satellite", position: 3 })).toBe(false);
+    expect(isCorrect(t, { centre: "rocket", position: 4 })).toBe(false);
+  });
+  it("summarises the level reached and is never an alert", () => {
+    const trials = [500, 500, 425, 425, 361, 361, 307, 368, 368, 313, 313, 266].map((displayMs, i) => ({ displayMs, correct: i % 3 !== 2 }));
+    const r = summarizeDrill(trials, 10.2)!;
+    expect(r).toMatchObject({ sdTrials: 12, sdMinutes: 10, sdAccuracy: 67 });
+    expect(r.sdThresholdMs).toBe(361);
+    expect(summarizeDrill(trials.slice(0, 3), 1)).toBeUndefined();
+    const f = drillFindings({ sdThresholdMs: 200, sdMinutes: 10 }, [250, 240]);
+    expect(f[0].text).toMatch(/New best/);
+    expect(f.every((x) => x.level === "none")).toBe(true);
+  });
+});
