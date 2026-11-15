@@ -1,6 +1,6 @@
 # AstroMed: slide outline
 
-The submitted 7-slide demo deck is live at https://astro-med-two.vercel.app/slides (source: web/src/app/slides/page.tsx; print it to PDF in landscape for one slide per page). This outline is the talking-point version.
+Talking points for the demo slides (uploaded separately, not part of the app). The Space Apps limit is 7 slides including the title and intro, and they must show the team name, team members and the challenge.
 
 ## 1. The problem
 - Missions are getting longer and farther: Artemis to the Moon, then Mars.

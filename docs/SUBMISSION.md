@@ -11,8 +11,7 @@ AstroMed
 AstroMed is a visual health self-assessment web app for astronauts. On the way to Mars, a message to Earth takes up to 24 minutes each way, so crews must check their own health and act first. Astronauts log vitals, sleep, food, exercise and mood in under a minute, or follow guided checkups made for space: a 3-minute reaction-time test, a cabin air and noise check, an Amsler grid for eye changes, a balance and stand-up test after gravity changes, and an after-spacewalk check for decompression sickness. Each reading is shown against the astronaut's own normal range and mission, colour-coded with an icon and a label, and every result comes with one of four urgency levels worded for their distance from Earth. All thresholds and advice cite NASA's crew health standards and Human Research Program evidence, covering all five hazards and 17 risks of human spaceflight. It gives guidance on self-care and health improvement, never diagnoses or recommends medicines, and works on phones and offline.
 
 ## Link to Project Demo
-https://astro-med-two.vercel.app/slides
-(7 slides, including title and introduction. Public, no login.)
+Paste the public link to the demo you upload yourself (up to 7 slides including title and intro, or a video of 30 seconds or less). The slides must show the team name (AstroMed), team member (Srija Dasgupta) and the challenge.
 
 ## Link to Final Project
 https://astro-med-two.vercel.app
@@ -70,4 +69,4 @@ Yes. The idea, the choice of NASA sources and all product decisions are mine. I 
 - [ ] Open both links in a private browser window to confirm they work without a login.
 - [ ] Check the boxes for "Terms and Conditions" and "Confirm All Work is Original".
 - [ ] Optional: request a FortiGuard Web Filter Classification for astro-med-two.vercel.app (Category: web-based application or education; Company Name: N/A) so judges' networks don't block it.
-- [ ] Optional: record the 30-second video in DEMO_SCRIPT.md if you'd rather submit a video than the slides.
+- [ ] Optional: record the 30-second video in DEMO_SCRIPT.md if you'd rather submit a video than slides.

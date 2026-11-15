@@ -15,7 +15,6 @@ Built for the NASA Space Apps Challenge brief *"create a visual tool that helps 
 
 ## Space Apps submission
 - Live app: https://astro-med-two.vercel.app (press **Try the demo**, no account needed)
-- Demo slides (7): https://astro-med-two.vercel.app/slides
 - Data, sources and AI use: https://astro-med-two.vercel.app/about
 - Paste-ready project page text: [docs/SUBMISSION.md](docs/SUBMISSION.md); 30-second video script: [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md)
 

@@ -51,7 +51,6 @@ export default async function Home() {
       </section>
       <footer className="flex flex-wrap gap-x-5 gap-y-2 border-t border-white/10 pt-5 text-sm text-slate-400">
         <span>NASA Space Apps Challenge 2026</span>
-        <Link href="/slides" className="hover:text-white">Demo slides</Link>
         <Link href="/about" className="hover:text-white">Data, sources and AI use</Link>
       </footer>
     </main>

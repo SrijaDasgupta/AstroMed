@@ -43,7 +43,6 @@ export default function AboutPage() {
     <main className="mx-auto max-w-3xl space-y-10 px-6 py-8">
       <header className="flex items-center justify-between">
         <Link href="/"><Logo className="text-lg" /></Link>
-        <Link href="/slides" className="text-sm text-slate-300 hover:text-white">Slides</Link>
       </header>
 
       <section>
