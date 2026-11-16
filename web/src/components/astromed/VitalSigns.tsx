@@ -19,7 +19,7 @@ const BEATS = 4;
 
 /**
  * Illustrative ECG sweep paced at the person's own heart rate, with their latest readings.
- * AstroMed does not record an ECG, so the trace is labelled as an illustration.
+ * AstroMed does not record an ECG, so the trace is labeled as an illustration.
  */
 export function VitalSigns({ readings, heartRateBpm }: { readings: readonly VitalReading[]; heartRateBpm?: number | null }) {
   const [paused, setPaused] = useState(false);

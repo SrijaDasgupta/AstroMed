@@ -101,7 +101,7 @@ export function nextStep(key: string, direction: "high" | "low"): string {
     case "restingHr":
       return direction === "high" ? "Take it again first thing tomorrow, before getting up, and drink to thirst today." : "Re-check at rest; a low resting rate is often just fitness, but mention it if you also feel dizzy.";
     case "hrv":
-      return "Prioritise sleep and an easier training day, then compare tomorrow's reading.";
+      return "Prioritize sleep and an easier training day, then compare tomorrow's reading.";
     case "temperature":
       return "Re-check in 2–4 hours and note any symptoms; rest and keep drinking.";
     case "glucose":

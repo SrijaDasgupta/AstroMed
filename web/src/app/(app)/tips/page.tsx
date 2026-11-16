@@ -42,7 +42,7 @@ export default async function TipsPage({ searchParams }: { searchParams: Promise
 
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2 text-sm" role="group" aria-label="Which mission">
-          <Link href={href({ topic: topic?.slug })} aria-current={!showAll ? "true" : undefined} className={chip(!showAll)}>For {env.name.toLowerCase()}</Link>
+          <Link href={href({ topic: topic?.slug })} aria-current={!showAll ? "true" : undefined} className={chip(!showAll)}>For {env.name}</Link>
           <Link href={href({ all: true, topic: topic?.slug })} aria-current={showAll ? "true" : undefined} className={chip(showAll)}>All missions</Link>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-sm" role="group" aria-label="Topic">

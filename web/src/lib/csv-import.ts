@@ -1,6 +1,6 @@
 /**
  * Import daily readings from a CSV exported by a smartwatch or health app. Columns are matched
- * by name; units are converted where they can be recognised. Pure functions, no I/O.
+ * by name; units are converted where they can be recognized. Pure functions, no I/O.
  */
 import type { MetricKey } from "@/lib/crew";
 

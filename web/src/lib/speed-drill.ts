@@ -1,6 +1,6 @@
 /**
- * Speed-of-processing drill, modelled on the "useful field of view" style of training used in the
- * ACTIVE and INHANCE trials: identify the object in the centre and, at the same time, where a target
+ * Speed-of-processing drill, modeled on the "useful field of view" style of training used in the
+ * ACTIVE and INHANCE trials: identify the object in the center and, at the same time, where a target
  * appeared at the edge of vision. The display time adapts (2 right in a row: shorter; a miss: longer),
  * so the drill stays hard as the person gets faster. Pure functions, no I/O.
  */

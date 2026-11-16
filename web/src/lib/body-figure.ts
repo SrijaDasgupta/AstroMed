@@ -1,6 +1,6 @@
 /**
  * Positions on the My body figure image (public/body/figure.webp, 1672 × 941 px, generated with
- * ChatGPT and labelled on screen as AI-generated). Body-part hotspots and problem pins are placed by hand on the figure's anatomy;
+ * ChatGPT and labeled on screen as AI-generated). Body-part hotspots and problem pins are placed by hand on the figure's anatomy;
  * "person's right" is on the viewer's left. Pure data.
  */
 export const FIGURE = { src: "/body/figure.webp", width: 1672, height: 941, viewBox: { x: 585, y: 0, w: 500, h: 900 } };

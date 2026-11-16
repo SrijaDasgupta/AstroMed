@@ -1,7 +1,7 @@
 /**
  * Turns readings found in an imported photo ("Blood pressure: 128/82 mmHg", "Glucose: 5.2 mmol/L")
  * into AstroMed's own measures, so they feed My vitals, trends and alerts like a daily log does.
- * Units are converted where they can be recognised; values outside a plausible range are left out.
+ * Units are converted where they can be recognized; values outside a plausible range are left out.
  * Pure functions, safe in the browser and on the server.
  */
 import type { Measurement } from "@/lib/records-store";

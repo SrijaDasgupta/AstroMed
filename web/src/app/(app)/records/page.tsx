@@ -76,7 +76,7 @@ export default async function RecordsPage({ searchParams }: { searchParams: Prom
         <h2 className="flex items-center gap-2 text-lg font-medium"><LineChart className="h-5 w-5 text-slate-400" aria-hidden />Import readings from a CSV</h2>
         <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
           <p className="mb-3 text-sm text-slate-400">
-            Export daily data from your smartwatch or health app as a CSV, then import it here. AstroMed needs a <strong className="text-slate-200">date</strong> column and recognises columns such as resting heart rate, systolic, diastolic, temperature, glucose and sleep. °F, mmol/L and sleep in minutes are converted. Days you&apos;ve already imported are skipped.{" "}
+            Export daily data from your smartwatch or health app as a CSV, then import it here. AstroMed needs a <strong className="text-slate-200">date</strong> column and recognizes columns such as resting heart rate, systolic, diastolic, temperature, glucose and sleep. °F, mmol/L and sleep in minutes are converted. Days you&apos;ve already imported are skipped.{" "}
             <a href="/astromed-import-template.csv" download className="text-sky-300 hover:text-sky-200">Download a template</a>.
           </p>
           <ImportForm disabled={demo} />

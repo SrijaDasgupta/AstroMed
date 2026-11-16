@@ -83,7 +83,7 @@ export default async function StartPage() {
       {/* Mission hero */}
       <section className="am-rise overflow-hidden rounded-3xl border border-sky-400/20 bg-[#070b16]">
         <div className="relative aspect-[3/1] max-h-72 w-full">
-          <MissionScene envId={env.id} progress={progressFraction} none={ctx.none} />
+          <MissionScene envId={env.id} progress={progressFraction} none={ctx.none} background />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#070b16] to-transparent" />
         </div>
         <div className="relative -mt-6 flex flex-wrap items-end justify-between gap-5 px-5 pb-5 sm:px-7 sm:pb-6">

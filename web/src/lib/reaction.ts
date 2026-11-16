@@ -24,7 +24,7 @@ const median = (xs: number[]) => {
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 };
 
-/** Summarise the reaction times (ms) of valid responses plus the false-start count. */
+/** Summarize the reaction times (ms) of valid responses plus the false-start count. */
 export function summarize(rts: number[], falseStarts: number): ReactionResult | undefined {
   if (rts.length === 0) return undefined;
   return {

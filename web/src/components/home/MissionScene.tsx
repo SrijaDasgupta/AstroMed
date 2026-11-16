@@ -48,7 +48,7 @@ function along(t: number, p0: [number, number], c: [number, number], p1: [number
   return [u * u * p0[0] + 2 * u * t * c[0] + t * t * p1[0], u * u * p0[1] + 2 * u * t * c[1] + t * t * p1[1]];
 }
 
-function Transit({ progress, to, toName }: { progress: number; to: typeof MARS; toName: string }) {
+function Transit({ progress, to, toName, earthLabel = true }: { progress: number; to: typeof MARS; toName: string; earthLabel?: boolean }) {
   const p0: [number, number] = [80, 140], c: [number, number] = [300, -30], p1: [number, number] = [520, 70];
   const t = Math.min(1, Math.max(0, progress));
   const [x, y] = along(t, p0, c, p1);
@@ -60,13 +60,13 @@ function Transit({ progress, to, toName }: { progress: number; to: typeof MARS; 
       <path d={route} fill="none" stroke="#7dd3fc" strokeOpacity="0.35" strokeDasharray="3 6" />
       <path d={route} fill="none" stroke="#38bdf8" strokeWidth="2.5" pathLength={1} strokeDasharray={`${t} 2`} style={{ "--route-from": t } as React.CSSProperties} className="am-route" />
       <Ship x={x} y={y} />
-      <text x={p0[0]} y={p0[1] + 46} textAnchor="middle" className="fill-slate-400 text-[11px]">Earth</text>
+      {earthLabel && <text x={p0[0]} y={p0[1] + 46} textAnchor="middle" className="fill-slate-400 text-[11px]">Earth</text>}
       <text x={p1[0]} y={p1[1] + 40} textAnchor="middle" className="fill-slate-400 text-[11px]">{toName}</text>
     </g>
   );
 }
 
-function Orbiting({ planet, id, label, moon }: { planet: typeof EARTH; id: string; label: string; moon?: typeof MOON }) {
+function Orbiting({ planet, id, label, moon }: { planet: typeof EARTH; id: string; label?: string; moon?: typeof MOON }) {
   return (
     <g>
       <Planet cx={300} cy={118} r={46} {...planet} id={id} />
@@ -78,12 +78,12 @@ function Orbiting({ planet, id, label, moon }: { planet: typeof EARTH; id: strin
         </g>
       </g>
       {moon && <Planet cx={500} cy={50} r={12} {...moon} id={`${id}-moon`} />}
-      <text x={300} y={190} textAnchor="middle" className="fill-slate-400 text-[11px]">{label}</text>
+      {label && <text x={300} y={190} textAnchor="middle" className="fill-slate-400 text-[11px]">{label}</text>}
     </g>
   );
 }
 
-function Surface({ planet, id, sky, skyId, label }: { planet: typeof MARS; id: string; sky: typeof EARTH; skyId: string; label: string }) {
+function Surface({ planet, id, sky, skyId, label }: { planet: typeof MARS; id: string; sky: typeof EARTH; skyId: string; label?: string }) {
   return (
     <g>
       <Planet cx={470} cy={45} r={13} {...sky} id={skyId} />
@@ -94,12 +94,13 @@ function Surface({ planet, id, sky, skyId, label }: { planet: typeof MARS; id: s
         <rect x="18" y="0" width="16" height="8" rx="2" fill="#cbd5e1" />
         <circle cx="-4" cy="-10" r="3" fill="#38bdf8" className="am-pulse" />
       </g>
-      <text x={180} y={178} textAnchor="middle" className="fill-slate-900 text-[11px] font-medium">{label}</text>
+      {label && <text x={180} y={178} textAnchor="middle" className="fill-slate-900 text-[11px] font-medium">{label}</text>}
     </g>
   );
 }
 
-export function MissionScene({ envId, progress, none }: { envId: EnvironmentId; progress: number; none?: boolean }) {
+/** `background`: the scene sits behind text (mission home), so captions that would sit under the text are left out. */
+export function MissionScene({ envId, progress, none, background = false }: { envId: EnvironmentId; progress: number; none?: boolean; background?: boolean }) {
   return (
     <svg viewBox="0 0 600 200" className="block h-full w-full" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
       <defs>
@@ -110,17 +111,17 @@ export function MissionScene({ envId, progress, none }: { envId: EnvironmentId; 
         <circle key={i} cx={s.x} cy={s.y} r={s.r} fill="#e2e8f0" className="am-twinkle" style={{ animationDelay: `${s.delay}s` }} />
       ))}
       {none ? (
-        <Orbiting planet={EARTH} id="sc-home" label="No mission yet" />
+        <Orbiting planet={EARTH} id="sc-home" label={background ? undefined : "No mission yet"} />
       ) : envId === "mars-transit" ? (
-        <Transit progress={progress} to={MARS} toName="Mars" />
+        <Transit progress={progress} to={MARS} toName="Mars" earthLabel={!background} />
       ) : envId === "leo" ? (
-        <Orbiting planet={EARTH} id="sc-leo" label="Low Earth orbit" moon={MOON} />
+        <Orbiting planet={EARTH} id="sc-leo" label={background ? undefined : "Low Earth orbit"} moon={MOON} />
       ) : envId === "lunar-surface" ? (
-        <Surface planet={MOON} id="sc-moon" sky={EARTH} skyId="sc-sky-earth" label="Lunar base" />
+        <Surface planet={MOON} id="sc-moon" sky={EARTH} skyId="sc-sky-earth" label={background ? undefined : "Lunar base"} />
       ) : envId === "mars-surface" ? (
-        <Surface planet={MARS} id="sc-mars" sky={MOON} skyId="sc-sky-phobos" label="Mars base" />
+        <Surface planet={MARS} id="sc-mars" sky={MOON} skyId="sc-sky-phobos" label={background ? undefined : "Mars base"} />
       ) : (
-        <Orbiting planet={EARTH} id="sc-analog" label="Earth analog station" />
+        <Orbiting planet={EARTH} id="sc-analog" label={background ? undefined : "Earth analog station"} />
       )}
     </svg>
   );

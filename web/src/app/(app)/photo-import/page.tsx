@@ -21,7 +21,7 @@ export default async function PhotoImportPage() {
           <h2 className="font-medium text-white">What it can read</h2>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li><strong className="text-white">Dosimeter or radiation report:</strong> the total dose (mSv, µSv or Sv) and the exposure time. Saved to <Link href="/hazards" className="text-sky-300 hover:text-sky-200">My exposure</Link>.</li>
-            <li><strong className="text-white">Sleep tracker screen:</strong> labelled bedtime and wake time with dates. Saved to the <Link href="/vitals" className="text-sky-300 hover:text-sky-200">Sleep orbit</Link>.</li>
+            <li><strong className="text-white">Sleep tracker screen:</strong> labeled bedtime and wake time with dates. Saved to the <Link href="/vitals" className="text-sky-300 hover:text-sky-200">Sleep orbit</Link>.</li>
             <li><strong className="text-white">Any other health photo,</strong> such as a blood pressure monitor, thermometer, scale or lab report: the text plus any readings it finds (like &ldquo;Blood pressure: 120/80 mmHg&rdquo;), saved in <Link href="/records" className="text-sky-300 hover:text-sky-200">My records</Link>{viewer.kind === "demo" ? " (the photo itself is kept only with an account)" : " with the photo"}.</li>
           </ul>
         </div>

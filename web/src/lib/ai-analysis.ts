@@ -57,7 +57,7 @@ export const PhotoAnalysisSchema = z.object({
   isHealthPhoto: z.boolean().describe("False if the photo doesn't show a body part, wound, skin, eye, nail or similar."),
   quality: z.enum(["good", "fair", "poor"]).describe("Whether the photo is sharp and well lit enough to judge."),
   description: z.string().describe("One or two plain sentences describing what is visible."),
-  observations: z.array(z.string()).describe("Specific visible findings: size, colour, edges, swelling, discharge, pattern."),
+  observations: z.array(z.string()).describe("Specific visible findings: size, color, edges, swelling, discharge, pattern."),
   possibleConditions: z.array(z.string()).describe("Plain-language possibilities, most likely first. Not a diagnosis."),
   conditionIds: z.array(z.enum(CONDITION_IDS)).describe("IDs from the provided list that this may relate to."),
   warningSigns: z.array(z.string()).describe("Visible signs that need prompt medical attention, if any."),

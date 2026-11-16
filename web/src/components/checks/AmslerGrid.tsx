@@ -9,7 +9,7 @@ const SIZE = N * CELL;
 type Eye = "left" | "right";
 
 /**
- * Amsler grid for a home check of central vision. The person looks at the centre dot with one eye
+ * Amsler grid for a home check of central vision. The person looks at the center dot with one eye
  * covered and taps any squares where lines look wavy, bent, blurred or missing. The marks are a
  * visual aid only; the yes/no answers in the form are what gets saved.
  */
@@ -38,10 +38,10 @@ export function AmslerGrid() {
         </div>
       </div>
       <p className="mt-2 text-sm text-slate-400">
-        Testing your <span className="text-slate-100">{eye}</span> eye: cover your {eye === "left" ? "right" : "left"} eye and keep looking at the centre dot.
+        Testing your <span className="text-slate-100">{eye}</span> eye: cover your {eye === "left" ? "right" : "left"} eye and keep looking at the center dot.
       </p>
       <div className="mt-4 flex justify-center">
-        <svg viewBox={`-2 -2 ${SIZE + 4} ${SIZE + 4}`} className="w-full max-w-[22rem] rounded-md bg-white" role="img" aria-label="Amsler grid: a square grid of black lines with a dot in the centre. Tap squares that look distorted.">
+        <svg viewBox={`-2 -2 ${SIZE + 4} ${SIZE + 4}`} className="w-full max-w-[22rem] rounded-md bg-white" role="img" aria-label="Amsler grid: a square grid of black lines with a dot in the center. Tap squares that look distorted.">
           {Array.from({ length: N * N }, (_, i) => (
             <rect key={i} x={(i % N) * CELL} y={Math.floor(i / N) * CELL} width={CELL} height={CELL}
               fill={marks[eye].has(i) ? "rgba(244,63,94,0.45)" : "transparent"} onClick={() => toggle(i)} className="cursor-pointer" />

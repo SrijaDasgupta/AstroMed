@@ -127,7 +127,7 @@ export const CHECKUPS: Checkup[] = [
     hazard: "Altered gravity",
     steps: [
       "Wear your usual reading glasses. Hold this screen at reading distance (about 35 cm) in good light.",
-      "Amsler grid: cover your left eye and look only at the centre dot of the grid below. Without looking away, notice whether any lines look wavy, bent, blurred or missing. Tap those squares to mark them.",
+      "Amsler grid: cover your left eye and look only at the center dot of the grid below. Without looking away, notice whether any lines look wavy, bent, blurred or missing. Tap those squares to mark them.",
       "Switch to the other eye and repeat.",
       "Near-vision card: cover one eye and read the smallest line you can on the onboard card, then the other eye. Compare with last week: is anything blurrier, or do you need the card further away?",
       "Note any headaches.",
@@ -173,14 +173,14 @@ export const CHECKUPS: Checkup[] = [
   {
     id: "speed-drill",
     title: "Speed drill",
-    summary: "Brain training: name the object in the centre and spot the star at the edge, faster and faster.",
+    summary: "Brain training: name the object in the center and spot the star at the edge, faster and faster.",
     everyDays: 3,
     widget: "speed",
     hazard: "Isolation and confinement",
     steps: [
       "Find a quiet spot and choose a session length. 10 minutes or more counts as today's brain health habit. The drill uses brief flashes: skip it if flashing images have ever caused you a seizure or migraine.",
-      "Keep your eyes on the centre cross. A rocket or a satellite flashes in the centre while a star flashes somewhere on the ring, then a pattern covers them.",
-      "Say what was in the centre, then tap where the star was. Two right in a row makes the flash shorter; a miss makes it longer.",
+      "Keep your eyes on the center cross. A rocket or a satellite flashes in the center while a star flashes somewhere on the ring, then a pattern covers them.",
+      "Say what was in the center, then tap where the star was. Two right in a row makes the flash shorter; a miss makes it longer.",
       "Aim for 2–3 sessions a week. The studies used 10–15 hours over 5–6 weeks, then regular top-ups.",
     ],
     fields: [
@@ -243,7 +243,7 @@ export const CHECKUPS: Checkup[] = [
       { id: "sysStanding", label: "Systolic blood pressure standing (optional)", kind: "number", unit: "mmHg", min: 40, max: 260, step: 1, optional: true },
       { id: "singleLegSec", label: "One leg, eyes open (best of 3)", kind: "number", unit: "s", min: 0, max: 60, step: 1, optional: true },
       { id: "tandemSec", label: "Heel-to-toe, eyes closed", kind: "number", unit: "s", min: 0, max: 60, step: 1, optional: true },
-      { id: "dizzyStanding", label: "Did you feel dizzy, light-headed or see grey when standing?", kind: "yesno" },
+      { id: "dizzyStanding", label: "Did you feel dizzy, light-headed or see gray when standing?", kind: "yesno" },
       { id: "fainted", label: "Did you faint or nearly faint?", kind: "yesno" },
       { id: "vertigo", label: "Room spinning, motion sickness, or trouble judging movement?", kind: "yesno" },
       { id: "tiredBreathless", label: "Unusually tired, or out of breath with light effort?", kind: "yesno" },
@@ -299,15 +299,15 @@ export const CHECKUPS: Checkup[] = [
       { id: "imRash", label: "Any other rash, or red, itchy skin?", kind: "yesno" },
       { id: "imWound", label: "A cut or scrape that is slow to heal, or red, warm or oozing?", kind: "yesno" },
       { id: "imCold", label: "Cold, cough, sore throat or blocked nose?", kind: "yesno" },
-      { id: "imGut", label: "Diarrhoea, vomiting or stomach upset lasting more than a day?", kind: "yesno" },
+      { id: "imGut", label: "Diarrhea, vomiting or stomach upset lasting more than a day?", kind: "yesno" },
       { id: "imUrine", label: "Burning or pain when passing urine?", kind: "yesno" },
       { id: "imCleaned", label: "Did you do this week's cleaning of hygiene and food areas?", kind: "yesno" },
     ],
     why: [
-      { text: "NASA's preventive care includes optimising and periodically monitoring immune function.", source: "std1", page: 20 },
+      { text: "NASA's preventive care includes optimizing and periodically monitoring immune function.", source: "std1", page: 20 },
       { text: "Stress in spaceflight has been linked to dormant viruses reactivating, such as cold sores and shingles.", source: "behavioral", page: 31 },
       { text: "On long ISS missions, Epstein-Barr, chickenpox-shingles and cytomegalovirus were shed more often and in larger amounts than on short flights, mostly without symptoms.", source: "latentVirus", page: 0 },
-      { text: "Cleaning and sanitising hygiene equipment controls microbial growth on the spacecraft.", source: "std2", page: 122 },
+      { text: "Cleaning and sanitizing hygiene equipment controls microbial growth on the spacecraft.", source: "std2", page: 122 },
     ],
   },
 ];
@@ -412,7 +412,7 @@ export function evaluate(checkup: Checkup, member: CrewMember, a: Answers, conte
   const cabinT = num("cabinTempC");
   if (cabinT !== undefined && (cabinT < 18 || cabinT > 27)) f.push({ level: "routine", text: `Cabin temperature of ${cabinT} °C is outside NASA's 18–27 °C crew health range. Report it to mission control.` });
   const rh = num("humidityPct");
-  if (rh !== undefined && (rh < 25 || rh > 75)) f.push({ level: "routine", text: `Humidity of ${rh}% is outside NASA's 25–75% range. ${rh < 25 ? "Dry air irritates eyes, nose and skin and builds static." : "Damp air encourages mould and bacteria."} Report it to mission control.` });
+  if (rh !== undefined && (rh < 25 || rh > 75)) f.push({ level: "routine", text: `Humidity of ${rh}% is outside NASA's 25–75% range. ${rh < 25 ? "Dry air irritates eyes, nose and skin and builds static." : "Damp air encourages mold and bacteria."} Report it to mission control.` });
   const noise = num("noiseDba");
   if (noise !== undefined) {
     if (noise >= 85) f.push({ level: "today", text: `Noise of ${noise} dBA is at NASA's hazardous level (85 dBA). Wear hearing protection, report the source, and mention any ringing or muffled hearing to the flight surgeon.` });

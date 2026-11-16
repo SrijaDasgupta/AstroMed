@@ -61,9 +61,9 @@ export const HIDDEN_RISKS: HiddenRisk[] = [
     id: "space-anemia",
     name: "Space anemia: faster red blood cell destruction",
     what: "In 14 astronauts on 6-month ISS missions, the body destroyed 54% more red blood cells than before flight, for the whole mission, and effects were still present a year after landing. Anemia affects fatigue, exercise tolerance and dizziness on standing, which matters most after landing on another world without full medical support.",
-    detect: "Carbon monoxide in exhaled breath (released each time haemoglobin is broken down) and blood tests for haemoglobin, iron and young red blood cells.",
+    detect: "Carbon monoxide in exhaled breath (released each time hemoglobin is broken down) and blood tests for hemoglobin, iron and young red blood cells.",
     self: [
-      "Report unusual tiredness, breathlessness with light effort, a racing heart or looking pale, and ask for a blood count (haemoglobin).",
+      "Report unusual tiredness, breathlessness with light effort, a racing heart or looking pale, and ask for a blood count (hemoglobin).",
       "After landing, do the Balance and stand-up test: anemia adds to dizziness on standing.",
     ],
     links: [{ text: "Balance and stand-up test", href: "/checkups/balance" }, { text: "Report a problem", href: "/problems" }],
@@ -75,7 +75,7 @@ export const HIDDEN_RISKS: HiddenRisk[] = [
     what: "Bone loss in weightlessness raises calcium in the urine at the same time as crews tend to drink less, so stone-forming crystals can build up for months without symptoms. NASA's medical model ranks a kidney stone as the second most likely reason for an emergency evacuation from the ISS.",
     detect: "24-hour urine chemistry (calcium, oxalate, citrate, pH and volume) and kidney ultrasound to spot small stones before they cause pain. Simpler tests such as first-morning urine calcium are being studied for small spacecraft.",
     self: [
-      "Log your water every day; AstroMed flags anything under NASA's 2.5 L minimum. A modelling study estimated about 3.2 L a day would bring stone risk back to pre-flight levels.",
+      "Log your water every day; AstroMed flags anything under NASA's 2.5 L minimum. A modeling study estimated about 3.2 L a day would bring stone risk back to pre-flight levels.",
       "Keep up resistance exercise, which protects bone and lowers the calcium load.",
       "Report pain in your side or back, or blood in your urine, the same day. These are in the daily log symptoms.",
     ],

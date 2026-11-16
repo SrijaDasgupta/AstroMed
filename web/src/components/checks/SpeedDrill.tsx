@@ -37,7 +37,7 @@ const CentreIcon = ({ kind, size = 56 }: { kind: Centre; size?: number }) =>
 const MASK = Array.from({ length: 140 }, (_, i) => ({ x: (i * 73) % SIZE, y: (i * 151) % SIZE, s: 10 + ((i * 7) % 18), g: 40 + ((i * 37) % 160) }));
 
 /**
- * Adaptive speed-of-processing drill. A rocket or satellite flashes in the centre while a star
+ * Adaptive speed-of-processing drill. A rocket or satellite flashes in the center while a star
  * flashes at one of 8 places at the edge; then a mask covers them. Report both. Two right in a row
  * makes the flash shorter; a miss makes it longer. Distractor shapes appear once the flash is short.
  */
@@ -139,7 +139,7 @@ export function SpeedDrill({ onDone, onReset }: { onDone: (r: DrillResult) => vo
       ) : (
         <div className="mt-4 space-y-3">
           <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="mx-auto block w-full max-w-sm rounded-2xl bg-slate-950" role="img"
-            aria-label={phase === "where" ? "Choose where the star was" : phase === "show" ? "Look now" : "Keep your eyes on the centre"}>
+            aria-label={phase === "where" ? "Choose where the star was" : phase === "show" ? "Look now" : "Keep your eyes on the center"}>
             <circle cx={C} cy={C} r={RING} fill="none" stroke="#1e293b" strokeDasharray="3 6" />
             {(phase === "fixation" || phase === "centre" || phase === "feedback") && <path d={`M${C - 10} ${C}H${C + 10}M${C} ${C - 10}V${C + 10}`} stroke="#64748b" strokeWidth="2" />}
             {phase === "show" && trial && (
@@ -165,7 +165,7 @@ export function SpeedDrill({ onDone, onReset }: { onDone: (r: DrillResult) => vo
 
           {phase === "centre" && (
             <div className="flex flex-wrap items-center justify-center gap-3" aria-live="polite">
-              <span className="w-full text-center text-sm text-slate-300">What was in the centre?</span>
+              <span className="w-full text-center text-sm text-slate-300">What was in the center?</span>
               {(["rocket", "satellite"] as const).map((k) => (
                 <button key={k} type="button" autoFocus={k === "rocket"} onClick={() => { setPick(k); setPhase("where"); }}
                   className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-100 hover:bg-white/5">
@@ -180,7 +180,7 @@ export function SpeedDrill({ onDone, onReset }: { onDone: (r: DrillResult) => vo
           </div>
         </div>
       )}
-      <p className="mt-4 text-xs text-slate-500">Keep your eyes on the centre cross. The flash gets shorter as you get faster, and grey shapes appear around the star once it&apos;s quick. Modelled on the speed training in the ACTIVE and INHANCE trials.</p>
+      <p className="mt-4 text-xs text-slate-500">Keep your eyes on the center cross. The flash gets shorter as you get faster, and gray shapes appear around the star once it&apos;s quick. Modeled on the speed training in the ACTIVE and INHANCE trials.</p>
     </div>
   );
 }
