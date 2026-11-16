@@ -86,52 +86,25 @@ Images: the home page picture and the My body figure were generated with ChatGPT
 ## NASA Data (Link Text → Link Url)
 | Link Text | Link Url |
 |---|---|
-| NASA-STD-3001 Volume 1 Rev C: Crew Health | https://standards.nasa.gov/sites/default/files/standards/NASA/C//nasa-std-3001-vol-1-rev-c-signature.pdf |
-| NASA-STD-3001 Volume 2 Rev F: Human Factors, Habitability and Environmental Health | https://standards.nasa.gov/system/files/tmp/NASA-STD-3001%20Vol%202%20Rev%20F.pdf |
-| NASA HRP Evidence Report: Sleep Loss and Circadian Desynchronization | https://humanresearchroadmap.nasa.gov/Evidence/reports/Sleep.pdf |
-| NASA HRP Evidence Report: Cardiovascular Adaptations | https://humanresearchroadmap.nasa.gov/Evidence/reports/Cardio%20Risk%20EB%202022%20FINAL_4-3-2023.pdf |
-| NASA HRP Evidence Report: Behavioral Health and Performance (2025) | https://humanresearchroadmap.nasa.gov/Evidence/reports/HRP-ER-BMED-HFBP-20250210.pdf |
-| NASA HRP Evidence Report: Bone Fracture (2024) | https://humanresearchroadmap.nasa.gov/Evidence/reports/Bone%20Fracture%20Evidence%20Report_07-18-2024.pdf |
-| NASA HRP Evidence Report: Radiation Carcinogenesis (2026) | https://humanresearchroadmap.nasa.gov/Evidence/reports/HRP-ER-CANCER-SR-20260811.pdf |
-| NASA Pharmaceutical Care Technical Brief (OCHMO-MTB-012) | https://www.nasa.gov/wp-content/uploads/2026/01/ochmo-mtb-012-pharmaceutical-care.pdf |
-| NASA Fundamentals of Human Health (medical technical briefs) | https://www.nasa.gov/reference/fundamentals-of-human-health/ |
-| NASA HRP: Risks of Human Spaceflight | https://www.nasa.gov/hrp/risks/ |
-| NASA HRP: 5 Hazards of Human Spaceflight | https://www.nasa.gov/hrp/hazards/ |
-| NASA HRP: Risk of Hypoxia | https://www.nasa.gov/reference/risk-of-hypoxia/ |
-| NASA HRP: Ongoing research | https://www.nasa.gov/hrp/ongoing-hrp-research/ |
+| NASA-STD-3001 Human Spaceflight Standards (Volumes 1 and 2, and technical briefs) | https://www.nasa.gov/ochmo/human-spaceflight-and-aviation-standards/ |
+| NASA Human Research Program (hazards and risks of human spaceflight) | https://www.nasa.gov/hrp/ |
+| NASA Human Research Roadmap: evidence reports | https://humanresearchroadmap.nasa.gov/evidence/ |
 
 ## Space Agency Partner & Other Data (Link Text → Link Url)
 | Link Text | Link Url |
 |---|---|
-| CSA: Monitoring radiation for astronaut health (2026) | https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp |
-| CSA: Why do we conduct science experiments in space? | https://www.asc-csa.gc.ca/eng/iss/science/why-do-we-conduct-science-experiments-in-space.asp |
-| MMASH dataset (PhysioNet), baseline recordings | https://physionet.org/content/mmash/1.0.0/ |
-| 2024 Adult Compendium of Physical Activities (exercise calories) | https://pmc.ncbi.nlm.nih.gov/articles/PMC10818145/ |
-| Marshall-Goebel et al. 2019, jugular flow and clots in space (JAMA Netw Open) | https://doi.org/10.1001/jamanetworkopen.2019.15011 |
-| Trudel et al. 2022, space anemia (Nature Medicine) | https://doi.org/10.1038/s41591-021-01637-7 |
-| Mehta et al. 2017, latent virus reactivation (npj Microgravity) | https://doi.org/10.1038/s41526-017-0015-y |
-| Brunstetter et al. 2025, predicting SANS (JAMA Ophthalmology) | https://doi.org/10.1001/jamaophthalmol.2025.3406 |
-| Goodenow-Messman et al. 2022, kidney stone risk (npj Microgravity) | https://doi.org/10.1038/s41526-021-00187-z |
-| Buckey et al. 2023, bone loss and kidney stones | https://doi.org/10.1097/mnh.0000000000000863 |
-| Coe et al. 2026, ACTIVE trial 20-year follow-up | https://doi.org/10.1002/trc2.70197 |
-| Attarha et al. 2025, INHANCE trial | https://doi.org/10.2196/75161 |
-| Gu et al. 2019, open vs. closed skill exercise review | https://pmc.ncbi.nlm.nih.gov/articles/PMC6718477/ |
-| Li et al. 2024, open and closed skill fNIRS study | https://pmc.ncbi.nlm.nih.gov/articles/PMC11385981/ |
-| Zong et al. 2022, exercise and brain messenger systems | https://www.frontiersin.org/journals/aging-neuroscience/articles/10.3389/fnagi.2022.869507/full |
-| Brandeis University 2026, novelty and brain health (news release) | https://www.brandeis.edu/stories/2026/may/wearables-study.html |
-| Park 2021, dual-task training trial | https://pmc.ncbi.nlm.nih.gov/articles/PMC9879379/ |
-| Li et al. 2018, balance and dual-tasking review | https://www.frontiersin.org/journals/neurology/articles/10.3389/fneur.2018.00913/full |
-| Carter et al. 2018, walking breaks and brain blood flow | https://doi.org/10.1152/japplphysiol.00310.2018 |
-| Dunstan et al. 2012, breaking up sitting and blood sugar | https://pmc.ncbi.nlm.nih.gov/articles/PMC3329818/ |
-| tesseract.js (on-device text reading, Apache 2.0) | https://github.com/naptha/tesseract.js |
+| Canadian Space Agency: Monitoring radiation for astronaut health | https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp |
+| MMASH dataset (PhysioNet) | https://physionet.org/content/mmash/1.0.0/ |
+| Compendium of Physical Activities | https://pacompendium.com/ |
+| Peer-reviewed spaceflight and brain-health research (full list with links) | https://astro-med-two.vercel.app/about |
 | Next.js | https://nextjs.org |
 | Supabase | https://supabase.com |
 | Vercel | https://vercel.com |
 | Tailwind CSS | https://tailwindcss.com |
 | Lucide icons | https://lucide.dev |
-| Claude Code (AI coding assistant used to build the app) | https://claude.com/claude-code |
-| ChatGPT (generated the two illustrations, watermarked in the app) | https://chatgpt.com |
-| AstroMed: full source list, data and AI use | https://astro-med-two.vercel.app/about |
+| tesseract.js | https://github.com/naptha/tesseract.js |
+| Claude Code (AI coding assistant) | https://claude.com/claude-code |
+| ChatGPT (two labelled illustrations) | https://chatgpt.com |
 
 ---
 
